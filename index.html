@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ellectra — Inventory Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#141b22;
+    --panel-2:#1a232c;
+    --line:#232e38;
+    --amber:#ffb300;
+    --amber-dim:#8a6a1f;
+    --teal:#20e3b2;
+    --coral:#ff5c6c;
+    --text:#e8edf2;
+    --muted:#7c8a99;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  h1,h2,h3,.mono{font-family:'Space Grotesk', sans-serif;}
+  .num, .sku, td.num-cell{font-family:'JetBrains Mono', monospace;}
+
+  /* ---------- Top bar ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, #10161d, #0d1117);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:8px;
+    background:conic-gradient(from 220deg, var(--amber), #7a5b12, var(--amber));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; color:#0d1117; font-size:16px;
+  }
+  .brand-text h1{font-size:18px; font-weight:700; letter-spacing:0.2px;}
+  .brand-text span{font-size:11px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase;}
+  .sync{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--muted);
+    border:1px solid var(--line); border-radius:20px; padding:6px 12px;
+    background:var(--panel);
+  }
+  .pulse-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--teal);
+    box-shadow:0 0 0 0 rgba(32,227,178,0.6);
+    animation:pulse 1.8s infinite;
+  }
+  .pulse-dot.off{background:var(--coral); animation:none;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(32,227,178,0.55);}
+    70%{box-shadow:0 0 0 7px rgba(32,227,178,0);}
+    100%{box-shadow:0 0 0 0 rgba(32,227,178,0);}
+  }
+
+  main{max-width:1180px; margin:0 auto; padding:26px 24px;}
+
+  /* ---------- Stat strip ---------- */
+  .stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+    margin-bottom:26px;
+  }
+  .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:16px 18px; position:relative; overflow:hidden;
+  }
+  .stat::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--stat-accent, var(--amber));
+  }
+  .stat .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px;}
+  .stat .val{font-size:26px; font-weight:700; font-family:'Space Grotesk',sans-serif;}
+  .stat.low{--stat-accent:var(--coral);}
+  .stat.value{--stat-accent:var(--teal);}
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;
+  }
+  input, select{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:9px 12px; font-size:13px; font-family:'Inter',sans-serif;
+    outline:none;
+  }
+  input:focus, select:focus{border-color:var(--amber-dim);}
+  #search{flex:1; min-width:180px;}
+  .btn{
+    border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:'Inter',sans-serif; transition:opacity .15s;
+  }
+  .btn:hover{opacity:0.85;}
+  .btn-primary{background:var(--amber); color:#0d1117;}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
+  .btn-danger{background:transparent; color:var(--coral); border:1px solid #4a2226;}
+
+  /* ---------- Table ---------- */
+  .table-wrap{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  }
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; padding:12px 16px; color:var(--muted); font-weight:600;
+    font-size:11px; text-transform:uppercase; letter-spacing:0.5px;
+    border-bottom:1px solid var(--line); background:var(--panel-2);
+  }
+  tbody tr{border-bottom:1px solid var(--line);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#171f27;}
+  td{padding:12px 16px; vertical-align:middle;}
+  .prod-name{font-weight:600;}
+  .prod-sku{color:var(--muted); font-size:11px;}
+  .cat-tag{
+    display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px;
+    background:#1e2933; color:var(--muted); border:1px solid var(--line);
+  }
+
+  /* Signal bars — signature stock indicator */
+  .signal{display:flex; align-items:flex-end; gap:2px; height:16px;}
+  .signal i{width:4px; border-radius:1px; background:var(--line); display:block;}
+  .signal i:nth-child(1){height:5px;}
+  .signal i:nth-child(2){height:9px;}
+  .signal i:nth-child(3){height:13px;}
+  .signal i:nth-child(4){height:16px;}
+  .signal.lvl-1 i:nth-child(1){background:var(--coral);}
+  .signal.lvl-2 i:nth-child(1),.signal.lvl-2 i:nth-child(2){background:#ffb300;}
+  .signal.lvl-3 i:nth-child(1),.signal.lvl-3 i:nth-child(2),.signal.lvl-3 i:nth-child(3){background:#ffb300;}
+  .signal.lvl-4 i{background:var(--teal);}
+  .qty-row{display:flex; align-items:center; gap:8px;}
+  .qty-num{font-weight:600;}
+  .low-flag{color:var(--coral); font-size:11px; font-weight:600;}
+
+  .row-actions{display:flex; gap:6px;}
+  .icon-btn{
+    width:28px; height:28px; border-radius:6px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--muted); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+  }
+  .icon-btn:hover{color:var(--text); border-color:var(--amber-dim);}
+
+  .empty-state{
+    text-align:center; padding:60px 20px; color:var(--muted);
+  }
+  .empty-state h3{color:var(--text); margin-bottom:6px; font-size:16px;}
+
+  /* ---------- Slide-in panel ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(5,8,11,0.6);
+    display:none; z-index:40;
+  }
+  .overlay.show{display:block;}
+  .panel{
+    position:fixed; top:0; right:0; height:100%; width:380px; max-width:92vw;
+    background:var(--panel); border-left:1px solid var(--line);
+    transform:translateX(100%); transition:transform .25s ease; z-index:41;
+    padding:22px; overflow-y:auto;
+  }
+  .panel.show{transform:translateX(0);}
+  .panel h2{font-size:17px; margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.4px;}
+  .field input, .field select{width:100%;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .panel-actions{display:flex; gap:10px; margin-top:20px;}
+  .panel-actions .btn{flex:1;}
+
+  footer{
+    text-align:center; color:var(--muted); font-size:11px; margin-top:30px;
+  }
+
+  @media (max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    thead th:nth-child(3), td:nth-child(3){display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">E</div>
+    <div class="brand-text">
+      <h1>Ellectra</h1>
+      <span>Inventory Control</span>
+    </div>
+  </div>
+  <div class="sync" id="syncBadge">
+    <span class="pulse-dot" id="pulseDot"></span>
+    <span id="syncText">Connecting…</span>
+  </div>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat">
+      <div class="lbl">Total Products</div>
+      <div class="val" id="statCount">0</div>
+    </div>
+    <div class="stat">
+      <div class="lbl">Units In Stock</div>
+      <div class="val" id="statUnits">0</div>
+    </div>
+    <div class="stat value">
+      <div class="lbl">Inventory Value</div>
+      <div class="val" id="statValue">₹0</div>
+    </div>
+    <div class="stat low">
+      <div class="lbl">Low Stock Alerts</div>
+      <div class="val" id="statLow">0</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" type="text" placeholder="Search by name or SKU…">
+    <select id="categoryFilter"><option value="">All categories</option></select>
+    <select id="stockFilter">
+      <option value="">All stock levels</option>
+      <option value="low">Low stock only</option>
+    </select>
+    <button class="btn btn-primary" id="addBtn">+ Add Product</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Supplier</th>
+          <th>Stock</th>
+          <th>Cost / Sell</th>
+          <th>Value</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <h3>No products yet</h3>
+      <p>Add your first electronics item to start tracking stock.</p>
+    </div>
+  </div>
+
+  <footer>Ellectra Inventory · synced live via Firebase Realtime Database</footer>
+</main>
+
+<div class="overlay" id="overlay"></div>
+<div class="panel" id="panel">
+  <h2 id="panelTitle">Add Product</h2>
+  <form id="productForm">
+    <div class="field">
+      <label>Product name</label>
+      <input type="text" id="f_name" placeholder="e.g. Anker 65W GaN Charger">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>SKU</label>
+        <input type="text" id="f_sku" placeholder="ELX-0001">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <input type="text" id="f_category" placeholder="Chargers">
+      </div>
+    </div>
+    <div class="field">
+      <label>Supplier</label>
+      <input type="text" id="f_supplier" placeholder="e.g. Anker India">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Quantity in stock</label>
+        <input type="number" id="f_qty" min="0" value="0">
+      </div>
+      <div class="field">
+        <label>Reorder level</label>
+        <input type="number" id="f_reorder" min="0" value="5">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Cost price (₹)</label>
+        <input type="number" id="f_cost" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label>Selling price (₹)</label>
+        <input type="number" id="f_sell" min="0" step="0.01">
+      </div>
+    </div>
+    <input type="hidden" id="f_id">
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn btn-primary" id="saveBtn">Save product</button>
+    </div>
+  </form>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAx0W0UqjNwr-99bOuBADwaDtNz0U4RBOE",
+  authDomain: "ellectrawebsite-main.firebaseapp.com",
+  databaseURL: "https://ellectrawebsite-main-default-rtdb.firebaseio.com",
+  projectId: "ellectrawebsite-main",
+  storageBucket: "ellectrawebsite-main.firebasestorage.app",
+  messagingSenderId: "615438825",
+  appId: "1:615438825:web:98de136edfe2d07e775378"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const inventoryRef = db.ref("inventory");
+
+let products = {};   // id -> product object
+let editingId = null;
+
+// ---------- Connection status ----------
+db.ref(".info/connected").on("value", (snap) => {
+  const connected = snap.val() === true;
+  document.getElementById("pulseDot").classList.toggle("off", !connected);
+  document.getElementById("syncText").textContent = connected ? "Live sync active" : "Offline";
+});
+
+// ---------- Realtime listener ----------
+inventoryRef.on("value", (snap) => {
+  products = snap.val() || {};
+  render();
+});
+
+// ---------- Helpers ----------
+function currency(n){
+  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
+
+function signalLevelClass(qty, reorder){
+  if (reorder <= 0) reorder = 1;
+  const ratio = qty / reorder;
+  if (qty <= 0) return "lvl-1";
+  if (ratio <= 1) return "lvl-1";
+  if (ratio <= 2) return "lvl-2";
+  if (ratio <= 4) return "lvl-3";
+  return "lvl-4";
+}
+
+function getFilteredList(){
+  const search = document.getElementById("search").value.trim().toLowerCase();
+  const cat = document.getElementById("categoryFilter").value;
+  const stockMode = document.getElementById("stockFilter").value;
+
+  return Object.entries(products)
+    .map(([id, p]) => ({ id, ...p }))
+    .filter(p => {
+      if (search && !(`${p.name} ${p.sku}`.toLowerCase().includes(search))) return false;
+      if (cat && p.category !== cat) return false;
+      if (stockMode === "low" && !(p.quantity <= p.reorderLevel)) return false;
+      return true;
+    })
+    .sort((a,b) => a.name.localeCompare(b.name));
+}
+
+function rebuildCategoryOptions(){
+  const sel = document.getElementById("categoryFilter");
+  const current = sel.value;
+  const cats = [...new Set(Object.values(products).map(p => p.category).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All categories</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join("");
+  sel.value = current;
+}
+
+// ---------- Render ----------
+function render(){
+  rebuildCategoryOptions();
+  const list = getFilteredList();
+  const tbody = document.getElementById("tableBody");
+  const empty = document.getElementById("emptyState");
+
+  // Stats (computed over ALL products, not just filtered)
+  const all = Object.values(products);
+  const totalCount = all.length;
+  const totalUnits = all.reduce((s,p) => s + Number(p.quantity || 0), 0);
+  const totalValue = all.reduce((s,p) => s + (Number(p.quantity||0) * Number(p.costPrice||0)), 0);
+  const lowCount = all.filter(p => Number(p.quantity||0) <= Number(p.reorderLevel||0)).length;
+
+  document.getElementById("statCount").textContent = totalCount;
+  document.getElementById("statUnits").textContent = totalUnits.toLocaleString("en-IN");
+  document.getElementById("statValue").textContent = currency(totalValue);
+  document.getElementById("statLow").textContent = lowCount;
+
+  if (list.length === 0){
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  tbody.innerHTML = list.map(p => {
+    const qty = Number(p.quantity||0);
+    const reorder = Number(p.reorderLevel||0);
+    const isLow = qty <= reorder;
+    const lvl = signalLevelClass(qty, reorder);
+    const value = qty * Number(p.costPrice||0);
+
+    return `
+      <tr>
+        <td>
+          <div class="prod-name">${escapeHtml(p.name)}</div>
+          <div class="prod-sku sku">${escapeHtml(p.sku)}</div>
+        </td>
+        <td><span class="cat-tag">${escapeHtml(p.category||"—")}</span></td>
+        <td>${escapeHtml(p.supplier||"—")}</td>
+        <td>
+          <div class="qty-row">
+            <span class="signal ${lvl}"><i></i><i></i><i></i><i></i></span>
+            <span class="qty-num num">${qty}</span>
+          </div>
+          ${isLow ? `<div class="low-flag">Reorder ≤ ${reorder}</div>` : ""}
+        </td>
+        <td class="num">${currency(p.costPrice)} / ${currency(p.sellPrice)}</td>
+        <td class="num">${currency(value)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick="openEdit('${p.id}')" title="Edit">✎</button>
+            <button class="icon-btn" onclick="deleteProduct('${p.id}')" title="Delete">✕</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+
+// ---------- Panel controls ----------
+const overlay = document.getElementById("overlay");
+const panel = document.getElementById("panel");
+
+function openPanel(){
+  overlay.classList.add("show");
+  panel.classList.add("show");
+}
+function closePanel(){
+  overlay.classList.remove("show");
+  panel.classList.remove("show");
+  document.getElementById("productForm").reset();
+  editingId = null;
+}
+
+document.getElementById("addBtn").onclick = () => {
+  editingId = null;
+  document.getElementById("panelTitle").textContent = "Add Product";
+  document.getElementById("productForm").reset();
+  openPanel();
+};
+document.getElementById("cancelBtn").onclick = closePanel;
+overlay.onclick = closePanel;
+
+window.openEdit = function(id){
+  const p = products[id];
+  if (!p) return;
+  editingId = id;
+  document.getElementById("panelTitle").textContent = "Edit Product";
+  document.getElementById("f_name").value = p.name || "";
+  document.getElementById("f_sku").value = p.sku || "";
+  document.getElementById("f_category").value = p.category || "";
+  document.getElementById("f_supplier").value = p.supplier || "";
+  document.getElementById("f_qty").value = p.quantity ?? 0;
+  document.getElementById("f_reorder").value = p.reorderLevel ?? 5;
+  document.getElementById("f_cost").value = p.costPrice ?? 0;
+  document.getElementById("f_sell").value = p.sellPrice ?? 0;
+  openPanel();
+};
+
+window.deleteProduct = function(id){
+  const p = products[id];
+  if (!p) return;
+  if (confirm(`Delete "${p.name}" from inventory?`)){
+    inventoryRef.child(id).remove();
+  }
+};
+
+// ---------- Save (add or update) ----------
+document.getElementById("productForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const data = {
+    name: document.getElementById("f_name").value.trim(),
+    sku: document.getElementById("f_sku").value.trim(),
+    category: document.getElementById("f_category").value.trim(),
+    supplier: document.getElementById("f_supplier").value.trim(),
+    quantity: Number(document.getElementById("f_qty").value || 0),
+    reorderLevel: Number(document.getElementById("f_reorder").value || 0),
+    costPrice: Number(document.getElementById("f_cost").value || 0),
+    sellPrice: Number(document.getElementById("f_sell").value || 0),
+    updatedAt: Date.now()
+  };
+
+  if (editingId){
+    inventoryRef.child(editingId).update(data);
+  } else {
+    inventoryRef.push(data);
+  }
+  closePanel();
+});
+
+// ---------- Filters ----------
+document.getElementById("search").addEventListener("input", render);
+document.getElementById("categoryFilter").addEventListener("change", render);
+document.getElementById("stockFilter").addEventListener("change", render);
+</script>
+</body>
+</html>
