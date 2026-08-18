@@ -66,7 +66,24 @@
     100%{box-shadow:0 0 0 0 rgba(32,227,178,0);}
   }
 
-  main{max-width:1180px; margin:0 auto; padding:26px 24px;}
+  main{max-width:1380px; margin:0 auto; padding:26px 24px;}
+
+  /* ---------- Tab Navigation ---------- */
+  .tabs{
+    display:flex; gap:8px; margin-bottom:24px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:0;
+  }
+  .tab-btn{
+    background:transparent; border:none; color:var(--muted);
+    padding:12px 20px; font-size:14px; font-weight:600; cursor:pointer;
+    border-bottom:2px solid transparent; transition:all .2s;
+    font-family:'Inter',sans-serif;
+  }
+  .tab-btn.active{color:var(--amber); border-bottom-color:var(--amber);}
+  .tab-btn:hover{color:var(--text);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
 
   /* ---------- Stat strip ---------- */
   .stats{
@@ -90,12 +107,12 @@
   .toolbar{
     display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;
   }
-  input, select{
+  input, select, textarea{
     background:var(--panel-2); border:1px solid var(--line); color:var(--text);
     border-radius:8px; padding:9px 12px; font-size:13px; font-family:'Inter',sans-serif;
     outline:none;
   }
-  input:focus, select:focus{border-color:var(--amber-dim);}
+  input:focus, select:focus, textarea:focus{border-color:var(--amber-dim);}
   #search{flex:1; min-width:180px;}
   .btn{
     border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:600;
@@ -105,6 +122,7 @@
   .btn-primary{background:var(--amber); color:#0d1117;}
   .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
   .btn-danger{background:transparent; color:var(--coral); border:1px solid #4a2226;}
+  .btn-teal{background:var(--teal); color:#0d1117;}
 
   /* ---------- Table ---------- */
   .table-wrap{
@@ -141,6 +159,7 @@
   .qty-row{display:flex; align-items:center; gap:8px;}
   .qty-num{font-weight:600;}
   .low-flag{color:var(--coral); font-size:11px; font-weight:600;}
+  .negative-stock{color:var(--coral); font-weight:700;}
 
   .row-actions{display:flex; gap:6px;}
   .icon-btn{
@@ -162,7 +181,7 @@
   }
   .overlay.show{display:block;}
   .panel{
-    position:fixed; top:0; right:0; height:100%; width:380px; max-width:92vw;
+    position:fixed; top:0; right:0; height:100%; width:420px; max-width:92vw;
     background:var(--panel); border-left:1px solid var(--line);
     transform:translateX(100%); transition:transform .25s ease; z-index:41;
     padding:22px; overflow-y:auto;
@@ -171,10 +190,58 @@
   .panel h2{font-size:17px; margin-bottom:18px;}
   .field{margin-bottom:14px;}
   .field label{display:block; font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.4px;}
-  .field input, .field select{width:100%;}
+  .field input, .field select, .field textarea{width:100%;}
   .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .field-row-3{display:grid; grid-template-columns:2fr 1fr; gap:10px; align-items:end;}
   .panel-actions{display:flex; gap:10px; margin-top:20px;}
   .panel-actions .btn{flex:1;}
+
+  .profit-indicator{
+    font-size:11px; color:var(--teal); margin-top:4px;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  /* Billing styles */
+  .billing-grid{
+    display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:20px;
+  }
+  .bill-product-select{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:16px; max-height:400px; overflow-y:auto;
+  }
+  .bill-item{
+    padding:10px; border-bottom:1px solid var(--line); cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .bill-item:hover{background:var(--panel-2);}
+  .bill-item.selected{background:var(--amber-dim); border-color:var(--amber);}
+  .bill-summary{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:16px;
+  }
+  .bill-line{
+    display:flex; justify-content:space-between; padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .bill-total{
+    font-size:20px; font-weight:700; color:var(--amber);
+    margin-top:12px;
+  }
+
+  /* Settings card */
+  .settings-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:20px; margin-bottom:20px;
+  }
+  .settings-card h3{margin-bottom:16px; font-size:15px;}
+
+  /* Import/Export */
+  .import-export{
+    display:flex; gap:12px; margin-bottom:20px;
+  }
+  input[type="file"]{
+    display:none;
+  }
 
   footer{
     text-align:center; color:var(--muted); font-size:11px; margin-top:30px;
@@ -183,6 +250,7 @@
   @media (max-width:720px){
     .stats{grid-template-columns:repeat(2,1fr);}
     thead th:nth-child(3), td:nth-child(3){display:none;}
+    .billing-grid{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -203,71 +271,209 @@
 </header>
 
 <main>
-  <div class="stats">
-    <div class="stat">
-      <div class="lbl">Total Products</div>
-      <div class="val" id="statCount">0</div>
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('inventory')">📦 Inventory</button>
+    <button class="tab-btn" onclick="switchTab('billing')">💳 Billing</button>
+    <button class="tab-btn" onclick="switchTab('history')">📊 Bill History</button>
+    <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+    <button class="tab-btn" onclick="switchTab('analytics')">📈 Analytics</button>
+  </div>
+
+  <!-- INVENTORY TAB -->
+  <div id="tab-inventory" class="tab-content active">
+    <div class="stats">
+      <div class="stat">
+        <div class="lbl">Total Products</div>
+        <div class="val" id="statCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Units In Stock</div>
+        <div class="val" id="statUnits">0</div>
+      </div>
+      <div class="stat value">
+        <div class="lbl">Inventory Value</div>
+        <div class="val" id="statValue">₹0</div>
+      </div>
+      <div class="stat low">
+        <div class="lbl">Low Stock Alerts</div>
+        <div class="val" id="statLow">0</div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="lbl">Units In Stock</div>
-      <div class="val" id="statUnits">0</div>
+
+    <div class="import-export">
+      <button class="btn btn-teal" onclick="document.getElementById('importFile').click()">📥 Import Excel</button>
+      <button class="btn btn-ghost" onclick="exportToExcel()">📤 Export Excel</button>
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" onchange="importFromExcel(event)">
     </div>
-    <div class="stat value">
-      <div class="lbl">Inventory Value</div>
-      <div class="val" id="statValue">₹0</div>
+
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Search by name or SKU…">
+      <select id="categoryFilter"><option value="">All categories</option></select>
+      <select id="stockFilter">
+        <option value="">All stock levels</option>
+        <option value="low">Low stock only</option>
+        <option value="negative">Negative stock</option>
+      </select>
+      <button class="btn btn-primary" id="addBtn">+ Add Product</button>
     </div>
-    <div class="stat low">
-      <div class="lbl">Low Stock Alerts</div>
-      <div class="val" id="statLow">0</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Supplier</th>
+            <th>Stock</th>
+            <th>Cost / Sell</th>
+            <th>Profit %</th>
+            <th>Value</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <h3>No products yet</h3>
+        <p>Add your first electronics item to start tracking stock.</p>
+      </div>
     </div>
   </div>
 
-  <div class="toolbar">
-    <input id="search" type="text" placeholder="Search by name or SKU…">
-    <select id="categoryFilter"><option value="">All categories</option></select>
-    <select id="stockFilter">
-      <option value="">All stock levels</option>
-      <option value="low">Low stock only</option>
-    </select>
-    <button class="btn btn-primary" id="addBtn">+ Add Product</button>
+  <!-- BILLING TAB -->
+  <div id="tab-billing" class="tab-content">
+    <h2 style="margin-bottom:20px;">Create New Bill</h2>
+    
+    <div class="field-row" style="margin-bottom:20px;">
+      <div class="field">
+        <label>Customer Name</label>
+        <input type="text" id="billCustomerName" placeholder="Enter customer name">
+      </div>
+      <div class="field">
+        <label>Contact Number</label>
+        <input type="text" id="billCustomerContact" placeholder="Phone number">
+      </div>
+    </div>
+
+    <div class="billing-grid">
+      <div>
+        <h3 style="margin-bottom:12px;">Select Products</h3>
+        <div class="bill-product-select" id="billProductList"></div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:12px;">Bill Summary</h3>
+        <div class="bill-summary" id="billSummary">
+          <p style="color:var(--muted); font-size:13px;">No items selected</p>
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="generateBill()">Generate Bill</button>
+      </div>
+    </div>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Category</th>
-          <th>Supplier</th>
-          <th>Stock</th>
-          <th>Cost / Sell</th>
-          <th>Value</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-    <div class="empty-state" id="emptyState" style="display:none;">
-      <h3>No products yet</h3>
-      <p>Add your first electronics item to start tracking stock.</p>
+  <!-- BILL HISTORY TAB -->
+  <div id="tab-history" class="tab-content">
+    <h2 style="margin-bottom:20px;">Bill History</h2>
+    <div class="toolbar">
+      <input id="historySearch" type="text" placeholder="Search by customer or bill ID…" style="flex:1;">
+      <button class="btn btn-ghost" onclick="exportBillHistory()">📤 Export History</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bill ID</th>
+            <th>Date & Time</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Total Amount</th>
+            <th>Profit</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div id="tab-settings" class="tab-content">
+    <h2 style="margin-bottom:20px;">Profit Settings</h2>
+    
+    <div class="settings-card">
+      <h3>Global Profit Margin</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Default Profit Percentage (%)</label>
+          <input type="number" id="globalProfitPercent" min="0" step="0.1" value="10">
+        </div>
+        <div class="field">
+          <button class="btn btn-primary" onclick="applyGlobalProfit()" style="margin-top:19px;">Apply to All Products</button>
+        </div>
+      </div>
+      <p style="color:var(--muted); font-size:12px; margin-top:8px;">
+        This will update selling prices for all products based on their cost price + this percentage.
+      </p>
+    </div>
+
+    <div class="settings-card">
+      <h3>Database Management</h3>
+      <button class="btn btn-danger" onclick="clearAllData()">Clear All Data (Caution!)</button>
+      <p style="color:var(--muted); font-size:12px; margin-top:8px;">
+        This will permanently delete all inventory and billing data.
+      </p>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div id="tab-analytics" class="tab-content">
+    <h2 style="margin-bottom:20px;">Sales Analytics</h2>
+    
+    <div class="stats">
+      <div class="stat">
+        <div class="lbl">Total Bills</div>
+        <div class="val" id="analyticsTotal">0</div>
+      </div>
+      <div class="stat value">
+        <div class="lbl">Total Revenue</div>
+        <div class="val" id="analyticsRevenue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Profit</div>
+        <div class="val" id="analyticsProfit">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Avg. Bill Value</div>
+        <div class="val" id="analyticsAvg">₹0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <button class="btn btn-teal" onclick="downloadAnalytics()">📊 Download Analytics Report</button>
+    </div>
+
+    <div style="margin-top:30px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px;">
+      <h3 style="margin-bottom:16px;">Top Selling Products</h3>
+      <div id="topProducts"></div>
     </div>
   </div>
 
   <footer>Ellectra Inventory · synced live via Firebase Realtime Database</footer>
 </main>
 
+<!-- Product Panel -->
 <div class="overlay" id="overlay"></div>
 <div class="panel" id="panel">
   <h2 id="panelTitle">Add Product</h2>
   <form id="productForm">
     <div class="field">
       <label>Product name</label>
-      <input type="text" id="f_name" placeholder="e.g. Anker 65W GaN Charger">
+      <input type="text" id="f_name" placeholder="e.g. Anker 65W GaN Charger" required>
     </div>
     <div class="field-row">
       <div class="field">
         <label>SKU</label>
-        <input type="text" id="f_sku" placeholder="ELX-0001">
+        <input type="text" id="f_sku" placeholder="ELX-0001" required>
       </div>
       <div class="field">
         <label>Category</label>
@@ -281,23 +487,28 @@
     <div class="field-row">
       <div class="field">
         <label>Quantity in stock</label>
-        <input type="number" id="f_qty" min="0" value="0">
+        <input type="number" id="f_qty" min="-9999" value="0">
       </div>
       <div class="field">
         <label>Reorder level</label>
         <input type="number" id="f_reorder" min="0" value="5">
       </div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Cost price (₹)</label>
-        <input type="number" id="f_cost" min="0" step="0.01">
-      </div>
+    <div class="field">
+      <label>Cost price (₹)</label>
+      <input type="number" id="f_cost" min="0" step="0.01" required>
+    </div>
+    <div class="field-row-3">
       <div class="field">
         <label>Selling price (₹)</label>
-        <input type="number" id="f_sell" min="0" step="0.01">
+        <input type="number" id="f_sell" min="0" step="0.01" required>
+      </div>
+      <div class="field">
+        <label>Profit %</label>
+        <input type="number" id="f_profit_percent" min="0" step="0.1" placeholder="10">
       </div>
     </div>
+    <div class="profit-indicator" id="profitIndicator"></div>
     <input type="hidden" id="f_id">
     <div class="panel-actions">
       <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
@@ -309,6 +520,8 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- SheetJS for Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -324,9 +537,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const inventoryRef = db.ref("inventory");
+const billsRef = db.ref("bills");
 
-let products = {};   // id -> product object
+let products = {};
+let bills = {};
 let editingId = null;
+let selectedBillItems = {};
 
 // ---------- Connection status ----------
 db.ref(".info/connected").on("value", (snap) => {
@@ -335,15 +551,34 @@ db.ref(".info/connected").on("value", (snap) => {
   document.getElementById("syncText").textContent = connected ? "Live sync active" : "Offline";
 });
 
-// ---------- Realtime listener ----------
+// ---------- Realtime listeners ----------
 inventoryRef.on("value", (snap) => {
   products = snap.val() || {};
   render();
+  renderBillProducts();
 });
+
+billsRef.on("value", (snap) => {
+  bills = snap.val() || {};
+  renderBillHistory();
+  renderAnalytics();
+});
+
+// ---------- Tab Switching ----------
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
+  
+  if(tabName === 'history') renderBillHistory();
+  if(tabName === 'analytics') renderAnalytics();
+}
 
 // ---------- Helpers ----------
 function currency(n){
-  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
 function signalLevelClass(qty, reorder){
@@ -356,6 +591,11 @@ function signalLevelClass(qty, reorder){
   return "lvl-4";
 }
 
+function calculateProfit(cost, sell) {
+  if (!cost || cost <= 0) return 0;
+  return ((sell - cost) / cost * 100).toFixed(2);
+}
+
 function getFilteredList(){
   const search = document.getElementById("search").value.trim().toLowerCase();
   const cat = document.getElementById("categoryFilter").value;
@@ -366,7 +606,8 @@ function getFilteredList(){
     .filter(p => {
       if (search && !(`${p.name} ${p.sku}`.toLowerCase().includes(search))) return false;
       if (cat && p.category !== cat) return false;
-      if (stockMode === "low" && !(p.quantity <= p.reorderLevel)) return false;
+      if (stockMode === "low" && !(p.quantity <= p.reorderLevel && p.quantity > 0)) return false;
+      if (stockMode === "negative" && p.quantity >= 0) return false;
       return true;
     })
     .sort((a,b) => a.name.localeCompare(b.name));
@@ -381,19 +622,18 @@ function rebuildCategoryOptions(){
   sel.value = current;
 }
 
-// ---------- Render ----------
+// ---------- Render Inventory ----------
 function render(){
   rebuildCategoryOptions();
   const list = getFilteredList();
   const tbody = document.getElementById("tableBody");
   const empty = document.getElementById("emptyState");
 
-  // Stats (computed over ALL products, not just filtered)
   const all = Object.values(products);
   const totalCount = all.length;
   const totalUnits = all.reduce((s,p) => s + Number(p.quantity || 0), 0);
   const totalValue = all.reduce((s,p) => s + (Number(p.quantity||0) * Number(p.costPrice||0)), 0);
-  const lowCount = all.filter(p => Number(p.quantity||0) <= Number(p.reorderLevel||0)).length;
+  const lowCount = all.filter(p => Number(p.quantity||0) <= Number(p.reorderLevel||0) && Number(p.quantity||0) > 0).length;
 
   document.getElementById("statCount").textContent = totalCount;
   document.getElementById("statUnits").textContent = totalUnits.toLocaleString("en-IN");
@@ -410,9 +650,10 @@ function render(){
   tbody.innerHTML = list.map(p => {
     const qty = Number(p.quantity||0);
     const reorder = Number(p.reorderLevel||0);
-    const isLow = qty <= reorder;
+    const isLow = qty <= reorder && qty > 0;
     const lvl = signalLevelClass(qty, reorder);
     const value = qty * Number(p.costPrice||0);
+    const profit = calculateProfit(p.costPrice, p.sellPrice);
 
     return `
       <tr>
@@ -425,11 +666,12 @@ function render(){
         <td>
           <div class="qty-row">
             <span class="signal ${lvl}"><i></i><i></i><i></i><i></i></span>
-            <span class="qty-num num">${qty}</span>
+            <span class="qty-num num ${qty < 0 ? 'negative-stock' : ''}">${qty}</span>
           </div>
           ${isLow ? `<div class="low-flag">Reorder ≤ ${reorder}</div>` : ""}
         </td>
         <td class="num">${currency(p.costPrice)} / ${currency(p.sellPrice)}</td>
+        <td class="num" style="color:${profit > 0 ? 'var(--teal)' : 'var(--coral)'};">${profit}%</td>
         <td class="num">${currency(value)}</td>
         <td>
           <div class="row-actions">
@@ -461,6 +703,7 @@ function closePanel(){
   panel.classList.remove("show");
   document.getElementById("productForm").reset();
   editingId = null;
+  updateProfitIndicator();
 }
 
 document.getElementById("addBtn").onclick = () => {
@@ -485,6 +728,7 @@ window.openEdit = function(id){
   document.getElementById("f_reorder").value = p.reorderLevel ?? 5;
   document.getElementById("f_cost").value = p.costPrice ?? 0;
   document.getElementById("f_sell").value = p.sellPrice ?? 0;
+  updateProfitIndicator();
   openPanel();
 };
 
@@ -496,7 +740,49 @@ window.deleteProduct = function(id){
   }
 };
 
-// ---------- Save (add or update) ----------
+// ---------- Profit Calculator ----------
+function updateProfitIndicator() {
+  const cost = Number(document.getElementById("f_cost").value || 0);
+  const sell = Number(document.getElementById("f_sell").value || 0);
+  const indicator = document.getElementById("profitIndicator");
+  
+  if (cost > 0 && sell > 0) {
+    const profit = sell - cost;
+    const profitPercent = ((profit / cost) * 100).toFixed(2);
+    indicator.textContent = `Profit: ${currency(profit)} (${profitPercent}%)`;
+    indicator.style.color = profit >= 0 ? 'var(--teal)' : 'var(--coral)';
+  } else {
+    indicator.textContent = '';
+  }
+}
+
+document.getElementById("f_cost").addEventListener("input", updateProfitIndicator);
+document.getElementById("f_sell").addEventListener("input", updateProfitIndicator);
+
+// Auto-calculate selling price from profit percentage
+document.getElementById("f_profit_percent").addEventListener("input", (e) => {
+  const cost = Number(document.getElementById("f_cost").value || 0);
+  const percent = Number(e.target.value || 0);
+  
+  if (cost > 0 && percent >= 0) {
+    const sell = cost + (cost * percent / 100);
+    document.getElementById("f_sell").value = sell.toFixed(2);
+    updateProfitIndicator();
+  }
+});
+
+// Update profit percentage when selling price changes
+document.getElementById("f_sell").addEventListener("input", () => {
+  const cost = Number(document.getElementById("f_cost").value || 0);
+  const sell = Number(document.getElementById("f_sell").value || 0);
+  
+  if (cost > 0) {
+    const percent = ((sell - cost) / cost * 100).toFixed(2);
+    document.getElementById("f_profit_percent").value = percent;
+  }
+});
+
+// ---------- Save Product ----------
 document.getElementById("productForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const data = {
@@ -518,6 +804,400 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
   }
   closePanel();
 });
+
+// ---------- Global Profit Application ----------
+function applyGlobalProfit() {
+  const percent = Number(document.getElementById("globalProfitPercent").value || 0);
+  if (percent < 0) {
+    alert("Please enter a valid profit percentage");
+    return;
+  }
+  
+  if (!confirm(`Apply ${percent}% profit margin to all ${Object.keys(products).length} products?`)) {
+    return;
+  }
+
+  Object.entries(products).forEach(([id, product]) => {
+    const cost = Number(product.costPrice || 0);
+    const newSell = cost + (cost * percent / 100);
+    inventoryRef.child(id).update({
+      sellPrice: newSell,
+      updatedAt: Date.now()
+    });
+  });
+
+  alert("Profit margin applied to all products!");
+}
+
+// ---------- Billing ----------
+function renderBillProducts() {
+  const container = document.getElementById("billProductList");
+  const list = Object.entries(products)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  container.innerHTML = list.map(p => `
+    <div class="bill-item ${selectedBillItems[p.id] ? 'selected' : ''}" onclick="toggleBillItem('${p.id}')">
+      <div>
+        <div style="font-weight:600;">${escapeHtml(p.name)}</div>
+        <div style="font-size:11px; color:var(--muted);">Stock: ${p.quantity} | ${currency(p.sellPrice)}</div>
+      </div>
+      <input type="number" min="1" max="${p.quantity > 0 ? p.quantity : 999}" value="${selectedBillItems[p.id]?.qty || 1}" 
+             onclick="event.stopPropagation()" 
+             onchange="updateBillQty('${p.id}', this.value)"
+             style="width:60px;">
+    </div>
+  `).join("");
+
+  updateBillSummary();
+}
+
+function toggleBillItem(id) {
+  if (selectedBillItems[id]) {
+    delete selectedBillItems[id];
+  } else {
+    selectedBillItems[id] = { qty: 1 };
+  }
+  renderBillProducts();
+}
+
+function updateBillQty(id, qty) {
+  qty = parseInt(qty) || 1;
+  if (selectedBillItems[id]) {
+    selectedBillItems[id].qty = qty;
+    updateBillSummary();
+  }
+}
+
+function updateBillSummary() {
+  const container = document.getElementById("billSummary");
+  const items = Object.entries(selectedBillItems);
+  
+  if (items.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted); font-size:13px;">No items selected</p>';
+    return;
+  }
+
+  let totalCost = 0;
+  let totalSell = 0;
+
+  const lines = items.map(([id, data]) => {
+    const product = products[id];
+    if (!product) return '';
+    
+    const qty = data.qty;
+    const itemTotal = product.sellPrice * qty;
+    const itemCost = product.costPrice * qty;
+    
+    totalCost += itemCost;
+    totalSell += itemTotal;
+
+    return `
+      <div class="bill-line">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(product.name)}</div>
+          <div style="font-size:11px; color:var(--muted);">${qty} × ${currency(product.sellPrice)}</div>
+        </div>
+        <div style="font-weight:600;">${currency(itemTotal)}</div>
+      </div>
+    `;
+  }).join("");
+
+  const profit = totalSell - totalCost;
+
+  container.innerHTML = `
+    ${lines}
+    <div style="margin-top:12px; padding-top:12px; border-top:2px solid var(--line);">
+      <div class="bill-line" style="border:none;">
+        <span>Subtotal:</span>
+        <span>${currency(totalSell)}</span>
+      </div>
+      <div class="bill-line" style="border:none; color:var(--teal);">
+        <span>Profit:</span>
+        <span>${currency(profit)}</span>
+      </div>
+      <div class="bill-total">
+        Total: ${currency(totalSell)}
+      </div>
+    </div>
+  `;
+}
+
+function generateBill() {
+  const customerName = document.getElementById("billCustomerName").value.trim();
+  const customerContact = document.getElementById("billCustomerContact").value.trim();
+  
+  if (!customerName) {
+    alert("Please enter customer name");
+    return;
+  }
+
+  const items = Object.entries(selectedBillItems);
+  if (items.length === 0) {
+    alert("Please select at least one product");
+    return;
+  }
+
+  let totalCost = 0;
+  let totalSell = 0;
+  const billItems = {};
+
+  // Calculate and update stock
+  items.forEach(([id, data]) => {
+    const product = products[id];
+    if (!product) return;
+    
+    const qty = data.qty;
+    const newStock = product.quantity - qty;
+    
+    // Update stock (can go negative)
+    inventoryRef.child(id).update({
+      quantity: newStock,
+      updatedAt: Date.now()
+    });
+
+    const itemCost = product.costPrice * qty;
+    const itemSell = product.sellPrice * qty;
+    
+    totalCost += itemCost;
+    totalSell += itemSell;
+
+    billItems[id] = {
+      name: product.name,
+      sku: product.sku,
+      qty: qty,
+      costPrice: product.costPrice,
+      sellPrice: product.sellPrice,
+      total: itemSell
+    };
+  });
+
+  const billData = {
+    billId: 'BILL-' + Date.now(),
+    timestamp: Date.now(),
+    customerName,
+    customerContact,
+    items: billItems,
+    totalAmount: totalSell,
+    totalCost: totalCost,
+    profit: totalSell - totalCost,
+    itemCount: items.length
+  };
+
+  billsRef.push(billData);
+
+  // Reset
+  selectedBillItems = {};
+  document.getElementById("billCustomerName").value = '';
+  document.getElementById("billCustomerContact").value = '';
+  renderBillProducts();
+
+  alert(`Bill generated successfully!\nBill ID: ${billData.billId}\nTotal: ${currency(totalSell)}`);
+}
+
+// ---------- Bill History ----------
+function renderBillHistory() {
+  const tbody = document.getElementById("historyTableBody");
+  const search = document.getElementById("historySearch")?.value.toLowerCase() || '';
+  
+  const billList = Object.entries(bills)
+    .map(([id, b]) => ({ id, ...b }))
+    .filter(b => {
+      if (!search) return true;
+      return b.billId.toLowerCase().includes(search) || 
+             b.customerName.toLowerCase().includes(search);
+    })
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  if (billList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:40px;">No bills found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = billList.map(bill => {
+    const date = new Date(bill.timestamp);
+    return `
+      <tr>
+        <td class="sku">${escapeHtml(bill.billId)}</td>
+        <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+        <td>
+          <div>${escapeHtml(bill.customerName)}</div>
+          <div style="font-size:11px; color:var(--muted);">${escapeHtml(bill.customerContact || '')}</div>
+        </td>
+        <td>${bill.itemCount} items</td>
+        <td class="num">${currency(bill.totalAmount)}</td>
+        <td class="num" style="color:var(--teal);">${currency(bill.profit)}</td>
+        <td>
+          <button class="icon-btn" onclick="viewBillDetails('${bill.id}')" title="View">👁</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.viewBillDetails = function(id) {
+  const bill = bills[id];
+  if (!bill) return;
+  
+  const itemsList = Object.values(bill.items).map(item => 
+    `${item.name} (${item.qty} × ${currency(item.sellPrice)}) = ${currency(item.total)}`
+  ).join('\n');
+
+  alert(`Bill Details\n\nBill ID: ${bill.billId}\nCustomer: ${bill.customerName}\nContact: ${bill.customerContact}\nDate: ${new Date(bill.timestamp).toLocaleString()}\n\nItems:\n${itemsList}\n\nTotal: ${currency(bill.totalAmount)}\nProfit: ${currency(bill.profit)}`);
+};
+
+document.getElementById("historySearch")?.addEventListener("input", renderBillHistory);
+
+// ---------- Analytics ----------
+function renderAnalytics() {
+  const billList = Object.values(bills);
+  const totalBills = billList.length;
+  const totalRevenue = billList.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const totalProfit = billList.reduce((sum, b) => sum + (b.profit || 0), 0);
+  const avgBill = totalBills > 0 ? totalRevenue / totalBills : 0;
+
+  document.getElementById("analyticsTotal").textContent = totalBills;
+  document.getElementById("analyticsRevenue").textContent = currency(totalRevenue);
+  document.getElementById("analyticsProfit").textContent = currency(totalProfit);
+  document.getElementById("analyticsAvg").textContent = currency(avgBill);
+
+  // Top products
+  const productSales = {};
+  billList.forEach(bill => {
+    Object.entries(bill.items || {}).forEach(([id, item]) => {
+      if (!productSales[item.name]) {
+        productSales[item.name] = { qty: 0, revenue: 0 };
+      }
+      productSales[item.name].qty += item.qty;
+      productSales[item.name].revenue += item.total;
+    });
+  });
+
+  const topProducts = Object.entries(productSales)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 10);
+
+  const topContainer = document.getElementById("topProducts");
+  if (topProducts.length === 0) {
+    topContainer.innerHTML = '<p style="color:var(--muted);">No sales data yet</p>';
+  } else {
+    topContainer.innerHTML = topProducts.map(([name, data], i) => `
+      <div style="padding:10px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between;">
+        <div>
+          <span style="color:var(--amber); font-weight:700; margin-right:8px;">#${i+1}</span>
+          <span>${escapeHtml(name)}</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:600;">${data.qty} units</div>
+          <div style="font-size:11px; color:var(--muted);">${currency(data.revenue)}</div>
+        </div>
+      </div>
+    `).join("");
+  }
+}
+
+function downloadAnalytics() {
+  const billList = Object.values(bills);
+  
+  const csvData = [
+    ['Bill ID', 'Date', 'Customer', 'Contact', 'Items', 'Total Amount', 'Profit'],
+    ...billList.map(b => [
+      b.billId,
+      new Date(b.timestamp).toLocaleString(),
+      b.customerName,
+      b.customerContact || '',
+      b.itemCount,
+      b.totalAmount,
+      b.profit
+    ])
+  ];
+
+  const csv = csvData.map(row => row.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `analytics_${Date.now()}.csv`;
+  a.click();
+}
+
+function exportBillHistory() {
+  downloadAnalytics();
+}
+
+// ---------- Excel Import/Export ----------
+function exportToExcel() {
+  const data = Object.entries(products).map(([id, p]) => ({
+    'Product Name': p.name,
+    'SKU': p.sku,
+    'Category': p.category || '',
+    'Supplier': p.supplier || '',
+    'Quantity': p.quantity,
+    'Reorder Level': p.reorderLevel,
+    'Cost Price': p.costPrice,
+    'Selling Price': p.sellPrice,
+    'Profit %': calculateProfit(p.costPrice, p.sellPrice)
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+  XLSX.writeFile(wb, `inventory_${Date.now()}.xlsx`);
+}
+
+function importFromExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+    if (!confirm(`Import ${jsonData.length} products from Excel?`)) {
+      return;
+    }
+
+    jsonData.forEach(row => {
+      const productData = {
+        name: row['Product Name'] || row['name'] || '',
+        sku: row['SKU'] || row['sku'] || '',
+        category: row['Category'] || row['category'] || '',
+        supplier: row['Supplier'] || row['supplier'] || '',
+        quantity: Number(row['Quantity'] || row['quantity'] || 0),
+        reorderLevel: Number(row['Reorder Level'] || row['reorderLevel'] || 5),
+        costPrice: Number(row['Cost Price'] || row['costPrice'] || 0),
+        sellPrice: Number(row['Selling Price'] || row['sellPrice'] || 0),
+        updatedAt: Date.now()
+      };
+
+      if (productData.name && productData.sku) {
+        inventoryRef.push(productData);
+      }
+    });
+
+    alert("Import completed!");
+    event.target.value = '';
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- Clear Data ----------
+function clearAllData() {
+  if (!confirm("Are you sure? This will delete ALL inventory and billing data permanently!")) {
+    return;
+  }
+  if (!confirm("FINAL WARNING: This action cannot be undone!")) {
+    return;
+  }
+
+  inventoryRef.remove();
+  billsRef.remove();
+  alert("All data cleared!");
+}
 
 // ---------- Filters ----------
 document.getElementById("search").addEventListener("input", render);
