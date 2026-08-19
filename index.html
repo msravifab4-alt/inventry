@@ -30,7 +30,6 @@
   h1,h2,h3,.mono{font-family:'Space Grotesk', sans-serif;}
   .num, .sku, td.num-cell{font-family:'JetBrains Mono', monospace;}
 
-  /* ---------- Top bar ---------- */
   header{
     display:flex; align-items:center; justify-content:space-between;
     padding:14px 20px;
@@ -68,7 +67,6 @@
 
   main{max-width:1380px; margin:0 auto; padding:20px 16px;}
 
-  /* ---------- Tab Navigation ---------- */
   .tabs{
     display:flex; gap:6px; margin-bottom:20px;
     border-bottom:1px solid var(--line);
@@ -88,7 +86,6 @@
   .tab-content{display:none;}
   .tab-content.active{display:block;}
 
-  /* ---------- Stat strip ---------- */
   .stats{
     display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;
     margin-bottom:20px;
@@ -106,7 +103,6 @@
   .stat.low{--stat-accent:var(--coral);}
   .stat.value{--stat-accent:var(--teal);}
 
-  /* ---------- Toolbar ---------- */
   .toolbar{
     display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;
     position:relative;
@@ -134,7 +130,6 @@
   .btn-teal{background:var(--teal); color:#0d1117;}
   .btn-whatsapp{background:#25D366; color:#fff;}
 
-  /* Search not found banner */
   .search-not-found{
     background:var(--panel); border:1px solid var(--amber); border-radius:10px;
     padding:14px 18px; margin-bottom:14px; display:none;
@@ -144,7 +139,6 @@
   .search-not-found-text{flex:1; font-size:13px;}
   .search-not-found-text strong{color:var(--amber);}
 
-  /* ---------- Table ---------- */
   .table-wrap{
     background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
     overflow-x:auto;
@@ -166,7 +160,6 @@
     background:#1e2933; color:var(--muted); border:1px solid var(--line);
   }
 
-  /* Signal bars */
   .signal{display:flex; align-items:flex-end; gap:2px; height:14px;}
   .signal i{width:3px; border-radius:1px; background:var(--line); display:block;}
   .signal i:nth-child(1){height:4px;}
@@ -182,7 +175,6 @@
   .low-flag{color:var(--coral); font-size:10px; font-weight:600;}
   .negative-stock{color:var(--coral); font-weight:700;}
 
-  /* Stock adjustment buttons */
   .stock-controls{
     display:flex; gap:4px; align-items:center;
   }
@@ -208,7 +200,6 @@
   }
   .empty-state h3{color:var(--text); margin-bottom:6px; font-size:15px;}
 
-  /* ---------- Slide-in panel ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(5,8,11,0.7);
     display:none; z-index:40;
@@ -235,12 +226,10 @@
     font-family:'JetBrains Mono', monospace;
   }
 
-  /* Optional field hint */
   .optional-hint{
     font-size:10px; color:var(--muted); font-style:italic; margin-top:2px;
   }
 
-  /* Billing styles */
   .billing-grid{
     display:grid; grid-template-columns:1fr; gap:16px; margin-bottom:18px;
   }
@@ -271,7 +260,6 @@
     margin-top:10px;
   }
 
-  /* Bill date/time section */
   .bill-datetime{
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
     padding:14px; margin-bottom:16px;
@@ -280,7 +268,6 @@
     font-size:13px; margin-bottom:10px; color:var(--muted);
   }
 
-  /* Bill receipt */
   .bill-receipt{
     background:white; color:#000; padding:20px;
     max-width:400px; margin:20px auto;
@@ -299,20 +286,17 @@
     font-weight:bold; font-size:14px;
   }
 
-  /* Settings card */
   .settings-card{
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
     padding:16px; margin-bottom:16px;
   }
   .settings-card h3{margin-bottom:12px; font-size:14px;}
 
-  /* Import/Export */
   .import-export{
     display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;
   }
   input[type="file"]{display:none;}
 
-  /* Toast notification */
   .toast{
     position:fixed; bottom:20px; right:20px; z-index:100;
     background:var(--panel); border:1px solid var(--amber); border-radius:8px;
@@ -323,7 +307,6 @@
   }
   .toast.show{transform:translateX(0);}
 
-  /* Loading spinner */
   .spinner{
     display:inline-block;
     width:14px;
@@ -336,6 +319,25 @@
   @keyframes spin{
     to{transform:rotate(360deg);}
   }
+
+  /* WhatsApp Options Modal */
+  .whatsapp-modal{
+    position:fixed; inset:0; background:rgba(5,8,11,0.85);
+    display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .whatsapp-modal.show{display:flex;}
+  .whatsapp-modal-content{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:24px; max-width:400px; width:90%;
+  }
+  .whatsapp-modal h3{margin-bottom:16px; font-size:16px;}
+  .whatsapp-option{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:14px; margin-bottom:12px; cursor:pointer; transition:all .2s;
+  }
+  .whatsapp-option:hover{background:var(--amber-dim); border-color:var(--amber);}
+  .whatsapp-option h4{font-size:14px; margin-bottom:4px;}
+  .whatsapp-option p{font-size:11px; color:var(--muted);}
 
   footer{
     text-align:center; color:var(--muted); font-size:10px; margin-top:30px;
@@ -382,7 +384,6 @@
 </header>
 
 <main>
-  <!-- Tab Navigation -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('inventory')">📦 Inventory</button>
     <button class="tab-btn" onclick="switchTab('billing')">💳 Billing</button>
@@ -418,7 +419,6 @@
       <input type="file" id="importFile" accept=".xlsx,.xls,.csv" onchange="importFromExcel(event)">
     </div>
 
-    <!-- Search Not Found Banner -->
     <div class="search-not-found" id="searchNotFound">
       <div class="search-not-found-text">
         <strong id="searchTermDisplay"></strong> not found in inventory
@@ -463,7 +463,6 @@
   <div id="tab-billing" class="tab-content">
     <h2 style="margin-bottom:16px;">Create Bill</h2>
     
-    <!-- Date & Time Section -->
     <div class="bill-datetime">
       <h3>📅 Bill Date & Time</h3>
       <div class="field-row">
@@ -492,7 +491,6 @@
     <div class="billing-grid">
       <div>
         <h3 style="margin-bottom:10px; font-size:14px;">Select Products</h3>
-        <!-- Product Search in Billing -->
         <input type="text" id="billProductSearch" placeholder="Search products..." style="margin-bottom:10px; width:100%;">
         <div class="bill-product-select" id="billProductList"></div>
       </div>
@@ -510,9 +508,7 @@
       <div style="text-align:center; margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
         <button class="btn btn-teal" onclick="downloadPDF()">📄 Download PDF</button>
-        <button class="btn btn-whatsapp" onclick="sendWhatsApp()" id="whatsappBtn">
-          <span id="whatsappBtnText">📱 Send WhatsApp</span>
-        </button>
+        <button class="btn btn-whatsapp" onclick="showWhatsAppOptions()">📱 Send WhatsApp</button>
         <button class="btn btn-ghost" onclick="closeBillReceipt()">Close</button>
       </div>
     </div>
@@ -659,16 +655,30 @@
   </form>
 </div>
 
-<!-- Toast -->
+<!-- WhatsApp Options Modal -->
+<div class="whatsapp-modal" id="whatsappModal">
+  <div class="whatsapp-modal-content">
+    <h3>Send Bill via WhatsApp</h3>
+    <div class="whatsapp-option" onclick="sendWhatsAppText()">
+      <h4>📝 Send as Text Message</h4>
+      <p>Simple text-based bill details (Recommended)</p>
+    </div>
+    <div class="whatsapp-option" onclick="sendWhatsAppWithPDF()">
+      <h4>📄 Download PDF & Share</h4>
+      <p>Download PDF first, then share manually</p>
+    </div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeWhatsAppModal()">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-<!-- SheetJS for Excel -->
+<!-- SheetJS -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-<!-- jsPDF for PDF generation -->
+<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
@@ -684,7 +694,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const storage = firebase.storage();
 const inventoryRef = db.ref("inventory");
 const billsRef = db.ref("bills");
 
@@ -695,9 +704,7 @@ let selectedBillItems = {};
 let currentSearchTerm = '';
 let currentBillData = null;
 let billProductSearchTerm = '';
-let currentPdfUrl = null;
 
-// ---------- Initialize Bill Date/Time ----------
 function initializeBillDateTime() {
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
@@ -709,7 +716,6 @@ function initializeBillDateTime() {
 
 initializeBillDateTime();
 
-// ---------- Toast Notification ----------
 function showToast(message) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
@@ -717,14 +723,12 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
-// ---------- Connection status ----------
 db.ref(".info/connected").on("value", (snap) => {
   const connected = snap.val() === true;
   document.getElementById("pulseDot").classList.toggle("off", !connected);
   document.getElementById("syncText").textContent = connected ? "Live" : "Off";
 });
 
-// ---------- Realtime listeners ----------
 inventoryRef.on("value", (snap) => {
   products = snap.val() || {};
   render();
@@ -737,7 +741,6 @@ billsRef.on("value", (snap) => {
   renderAnalytics();
 });
 
-// ---------- Tab Switching ----------
 function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -750,7 +753,6 @@ function switchTab(tabName) {
   if(tabName === 'billing') initializeBillDateTime();
 }
 
-// ---------- Helpers ----------
 function currency(n){
   return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 }
@@ -839,7 +841,6 @@ function adjustStock(id, delta) {
   showToast(`${delta > 0 ? '+' : ''}${delta} ${product.name}`);
 }
 
-// ---------- Render Inventory ----------
 function render(){
   rebuildCategoryOptions();
   const list = getFilteredList();
@@ -920,7 +921,6 @@ function escapeHtml(str){
   }[m]));
 }
 
-// ---------- Panel controls ----------
 const overlay = document.getElementById("overlay");
 const panel = document.getElementById("panel");
 
@@ -971,7 +971,6 @@ window.deleteProduct = function(id){
   }
 };
 
-// ---------- Profit Calculator ----------
 function updateProfitIndicator() {
   const cost = Number(document.getElementById("f_cost").value || 0);
   const sell = Number(document.getElementById("f_sell").value || 0);
@@ -1011,7 +1010,6 @@ document.getElementById("f_sell").addEventListener("input", () => {
   }
 });
 
-// ---------- Save Product ----------
 document.getElementById("productForm").addEventListener("submit", (e) => {
   e.preventDefault();
   
@@ -1044,7 +1042,6 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
   closePanel();
 });
 
-// ---------- Global Profit ----------
 function applyGlobalProfit() {
   const percent = Number(document.getElementById("globalProfitPercent").value || 0);
   if (percent < 0) {
@@ -1066,13 +1063,11 @@ function applyGlobalProfit() {
   showToast('Profit applied to all!');
 }
 
-// ---------- Billing Product Search ----------
 document.getElementById("billProductSearch").addEventListener("input", (e) => {
   billProductSearchTerm = e.target.value.trim().toLowerCase();
   renderBillProducts();
 });
 
-// ---------- Billing ----------
 function renderBillProducts() {
   const container = document.getElementById("billProductList");
   let list = Object.entries(products)
@@ -1250,7 +1245,6 @@ function generateBill() {
 
   billsRef.push(billData);
   currentBillData = billData;
-  currentPdfUrl = null;
 
   displayBillReceipt(billData);
 
@@ -1316,10 +1310,9 @@ function printBill() {
 function closeBillReceipt() {
   document.getElementById("billReceiptContainer").style.display = 'none';
   currentBillData = null;
-  currentPdfUrl = null;
 }
 
-// ---------- PDF Generation & Download ----------
+// ---------- PDF Download ----------
 async function downloadPDF() {
   if (!currentBillData) {
     alert("No bill data available");
@@ -1340,7 +1333,6 @@ async function downloadPDF() {
     const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
     const displayTime = currentBillData.billTime || date.toLocaleTimeString();
 
-    // Header
     doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
     doc.text('INVOICE', 105, 20, { align: 'center' });
@@ -1354,22 +1346,19 @@ async function downloadPDF() {
     doc.setFont(undefined, 'bold');
     doc.text(`Bill: ${currentBillData.billId}`, 105, 42, { align: 'center' });
 
-    // Customer Info
+    let yPos = 55;
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    let yPos = 55;
     doc.text(`Customer: ${currentBillData.customerName}`, 20, yPos);
     if (currentBillData.customerContact) {
       yPos += 6;
       doc.text(`Contact: ${currentBillData.customerContact}`, 20, yPos);
     }
 
-    // Line
     yPos += 10;
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);
 
-    // Items Header
     yPos += 8;
     doc.setFont(undefined, 'bold');
     doc.text('Item', 20, yPos);
@@ -1381,7 +1370,6 @@ async function downloadPDF() {
     doc.setLineWidth(0.3);
     doc.line(20, yPos, 190, yPos);
 
-    // Items
     yPos += 6;
     doc.setFont(undefined, 'normal');
     Object.values(currentBillData.items).forEach(item => {
@@ -1396,7 +1384,6 @@ async function downloadPDF() {
       yPos += 6;
     });
 
-    // Total
     yPos += 5;
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);
@@ -1406,13 +1393,11 @@ async function downloadPDF() {
     doc.text('TOTAL:', 130, yPos);
     doc.text(currency(currentBillData.totalAmount), 170, yPos);
 
-    // Footer
     yPos += 15;
     doc.setFontSize(9);
     doc.setFont(undefined, 'italic');
     doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
 
-    // Download
     const pdfBlob = doc.output('blob');
     const fileName = `Invoice_${currentBillData.billId}.pdf`;
     
@@ -1429,8 +1414,8 @@ async function downloadPDF() {
   }
 }
 
-// ---------- WhatsApp with PDF Upload ----------
-async function sendWhatsApp() {
+// ---------- WhatsApp Functions ----------
+function showWhatsAppOptions() {
   if (!currentBillData) {
     alert("No bill data available");
     return;
@@ -1438,10 +1423,21 @@ async function sendWhatsApp() {
 
   const phone = currentBillData.customerContact;
   if (!phone) {
-    alert("Customer phone number is required");
+    alert("Customer phone number is required for WhatsApp");
     return;
   }
 
+  document.getElementById('whatsappModal').classList.add('show');
+}
+
+function closeWhatsAppModal() {
+  document.getElementById('whatsappModal').classList.remove('show');
+}
+
+function sendWhatsAppText() {
+  closeWhatsAppModal();
+
+  const phone = currentBillData.customerContact;
   const cleanPhone = phone.replace(/[^\d+]/g, '');
   
   if (!cleanPhone.startsWith('+')) {
@@ -1449,126 +1445,53 @@ async function sendWhatsApp() {
     return;
   }
 
-  const whatsappBtn = document.getElementById('whatsappBtn');
-  const originalText = whatsappBtn.innerHTML;
-  whatsappBtn.disabled = true;
-  whatsappBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+  const date = new Date(currentBillData.timestamp);
+  const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
+  const displayTime = currentBillData.billTime || date.toLocaleTimeString();
+  
+  let message = `*INVOICE*\n\n`;
+  message += `Hi ${currentBillData.customerName},\n\n`;
+  message += `Your bill is ready!\n\n`;
+  message += `📋 *Bill ID:* ${currentBillData.billId}\n`;
+  message += `📅 *Date:* ${displayDate} ${displayTime}\n\n`;
+  message += `*ITEMS:*\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+  
+  Object.values(currentBillData.items).forEach(item => {
+    message += `${item.name}\n`;
+    message += `  ${item.qty} × ${currency(item.sellPrice)} = ${currency(item.total)}\n`;
+  });
+  
+  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+  message += `*TOTAL: ${currency(currentBillData.totalAmount)}*\n\n`;
+  message += `Thank you for your business!\n`;
 
-  try {
-    showToast('Generating PDF...');
+  const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappURL, '_blank');
+  
+  showToast('WhatsApp opened!');
+}
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    const date = new Date(currentBillData.timestamp);
-    const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
-    const displayTime = currentBillData.billTime || date.toLocaleTimeString();
-
-    doc.setFontSize(22);
-    doc.setFont(undefined, 'bold');
-    doc.text('INVOICE', 105, 20, { align: 'center' });
-
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text('Stock Inventory & Billing', 105, 28, { align: 'center' });
-    doc.text(`${displayDate} ${displayTime}`, 105, 34, { align: 'center' });
+function sendWhatsAppWithPDF() {
+  closeWhatsAppModal();
+  
+  showToast('Downloading PDF... Then share via WhatsApp');
+  
+  // Download PDF first
+  downloadPDF();
+  
+  // Wait a bit, then open WhatsApp
+  setTimeout(() => {
+    const phone = currentBillData.customerContact;
+    const cleanPhone = phone.replace(/[^\d+]/g, '');
     
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`Bill: ${currentBillData.billId}`, 105, 42, { align: 'center' });
-
-    let yPos = 55;
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Customer: ${currentBillData.customerName}`, 20, yPos);
-    if (currentBillData.customerContact) {
-      yPos += 6;
-      doc.text(`Contact: ${currentBillData.customerContact}`, 20, yPos);
-    }
-
-    yPos += 10;
-    doc.setLineWidth(0.5);
-    doc.line(20, yPos, 190, yPos);
-
-    yPos += 8;
-    doc.setFont(undefined, 'bold');
-    doc.text('Item', 20, yPos);
-    doc.text('Qty', 130, yPos);
-    doc.text('Price', 150, yPos);
-    doc.text('Total', 170, yPos);
-
-    yPos += 2;
-    doc.setLineWidth(0.3);
-    doc.line(20, yPos, 190, yPos);
-
-    yPos += 6;
-    doc.setFont(undefined, 'normal');
-    Object.values(currentBillData.items).forEach(item => {
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20;
-      }
-      doc.text(item.name, 20, yPos);
-      doc.text(item.qty.toString(), 130, yPos);
-      doc.text(currency(item.sellPrice), 150, yPos);
-      doc.text(currency(item.total), 170, yPos);
-      yPos += 6;
-    });
-
-    yPos += 5;
-    doc.setLineWidth(0.5);
-    doc.line(20, yPos, 190, yPos);
-    yPos += 8;
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text('TOTAL:', 130, yPos);
-    doc.text(currency(currentBillData.totalAmount), 170, yPos);
-
-    yPos += 15;
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'italic');
-    doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
-
-    const pdfBlob = doc.output('blob');
-    const fileName = `Invoice_${currentBillData.billId}.pdf`;
-
-    showToast('Uploading to Firebase...');
-
-    // Upload to Firebase Storage
-    const storageRef = storage.ref();
-    const fileRef = storageRef.child(`bills/${fileName}`);
+    const message = `Hi ${currentBillData.customerName},\n\nYour invoice (${currentBillData.billId}) is ready!\n\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nPlease find the attached PDF invoice.\n\nThank you!`;
     
-    await fileRef.put(pdfBlob, {
-      contentType: 'application/pdf',
-      customMetadata: {
-        'billId': currentBillData.billId,
-        'customerName': currentBillData.customerName
-      }
-    });
-    
-    const downloadURL = await fileRef.getDownloadURL();
-    currentPdfUrl = downloadURL;
-
-    // Create WhatsApp message
-    const message = `*INVOICE*\n\nHi ${currentBillData.customerName},\n\nYour invoice is ready!\n\n📋 Bill ID: ${currentBillData.billId}\n📅 Date: ${displayDate} ${displayTime}\n💰 Total Amount: ${currency(currentBillData.totalAmount)}\n\n📄 Download your invoice PDF:\n${downloadURL}\n\nThank you for your business!`;
-
     const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    
     window.open(whatsappURL, '_blank');
     
-    showToast('WhatsApp opened!');
-
-  } catch (error) {
-    console.error('WhatsApp send error:', error);
-    alert(`Error: ${error.message || 'Failed to send via WhatsApp'}`);
-  } finally {
-    whatsappBtn.disabled = false;
-    whatsappBtn.innerHTML = originalText;
-  }
+    alert('PDF downloaded! Now attach it to WhatsApp and send.');
+  }, 1500);
 }
 
 // ---------- Bill History ----------
@@ -1767,7 +1690,6 @@ function importFromExcel(event) {
   reader.readAsArrayBuffer(file);
 }
 
-// ---------- Clear Data ----------
 function clearAllData() {
   if (!confirm("Delete ALL data?")) return;
   if (!confirm("FINAL WARNING!")) return;
@@ -1777,7 +1699,6 @@ function clearAllData() {
   showToast('All data cleared!');
 }
 
-// ---------- Filters ----------
 document.getElementById("search").addEventListener("input", render);
 document.getElementById("categoryFilter").addEventListener("change", render);
 document.getElementById("stockFilter").addEventListener("change", render);
