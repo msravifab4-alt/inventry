@@ -230,82 +230,287 @@
     font-size:10px; color:var(--muted); font-style:italic; margin-top:2px;
   }
 
-  .billing-grid{
-    display:grid; grid-template-columns:1fr; gap:16px; margin-bottom:18px;
+  /* IMPROVED BILLING INTERFACE */
+  .billing-container{
+    display:grid; 
+    grid-template-columns:1fr; 
+    gap:20px;
   }
-  .bill-product-select{
-    background:var(--panel); border:1px solid var(--line); border-radius:10px;
-    padding:14px; max-height:350px; overflow-y:auto;
+
+  @media (min-width:768px){
+    .billing-container{grid-template-columns:1.5fr 1fr;}
   }
-  .bill-item{
-    padding:10px; border-bottom:1px solid var(--line); cursor:pointer;
-    display:flex; justify-content:space-between; align-items:center;
-    border-radius:6px;
+
+  /* Product Selection - Card Style */
+  .bill-product-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap:12px;
+    max-height:500px;
+    overflow-y:auto;
+    padding:4px;
+  }
+
+  .product-card{
+    background:var(--panel-2);
+    border:2px solid var(--line);
+    border-radius:10px;
+    padding:12px;
+    cursor:pointer;
+    transition:all .2s;
+    position:relative;
+  }
+
+  .product-card:hover{
+    border-color:var(--amber-dim);
+    transform:translateY(-2px);
+  }
+
+  .product-card.in-cart{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .product-card-name{
+    font-weight:600;
+    font-size:13px;
     margin-bottom:4px;
+    line-height:1.3;
   }
-  .bill-item:hover{background:var(--panel-2);}
-  .bill-item.selected{background:var(--amber-dim); border-color:var(--amber);}
-  .bill-item input{width:60px; padding:6px;}
-  .bill-summary{
-    background:var(--panel); border:1px solid var(--line); border-radius:10px;
-    padding:14px;
+
+  .product-card-price{
+    color:var(--teal);
+    font-size:14px;
+    font-weight:700;
+    font-family:'JetBrains Mono', monospace;
   }
-  .bill-line{
-    display:flex; justify-content:space-between; padding:8px 0;
-    border-bottom:1px solid var(--line);
+
+  .product-card-stock{
+    font-size:10px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .product-card-badge{
+    position:absolute;
+    top:6px;
+    right:6px;
+    background:var(--amber);
+    color:#0d1117;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  /* Cart/Bill Summary */
+  .bill-cart{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+    position:sticky;
+    top:80px;
+  }
+
+  .cart-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    background:var(--panel-2);
+    border-radius:8px;
+    margin-bottom:10px;
+    border:1px solid var(--line);
+  }
+
+  .cart-item-info{
+    flex:1;
+  }
+
+  .cart-item-name{
+    font-weight:600;
+    font-size:13px;
+    margin-bottom:2px;
+  }
+
+  .cart-item-price{
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .cart-qty-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .qty-btn{
+    width:32px;
+    height:32px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--amber);
+    font-size:18px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:all .15s;
+    user-select:none;
+  }
+
+  .qty-btn:hover{
+    background:var(--amber);
+    color:#0d1117;
+  }
+
+  .qty-btn:active{
+    transform:scale(0.9);
+  }
+
+  .qty-display{
+    min-width:32px;
+    text-align:center;
+    font-weight:700;
+    font-size:15px;
+  }
+
+  .cart-remove{
+    width:32px;
+    height:32px;
+    border-radius:6px;
+    border:1px solid var(--coral);
+    background:transparent;
+    color:var(--coral);
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:all .15s;
+  }
+
+  .cart-remove:hover{
+    background:var(--coral);
+    color:#fff;
+  }
+
+  .cart-total{
+    border-top:2px solid var(--line);
+    margin-top:16px;
+    padding-top:16px;
+  }
+
+  .cart-total-line{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:8px;
     font-size:13px;
   }
-  .bill-total{
-    font-size:18px; font-weight:700; color:var(--amber);
-    margin-top:10px;
+
+  .cart-total-final{
+    font-size:20px;
+    font-weight:700;
+    color:var(--amber);
+    margin-top:12px;
   }
 
   .bill-datetime{
-    background:var(--panel); border:1px solid var(--line); border-radius:10px;
-    padding:14px; margin-bottom:16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:16px;
   }
+
   .bill-datetime h3{
-    font-size:13px; margin-bottom:10px; color:var(--muted);
+    font-size:13px;
+    margin-bottom:10px;
+    color:var(--muted);
   }
 
   .bill-receipt{
-    background:white; color:#000; padding:20px;
-    max-width:400px; margin:20px auto;
+    background:white;
+    color:#000;
+    padding:20px;
+    max-width:400px;
+    margin:20px auto;
     font-family:monospace;
     border-radius:8px;
   }
+
   .receipt-header{
-    text-align:center; border-bottom:2px dashed #000; padding-bottom:10px; margin-bottom:10px;
+    text-align:center;
+    border-bottom:2px dashed #000;
+    padding-bottom:10px;
+    margin-bottom:10px;
   }
+
   .receipt-line{
-    display:flex; justify-content:space-between; padding:4px 0;
+    display:flex;
+    justify-content:space-between;
+    padding:4px 0;
     font-size:12px;
   }
+
   .receipt-total{
-    border-top:2px solid #000; margin-top:10px; padding-top:10px;
-    font-weight:bold; font-size:14px;
+    border-top:2px solid #000;
+    margin-top:10px;
+    padding-top:10px;
+    font-weight:bold;
+    font-size:14px;
   }
 
   .settings-card{
-    background:var(--panel); border:1px solid var(--line); border-radius:10px;
-    padding:16px; margin-bottom:16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:16px;
   }
-  .settings-card h3{margin-bottom:12px; font-size:14px;}
+
+  .settings-card h3{
+    margin-bottom:12px;
+    font-size:14px;
+  }
 
   .import-export{
-    display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
   }
-  input[type="file"]{display:none;}
+
+  input[type="file"]{
+    display:none;
+  }
 
   .toast{
-    position:fixed; bottom:20px; right:20px; z-index:100;
-    background:var(--panel); border:1px solid var(--amber); border-radius:8px;
-    padding:12px 18px; color:var(--text); font-size:13px;
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    z-index:100;
+    background:var(--panel);
+    border:1px solid var(--amber);
+    border-radius:8px;
+    padding:12px 18px;
+    color:var(--text);
+    font-size:13px;
     box-shadow:0 4px 12px rgba(0,0,0,0.3);
     transform:translateX(400px);
     transition:transform .3s ease;
   }
-  .toast.show{transform:translateX(0);}
+
+  .toast.show{
+    transform:translateX(0);
+  }
 
   .spinner{
     display:inline-block;
@@ -316,35 +521,69 @@
     border-radius:50%;
     animation:spin 0.6s linear infinite;
   }
+
   @keyframes spin{
     to{transform:rotate(360deg);}
   }
 
-  /* WhatsApp Options Modal */
   .whatsapp-modal{
-    position:fixed; inset:0; background:rgba(5,8,11,0.85);
-    display:none; align-items:center; justify-content:center; z-index:50;
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,11,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
   }
-  .whatsapp-modal.show{display:flex;}
+
+  .whatsapp-modal.show{
+    display:flex;
+  }
+
   .whatsapp-modal-content{
-    background:var(--panel); border:1px solid var(--line); border-radius:12px;
-    padding:24px; max-width:400px; width:90%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:24px;
+    max-width:400px;
+    width:90%;
   }
-  .whatsapp-modal h3{margin-bottom:16px; font-size:16px;}
+
+  .whatsapp-modal h3{
+    margin-bottom:16px;
+    font-size:16px;
+  }
+
   .whatsapp-option{
-    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
-    padding:14px; margin-bottom:12px; cursor:pointer; transition:all .2s;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:all .2s;
   }
-  .whatsapp-option:hover{background:var(--amber-dim); border-color:var(--amber);}
-  .whatsapp-option h4{font-size:14px; margin-bottom:4px;}
-  .whatsapp-option p{font-size:11px; color:var(--muted);}
+
+  .whatsapp-option:hover{
+    background:var(--amber-dim);
+    border-color:var(--amber);
+  }
+
+  .whatsapp-option h4{
+    font-size:14px;
+    margin-bottom:4px;
+  }
+
+  .whatsapp-option p{
+    font-size:11px;
+    color:var(--muted);
+  }
 
   footer{
-    text-align:center; color:var(--muted); font-size:10px; margin-top:30px;
-  }
-
-  @media (min-width:768px){
-    .billing-grid{grid-template-columns:2fr 1fr;}
+    text-align:center;
+    color:var(--muted);
+    font-size:10px;
+    margin-top:30px;
   }
 
   @media (max-width:640px){
@@ -358,6 +597,7 @@
     .prod-name{font-size:12px;}
     .tabs{gap:4px;}
     .tab-btn{padding:8px 12px; font-size:12px;}
+    .bill-product-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));}
   }
 
   @media print{
@@ -459,7 +699,7 @@
     </div>
   </div>
 
-  <!-- BILLING TAB -->
+  <!-- BILLING TAB - IMPROVED -->
   <div id="tab-billing" class="tab-content">
     <h2 style="margin-bottom:16px;">Create Bill</h2>
     
@@ -477,7 +717,7 @@
       </div>
     </div>
 
-    <div class="field-row" style="margin-bottom:16px;">
+    <div class="field-row" style="margin-bottom:20px;">
       <div class="field">
         <label>Customer Name</label>
         <input type="text" id="billCustomerName" placeholder="Name">
@@ -488,27 +728,60 @@
       </div>
     </div>
 
-    <div class="billing-grid">
+    <div class="billing-container">
+      <!-- Product Selection -->
       <div>
-        <h3 style="margin-bottom:10px; font-size:14px;">Select Products</h3>
-        <input type="text" id="billProductSearch" placeholder="Search products..." style="margin-bottom:10px; width:100%;">
-        <div class="bill-product-select" id="billProductList"></div>
-      </div>
-      <div>
-        <h3 style="margin-bottom:10px; font-size:14px;">Summary</h3>
-        <div class="bill-summary" id="billSummary">
-          <p style="color:var(--muted); font-size:12px;">No items</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:14px;">Select Products</h3>
+          <span style="font-size:12px; color:var(--muted);" id="productCount">0 products</span>
         </div>
-        <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="generateBill()">Generate Bill</button>
+        <input type="text" id="billProductSearch" placeholder="🔍 Search products..." 
+               style="margin-bottom:12px; width:100%;">
+        <div class="bill-product-grid" id="billProductGrid"></div>
+      </div>
+
+      <!-- Cart/Summary -->
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px;">Cart <span id="cartItemCount" style="color:var(--muted);">(0 items)</span></h3>
+        <div class="bill-cart">
+          <div id="cartItems">
+            <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+              <div style="font-size:40px; margin-bottom:8px;">🛒</div>
+              <p>Tap products to add</p>
+            </div>
+          </div>
+          
+          <div class="cart-total" id="cartTotal" style="display:none;">
+            <div class="cart-total-line">
+              <span>Items:</span>
+              <span id="totalItems">0</span>
+            </div>
+            <div class="cart-total-line">
+              <span>Subtotal:</span>
+              <span id="subtotalAmount">₹0</span>
+            </div>
+            <div class="cart-total-line" style="color:var(--teal);">
+              <span>Profit:</span>
+              <span id="profitAmount">₹0</span>
+            </div>
+            <div class="cart-total-line cart-total-final">
+              <span>TOTAL:</span>
+              <span id="totalAmount">₹0</span>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="generateBill()">
+              Generate Bill
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div id="billReceiptContainer" style="display:none;">
+    <div id="billReceiptContainer" style="display:none; margin-top:30px;">
       <div class="bill-receipt" id="billReceipt"></div>
       <div style="text-align:center; margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
         <button class="btn btn-teal" onclick="downloadPDF()">📄 Download PDF</button>
-        <button class="btn btn-whatsapp" onclick="showWhatsAppOptions()">📱 Send WhatsApp</button>
+        <button class="btn btn-whatsapp" onclick="showWhatsAppOptions()">📱 WhatsApp</button>
         <button class="btn btn-ghost" onclick="closeBillReceipt()">Close</button>
       </div>
     </div>
@@ -655,7 +928,7 @@
   </form>
 </div>
 
-<!-- WhatsApp Options Modal -->
+<!-- WhatsApp Modal -->
 <div class="whatsapp-modal" id="whatsappModal">
   <div class="whatsapp-modal-content">
     <h3>Send Bill via WhatsApp</h3>
@@ -700,7 +973,7 @@ const billsRef = db.ref("bills");
 let products = {};
 let bills = {};
 let editingId = null;
-let selectedBillItems = {};
+let cart = {}; // Changed from selectedBillItems to cart
 let currentSearchTerm = '';
 let currentBillData = null;
 let billProductSearchTerm = '';
@@ -732,7 +1005,7 @@ db.ref(".info/connected").on("value", (snap) => {
 inventoryRef.on("value", (snap) => {
   products = snap.val() || {};
   render();
-  renderBillProducts();
+  renderBillingProducts();
 });
 
 billsRef.on("value", (snap) => {
@@ -750,7 +1023,10 @@ function switchTab(tabName) {
   
   if(tabName === 'history') renderBillHistory();
   if(tabName === 'analytics') renderAnalytics();
-  if(tabName === 'billing') initializeBillDateTime();
+  if(tabName === 'billing') {
+    initializeBillDateTime();
+    renderBillingProducts();
+  }
 }
 
 function currency(n){
@@ -1063,13 +1339,15 @@ function applyGlobalProfit() {
   showToast('Profit applied to all!');
 }
 
+// ========== NEW BILLING INTERFACE ==========
+
 document.getElementById("billProductSearch").addEventListener("input", (e) => {
   billProductSearchTerm = e.target.value.trim().toLowerCase();
-  renderBillProducts();
+  renderBillingProducts();
 });
 
-function renderBillProducts() {
-  const container = document.getElementById("billProductList");
+function renderBillingProducts() {
+  const container = document.getElementById("billProductGrid");
   let list = Object.entries(products)
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -1081,95 +1359,125 @@ function renderBillProducts() {
     );
   }
 
+  document.getElementById('productCount').textContent = `${list.length} products`;
+
   if (list.length === 0) {
-    container.innerHTML = '<p style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">No products found</p>';
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
     return;
   }
 
-  container.innerHTML = list.map(p => `
-    <div class="bill-item ${selectedBillItems[p.id] ? 'selected' : ''}" onclick="toggleBillItem('${p.id}')">
-      <div style="flex:1;">
-        <div style="font-weight:600; font-size:13px;">${escapeHtml(p.name)}</div>
-        <div style="font-size:10px; color:var(--muted);">Stock: ${p.quantity} | ${currency(p.sellPrice)}</div>
+  container.innerHTML = list.map(p => {
+    const inCart = cart[p.id];
+    const qty = inCart ? inCart.qty : 0;
+    
+    return `
+      <div class="product-card ${inCart ? 'in-cart' : ''}" onclick="addToCart('${p.id}')">
+        ${qty > 0 ? `<div class="product-card-badge">${qty}</div>` : ''}
+        <div class="product-card-name">${escapeHtml(p.name)}</div>
+        <div class="product-card-price">${currency(p.sellPrice)}</div>
+        <div class="product-card-stock">Stock: ${p.quantity}</div>
       </div>
-      <input type="number" min="1" value="${selectedBillItems[p.id]?.qty || 1}" 
-             onclick="event.stopPropagation()" 
-             onchange="updateBillQty('${p.id}', this.value)">
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
-  updateBillSummary();
+  updateCart();
 }
 
-function toggleBillItem(id) {
-  if (selectedBillItems[id]) {
-    delete selectedBillItems[id];
+function addToCart(productId) {
+  const product = products[productId];
+  if (!product) return;
+
+  if (cart[productId]) {
+    // Already in cart, increment
+    cart[productId].qty++;
   } else {
-    selectedBillItems[id] = { qty: 1 };
+    // Add to cart
+    cart[productId] = { qty: 1 };
   }
-  renderBillProducts();
+
+  renderBillingProducts();
+  showToast(`Added ${product.name}`);
 }
 
-function updateBillQty(id, qty) {
-  qty = parseInt(qty) || 1;
-  if (selectedBillItems[id]) {
-    selectedBillItems[id].qty = qty;
-    updateBillSummary();
-  }
+function removeFromCart(productId) {
+  delete cart[productId];
+  renderBillingProducts();
+  showToast('Removed from cart');
 }
 
-function updateBillSummary() {
-  const container = document.getElementById("billSummary");
-  const items = Object.entries(selectedBillItems);
-  
+function updateCartQty(productId, delta) {
+  if (!cart[productId]) return;
+
+  cart[productId].qty += delta;
+
+  if (cart[productId].qty <= 0) {
+    delete cart[productId];
+  }
+
+  renderBillingProducts();
+}
+
+function updateCart() {
+  const cartContainer = document.getElementById('cartItems');
+  const cartTotalSection = document.getElementById('cartTotal');
+  const cartItemCount = document.getElementById('cartItemCount');
+
+  const items = Object.entries(cart);
+
   if (items.length === 0) {
-    container.innerHTML = '<p style="color:var(--muted); font-size:12px;">No items</p>';
+    cartContainer.innerHTML = `
+      <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+        <div style="font-size:40px; margin-bottom:8px;">🛒</div>
+        <p>Tap products to add</p>
+      </div>
+    `;
+    cartTotalSection.style.display = 'none';
+    cartItemCount.textContent = '(0 items)';
     return;
   }
+
+  cartItemCount.textContent = `(${items.length} items)`;
 
   let totalCost = 0;
   let totalSell = 0;
+  let totalQty = 0;
 
-  const lines = items.map(([id, data]) => {
+  cartContainer.innerHTML = items.map(([id, data]) => {
     const product = products[id];
     if (!product) return '';
-    
+
     const qty = data.qty;
     const itemTotal = product.sellPrice * qty;
     const itemCost = product.costPrice * qty;
-    
+
     totalCost += itemCost;
     totalSell += itemTotal;
+    totalQty += qty;
 
     return `
-      <div class="bill-line">
-        <div>
-          <div style="font-weight:600; font-size:12px;">${escapeHtml(product.name)}</div>
-          <div style="font-size:10px; color:var(--muted);">${qty} × ${currency(product.sellPrice)}</div>
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${escapeHtml(product.name)}</div>
+          <div class="cart-item-price">${currency(product.sellPrice)} × ${qty} = ${currency(itemTotal)}</div>
         </div>
-        <div style="font-weight:600;">${currency(itemTotal)}</div>
+        <div class="cart-qty-controls">
+          <div class="qty-btn" onclick="updateCartQty('${id}', -1)">−</div>
+          <div class="qty-display">${qty}</div>
+          <div class="qty-btn" onclick="updateCartQty('${id}', 1)">+</div>
+          <div class="cart-remove" onclick="removeFromCart('${id}')" title="Remove">×</div>
+        </div>
       </div>
     `;
   }).join("");
 
   const profit = totalSell - totalCost;
 
-  container.innerHTML = `
-    ${lines}
-    <div style="margin-top:10px; padding-top:10px; border-top:2px solid var(--line);">
-      <div class="bill-line" style="border:none; font-size:12px;">
-        <span>Subtotal:</span>
-        <span>${currency(totalSell)}</span>
-      </div>
-      <div class="bill-line" style="border:none; color:var(--teal); font-size:11px;">
-        <span>Profit:</span>
-        <span>${currency(profit)}</span>
-      </div>
-      <div class="bill-total">
-        ${currency(totalSell)}
-      </div>
-    </div>
-  `;
+  document.getElementById('totalItems').textContent = totalQty;
+  document.getElementById('subtotalAmount').textContent = currency(totalSell);
+  document.getElementById('profitAmount').textContent = currency(profit);
+  document.getElementById('totalAmount').textContent = currency(totalSell);
+
+  cartTotalSection.style.display = 'block';
 }
 
 function generateBill() {
@@ -1188,9 +1496,9 @@ function generateBill() {
     return;
   }
 
-  const items = Object.entries(selectedBillItems);
+  const items = Object.entries(cart);
   if (items.length === 0) {
-    alert("Select products");
+    alert("Cart is empty! Add products first.");
     return;
   }
 
@@ -1248,13 +1556,14 @@ function generateBill() {
 
   displayBillReceipt(billData);
 
-  selectedBillItems = {};
+  // Reset cart
+  cart = {};
   document.getElementById("billCustomerName").value = '';
   document.getElementById("billCustomerContact").value = '';
   billProductSearchTerm = '';
   document.getElementById("billProductSearch").value = '';
   initializeBillDateTime();
-  renderBillProducts();
+  renderBillingProducts();
 
   showToast('Bill generated!');
 }
@@ -1312,7 +1621,6 @@ function closeBillReceipt() {
   currentBillData = null;
 }
 
-// ---------- PDF Download ----------
 async function downloadPDF() {
   if (!currentBillData) {
     alert("No bill data available");
@@ -1414,7 +1722,6 @@ async function downloadPDF() {
   }
 }
 
-// ---------- WhatsApp Functions ----------
 function showWhatsAppOptions() {
   if (!currentBillData) {
     alert("No bill data available");
@@ -1477,10 +1784,8 @@ function sendWhatsAppWithPDF() {
   
   showToast('Downloading PDF... Then share via WhatsApp');
   
-  // Download PDF first
   downloadPDF();
   
-  // Wait a bit, then open WhatsApp
   setTimeout(() => {
     const phone = currentBillData.customerContact;
     const cleanPhone = phone.replace(/[^\d+]/g, '');
@@ -1494,7 +1799,6 @@ function sendWhatsAppWithPDF() {
   }, 1500);
 }
 
-// ---------- Bill History ----------
 function renderBillHistory() {
   const tbody = document.getElementById("historyTableBody");
   const search = document.getElementById("historySearch")?.value.toLowerCase() || '';
@@ -1548,7 +1852,6 @@ window.viewBillDetails = function(id) {
 
 document.getElementById("historySearch")?.addEventListener("input", renderBillHistory);
 
-// ---------- Analytics ----------
 function renderAnalytics() {
   const billList = Object.values(bills);
   const totalBills = billList.length;
@@ -1629,7 +1932,6 @@ function exportBillHistory() {
   downloadAnalytics();
 }
 
-// ---------- Excel Import/Export ----------
 function exportToExcel() {
   const data = Object.entries(products).map(([id, p]) => ({
     'Name': p.name,
