@@ -670,8 +670,6 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <!-- jsPDF for PDF generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- html2canvas for converting HTML to image -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -679,7 +677,7 @@ const firebaseConfig = {
   authDomain: "ellectrawebsite-main.firebaseapp.com",
   databaseURL: "https://ellectrawebsite-main-default-rtdb.firebaseio.com",
   projectId: "ellectrawebsite-main",
-  storageBucket: "ellectrawebsite-main.firebasestorage.app",
+  storageBucket: "ellectrawebsite-main.appspot.com",
   messagingSenderId: "615438825",
   appId: "1:615438825:web:98de136edfe2d07e775378"
 };
@@ -716,7 +714,7 @@ function showToast(message) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
 // ---------- Connection status ----------
@@ -1252,7 +1250,7 @@ function generateBill() {
 
   billsRef.push(billData);
   currentBillData = billData;
-  currentPdfUrl = null; // Reset PDF URL
+  currentPdfUrl = null;
 
   displayBillReceipt(billData);
 
@@ -1321,7 +1319,7 @@ function closeBillReceipt() {
   currentPdfUrl = null;
 }
 
-// ---------- PDF Generation ----------
+// ---------- PDF Generation & Download ----------
 async function downloadPDF() {
   if (!currentBillData) {
     alert("No bill data available");
@@ -1387,7 +1385,7 @@ async function downloadPDF() {
     yPos += 6;
     doc.setFont(undefined, 'normal');
     Object.values(currentBillData.items).forEach(item => {
-      if (yPos > 270) { // New page if needed
+      if (yPos > 270) {
         doc.addPage();
         yPos = 20;
       }
@@ -1414,11 +1412,10 @@ async function downloadPDF() {
     doc.setFont(undefined, 'italic');
     doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
 
-    // Save PDF
+    // Download
     const pdfBlob = doc.output('blob');
     const fileName = `Invoice_${currentBillData.billId}.pdf`;
     
-    // Download PDF
     const link = document.createElement('a');
     link.href = URL.createObjectURL(pdfBlob);
     link.download = fileName;
@@ -1428,11 +1425,11 @@ async function downloadPDF() {
 
   } catch (error) {
     console.error('PDF generation error:', error);
-    alert('Error generating PDF. Please try again.');
+    alert('Error generating PDF');
   }
 }
 
-// ---------- WhatsApp Integration with PDF ----------
+// ---------- WhatsApp with PDF Upload ----------
 async function sendWhatsApp() {
   if (!currentBillData) {
     alert("No bill data available");
@@ -1452,16 +1449,14 @@ async function sendWhatsApp() {
     return;
   }
 
-  // Disable button and show loading
   const whatsappBtn = document.getElementById('whatsappBtn');
   const originalText = whatsappBtn.innerHTML;
   whatsappBtn.disabled = true;
-  whatsappBtn.innerHTML = '<span class="spinner"></span> Preparing...';
+  whatsappBtn.innerHTML = '<span class="spinner"></span> Uploading...';
 
   try {
     showToast('Generating PDF...');
 
-    // Generate PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -1473,7 +1468,6 @@ async function sendWhatsApp() {
     const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
     const displayTime = currentBillData.billTime || date.toLocaleTimeString();
 
-    // Generate PDF content (same as downloadPDF function)
     doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
     doc.text('INVOICE', 105, 20, { align: 'center' });
@@ -1548,13 +1542,19 @@ async function sendWhatsApp() {
     const storageRef = storage.ref();
     const fileRef = storageRef.child(`bills/${fileName}`);
     
-    await fileRef.put(pdfBlob);
-    const downloadURL = await fileRef.getDownloadURL();
+    await fileRef.put(pdfBlob, {
+      contentType: 'application/pdf',
+      customMetadata: {
+        'billId': currentBillData.billId,
+        'customerName': currentBillData.customerName
+      }
+    });
     
+    const downloadURL = await fileRef.getDownloadURL();
     currentPdfUrl = downloadURL;
 
-    // Create WhatsApp message with PDF link
-    const message = `*INVOICE*\n\nHi ${currentBillData.customerName},\n\nYour invoice is ready!\n\nBill ID: ${currentBillData.billId}\nDate: ${displayDate} ${displayTime}\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nDownload your invoice PDF:\n${downloadURL}\n\nThank you for your business!`;
+    // Create WhatsApp message
+    const message = `*INVOICE*\n\nHi ${currentBillData.customerName},\n\nYour invoice is ready!\n\n📋 Bill ID: ${currentBillData.billId}\n📅 Date: ${displayDate} ${displayTime}\n💰 Total Amount: ${currency(currentBillData.totalAmount)}\n\n📄 Download your invoice PDF:\n${downloadURL}\n\nThank you for your business!`;
 
     const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     
@@ -1564,9 +1564,8 @@ async function sendWhatsApp() {
 
   } catch (error) {
     console.error('WhatsApp send error:', error);
-    alert('Error sending to WhatsApp. Please try again.');
+    alert(`Error: ${error.message || 'Failed to send via WhatsApp'}`);
   } finally {
-    // Re-enable button
     whatsappBtn.disabled = false;
     whatsappBtn.innerHTML = originalText;
   }
