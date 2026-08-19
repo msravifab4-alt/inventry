@@ -127,6 +127,7 @@
     white-space:nowrap;
   }
   .btn:hover{opacity:0.85;}
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
   .btn-primary{background:var(--amber); color:#0d1117;}
   .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
   .btn-danger{background:transparent; color:var(--coral); border:1px solid #4a2226;}
@@ -322,6 +323,20 @@
   }
   .toast.show{transform:translateX(0);}
 
+  /* Loading spinner */
+  .spinner{
+    display:inline-block;
+    width:14px;
+    height:14px;
+    border:2px solid rgba(255,255,255,0.3);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin 0.6s linear infinite;
+  }
+  @keyframes spin{
+    to{transform:rotate(360deg);}
+  }
+
   footer{
     text-align:center; color:var(--muted); font-size:10px; margin-top:30px;
   }
@@ -347,13 +362,6 @@
     body * {visibility:hidden;}
     .bill-receipt, .bill-receipt * {visibility:visible;}
     .bill-receipt{position:absolute; left:0; top:0; width:100%;}
-  }
-
-  /* Hidden element for PDF generation */
-  #pdfContent{
-    position:absolute;
-    left:-9999px;
-    top:0;
   }
 </style>
 </head>
@@ -501,7 +509,10 @@
       <div class="bill-receipt" id="billReceipt"></div>
       <div style="text-align:center; margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
-        <button class="btn btn-whatsapp" onclick="sendWhatsApp()" id="whatsappBtn">📱 Send WhatsApp</button>
+        <button class="btn btn-teal" onclick="downloadPDF()">📄 Download PDF</button>
+        <button class="btn btn-whatsapp" onclick="sendWhatsApp()" id="whatsappBtn">
+          <span id="whatsappBtnText">📱 Send WhatsApp</span>
+        </button>
         <button class="btn btn-ghost" onclick="closeBillReceipt()">Close</button>
       </div>
     </div>
@@ -648,15 +659,13 @@
   </form>
 </div>
 
-<!-- Hidden element for PDF content -->
-<div id="pdfContent"></div>
-
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <!-- SheetJS for Excel -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <!-- jsPDF for PDF generation -->
@@ -677,6 +686,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 const inventoryRef = db.ref("inventory");
 const billsRef = db.ref("bills");
 
@@ -687,6 +697,7 @@ let selectedBillItems = {};
 let currentSearchTerm = '';
 let currentBillData = null;
 let billProductSearchTerm = '';
+let currentPdfUrl = null;
 
 // ---------- Initialize Bill Date/Time ----------
 function initializeBillDateTime() {
@@ -698,7 +709,6 @@ function initializeBillDateTime() {
   document.getElementById('billTime').value = timeStr;
 }
 
-// Initialize on page load
 initializeBillDateTime();
 
 // ---------- Toast Notification ----------
@@ -785,7 +795,6 @@ function getFilteredList(){
     })
     .sort((a,b) => a.name.localeCompare(b.name));
 
-  // Show "not found" banner if search term exists but no results
   const notFoundBanner = document.getElementById('searchNotFound');
   if (search && filtered.length === 0 && Object.keys(products).length > 0) {
     document.getElementById('searchTermDisplay').textContent = `"${search}"`;
@@ -806,7 +815,6 @@ function rebuildCategoryOptions(){
   sel.value = current;
 }
 
-// ---------- Add Product From Search ----------
 function addProductFromSearch() {
   editingId = null;
   document.getElementById("panelTitle").textContent = "Add Product";
@@ -820,7 +828,6 @@ function addProductFromSearch() {
   document.getElementById('searchNotFound').classList.remove('show');
 }
 
-// ---------- Stock Adjustment ----------
 function adjustStock(id, delta) {
   const product = products[id];
   if (!product) return;
@@ -1074,7 +1081,6 @@ function renderBillProducts() {
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Filter by search term
   if (billProductSearchTerm) {
     list = list.filter(p => 
       p.name.toLowerCase().includes(billProductSearchTerm) || 
@@ -1246,6 +1252,7 @@ function generateBill() {
 
   billsRef.push(billData);
   currentBillData = billData;
+  currentPdfUrl = null; // Reset PDF URL
 
   displayBillReceipt(billData);
 
@@ -1311,9 +1318,121 @@ function printBill() {
 function closeBillReceipt() {
   document.getElementById("billReceiptContainer").style.display = 'none';
   currentBillData = null;
+  currentPdfUrl = null;
 }
 
-// ---------- WhatsApp Integration ----------
+// ---------- PDF Generation ----------
+async function downloadPDF() {
+  if (!currentBillData) {
+    alert("No bill data available");
+    return;
+  }
+
+  showToast('Generating PDF...');
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const date = new Date(currentBillData.timestamp);
+    const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = currentBillData.billTime || date.toLocaleTimeString();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text('INVOICE', 105, 20, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Stock Inventory & Billing', 105, 28, { align: 'center' });
+    doc.text(`${displayDate} ${displayTime}`, 105, 34, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Bill: ${currentBillData.billId}`, 105, 42, { align: 'center' });
+
+    // Customer Info
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    let yPos = 55;
+    doc.text(`Customer: ${currentBillData.customerName}`, 20, yPos);
+    if (currentBillData.customerContact) {
+      yPos += 6;
+      doc.text(`Contact: ${currentBillData.customerContact}`, 20, yPos);
+    }
+
+    // Line
+    yPos += 10;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+
+    // Items Header
+    yPos += 8;
+    doc.setFont(undefined, 'bold');
+    doc.text('Item', 20, yPos);
+    doc.text('Qty', 130, yPos);
+    doc.text('Price', 150, yPos);
+    doc.text('Total', 170, yPos);
+
+    yPos += 2;
+    doc.setLineWidth(0.3);
+    doc.line(20, yPos, 190, yPos);
+
+    // Items
+    yPos += 6;
+    doc.setFont(undefined, 'normal');
+    Object.values(currentBillData.items).forEach(item => {
+      if (yPos > 270) { // New page if needed
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(item.name, 20, yPos);
+      doc.text(item.qty.toString(), 130, yPos);
+      doc.text(currency(item.sellPrice), 150, yPos);
+      doc.text(currency(item.total), 170, yPos);
+      yPos += 6;
+    });
+
+    // Total
+    yPos += 5;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('TOTAL:', 130, yPos);
+    doc.text(currency(currentBillData.totalAmount), 170, yPos);
+
+    // Footer
+    yPos += 15;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
+
+    // Save PDF
+    const pdfBlob = doc.output('blob');
+    const fileName = `Invoice_${currentBillData.billId}.pdf`;
+    
+    // Download PDF
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfBlob);
+    link.download = fileName;
+    link.click();
+
+    showToast('PDF Downloaded!');
+
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    alert('Error generating PDF. Please try again.');
+  }
+}
+
+// ---------- WhatsApp Integration with PDF ----------
 async function sendWhatsApp() {
   if (!currentBillData) {
     alert("No bill data available");
@@ -1326,55 +1445,131 @@ async function sendWhatsApp() {
     return;
   }
 
-  // Clean phone number (remove spaces, dashes, etc.)
   const cleanPhone = phone.replace(/[^\d+]/g, '');
   
-  // Validate phone format
   if (!cleanPhone.startsWith('+')) {
     alert("Phone number must include country code (e.g., +91XXXXXXXXXX)");
     return;
   }
 
-  showToast('Preparing bill...');
+  // Disable button and show loading
+  const whatsappBtn = document.getElementById('whatsappBtn');
+  const originalText = whatsappBtn.innerHTML;
+  whatsappBtn.disabled = true;
+  whatsappBtn.innerHTML = '<span class="spinner"></span> Preparing...';
 
-  // Generate bill text
-  const billText = generateBillText(currentBillData);
-  
-  // Option 1: Send text only (Simple)
-  const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(billText)}`;
-  
-  // Open WhatsApp
-  window.open(whatsappURL, '_blank');
-  
-  showToast('Opening WhatsApp...');
-}
+  try {
+    showToast('Generating PDF...');
 
-function generateBillText(bill) {
-  const date = new Date(bill.timestamp);
-  const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
-  const displayTime = bill.billTime || date.toLocaleTimeString();
-  
-  let text = `*INVOICE*\n`;
-  text += `Stock Inventory & Billing\n`;
-  text += `${displayDate} ${displayTime}\n`;
-  text += `Bill: ${bill.billId}\n\n`;
-  text += `*Customer:* ${bill.customerName}\n`;
-  if (bill.customerContact) {
-    text += `*Contact:* ${bill.customerContact}\n`;
+    // Generate PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const date = new Date(currentBillData.timestamp);
+    const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = currentBillData.billTime || date.toLocaleTimeString();
+
+    // Generate PDF content (same as downloadPDF function)
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text('INVOICE', 105, 20, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Stock Inventory & Billing', 105, 28, { align: 'center' });
+    doc.text(`${displayDate} ${displayTime}`, 105, 34, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Bill: ${currentBillData.billId}`, 105, 42, { align: 'center' });
+
+    let yPos = 55;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Customer: ${currentBillData.customerName}`, 20, yPos);
+    if (currentBillData.customerContact) {
+      yPos += 6;
+      doc.text(`Contact: ${currentBillData.customerContact}`, 20, yPos);
+    }
+
+    yPos += 10;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+
+    yPos += 8;
+    doc.setFont(undefined, 'bold');
+    doc.text('Item', 20, yPos);
+    doc.text('Qty', 130, yPos);
+    doc.text('Price', 150, yPos);
+    doc.text('Total', 170, yPos);
+
+    yPos += 2;
+    doc.setLineWidth(0.3);
+    doc.line(20, yPos, 190, yPos);
+
+    yPos += 6;
+    doc.setFont(undefined, 'normal');
+    Object.values(currentBillData.items).forEach(item => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(item.name, 20, yPos);
+      doc.text(item.qty.toString(), 130, yPos);
+      doc.text(currency(item.sellPrice), 150, yPos);
+      doc.text(currency(item.total), 170, yPos);
+      yPos += 6;
+    });
+
+    yPos += 5;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('TOTAL:', 130, yPos);
+    doc.text(currency(currentBillData.totalAmount), 170, yPos);
+
+    yPos += 15;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
+
+    const pdfBlob = doc.output('blob');
+    const fileName = `Invoice_${currentBillData.billId}.pdf`;
+
+    showToast('Uploading to Firebase...');
+
+    // Upload to Firebase Storage
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child(`bills/${fileName}`);
+    
+    await fileRef.put(pdfBlob);
+    const downloadURL = await fileRef.getDownloadURL();
+    
+    currentPdfUrl = downloadURL;
+
+    // Create WhatsApp message with PDF link
+    const message = `*INVOICE*\n\nHi ${currentBillData.customerName},\n\nYour invoice is ready!\n\nBill ID: ${currentBillData.billId}\nDate: ${displayDate} ${displayTime}\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nDownload your invoice PDF:\n${downloadURL}\n\nThank you for your business!`;
+
+    const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    
+    window.open(whatsappURL, '_blank');
+    
+    showToast('WhatsApp opened!');
+
+  } catch (error) {
+    console.error('WhatsApp send error:', error);
+    alert('Error sending to WhatsApp. Please try again.');
+  } finally {
+    // Re-enable button
+    whatsappBtn.disabled = false;
+    whatsappBtn.innerHTML = originalText;
   }
-  text += `\n*ITEMS:*\n`;
-  text += `━━━━━━━━━━━━━━━━━━━━\n`;
-  
-  Object.values(bill.items).forEach(item => {
-    text += `${item.name}\n`;
-    text += `  ${item.qty} × ${currency(item.sellPrice)} = ${currency(item.total)}\n`;
-  });
-  
-  text += `━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `*TOTAL: ${currency(bill.totalAmount)}*\n\n`;
-  text += `Thank you for your business!\n`;
-  
-  return text;
 }
 
 // ---------- Bill History ----------
