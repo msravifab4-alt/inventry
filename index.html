@@ -109,6 +109,7 @@
   /* ---------- Toolbar ---------- */
   .toolbar{
     display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;
+    position:relative;
   }
   input, select, textarea{
     background:var(--panel-2); border:1px solid var(--line); color:var(--text);
@@ -127,6 +128,16 @@
   .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
   .btn-danger{background:transparent; color:var(--coral); border:1px solid #4a2226;}
   .btn-teal{background:var(--teal); color:#0d1117;}
+
+  /* Search not found banner */
+  .search-not-found{
+    background:var(--panel); border:1px solid var(--amber); border-radius:10px;
+    padding:14px 18px; margin-bottom:14px; display:none;
+    align-items:center; justify-content:space-between; gap:12px;
+  }
+  .search-not-found.show{display:flex;}
+  .search-not-found-text{flex:1; font-size:13px;}
+  .search-not-found-text strong{color:var(--amber);}
 
   /* ---------- Table ---------- */
   .table-wrap{
@@ -217,6 +228,11 @@
   .profit-indicator{
     font-size:11px; color:var(--teal); margin-top:4px;
     font-family:'JetBrains Mono', monospace;
+  }
+
+  /* Optional field hint */
+  .optional-hint{
+    font-size:10px; color:var(--muted); font-style:italic; margin-top:2px;
   }
 
   /* Billing styles */
@@ -372,6 +388,14 @@
       <button class="btn btn-teal" onclick="document.getElementById('importFile').click()">📥 Import</button>
       <button class="btn btn-ghost" onclick="exportToExcel()">📤 Export</button>
       <input type="file" id="importFile" accept=".xlsx,.xls,.csv" onchange="importFromExcel(event)">
+    </div>
+
+    <!-- Search Not Found Banner -->
+    <div class="search-not-found" id="searchNotFound">
+      <div class="search-not-found-text">
+        <strong id="searchTermDisplay"></strong> not found in inventory
+      </div>
+      <button class="btn btn-primary" onclick="addProductFromSearch()">+ Add This Product</button>
     </div>
 
     <div class="toolbar">
@@ -536,12 +560,13 @@
   <form id="productForm">
     <div class="field">
       <label>Product name</label>
-      <input type="text" id="f_name" placeholder="Product name" required>
+      <input type="text" id="f_name" placeholder="Product name">
+      <div class="optional-hint">All fields are optional except name</div>
     </div>
     <div class="field-row">
       <div class="field">
         <label>SKU</label>
-        <input type="text" id="f_sku" placeholder="SKU" required>
+        <input type="text" id="f_sku" placeholder="Auto-generated">
       </div>
       <div class="field">
         <label>Category</label>
@@ -555,21 +580,21 @@
     <div class="field-row">
       <div class="field">
         <label>Stock Qty</label>
-        <input type="number" id="f_qty" min="-9999" value="0">
+        <input type="number" id="f_qty" min="-9999" value="0" placeholder="0">
       </div>
       <div class="field">
         <label>Reorder at</label>
-        <input type="number" id="f_reorder" min="0" value="5">
+        <input type="number" id="f_reorder" min="0" value="5" placeholder="5">
       </div>
     </div>
     <div class="field">
       <label>Cost price (₹)</label>
-      <input type="number" id="f_cost" min="0" step="0.01" required>
+      <input type="number" id="f_cost" min="0" step="0.01" placeholder="0">
     </div>
     <div class="field-row-3">
       <div class="field">
         <label>Selling price (₹)</label>
-        <input type="number" id="f_sell" min="0" step="0.01" required>
+        <input type="number" id="f_sell" min="0" step="0.01" placeholder="0">
       </div>
       <div class="field">
         <label>Profit %</label>
@@ -614,6 +639,7 @@ let products = {};
 let bills = {};
 let editingId = null;
 let selectedBillItems = {};
+let currentSearchTerm = '';
 
 // ---------- Toast Notification ----------
 function showToast(message) {
@@ -675,12 +701,19 @@ function calculateProfit(cost, sell) {
   return ((sell - cost) / cost * 100).toFixed(1);
 }
 
+function generateSKU(name) {
+  const prefix = name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+  const timestamp = Date.now().toString().slice(-6);
+  return `${prefix}-${timestamp}`;
+}
+
 function getFilteredList(){
   const search = document.getElementById("search").value.trim().toLowerCase();
+  currentSearchTerm = search;
   const cat = document.getElementById("categoryFilter").value;
   const stockMode = document.getElementById("stockFilter").value;
 
-  return Object.entries(products)
+  const filtered = Object.entries(products)
     .map(([id, p]) => ({ id, ...p }))
     .filter(p => {
       if (search && !(`${p.name} ${p.sku}`.toLowerCase().includes(search))) return false;
@@ -690,6 +723,17 @@ function getFilteredList(){
       return true;
     })
     .sort((a,b) => a.name.localeCompare(b.name));
+
+  // Show "not found" banner if search term exists but no results
+  const notFoundBanner = document.getElementById('searchNotFound');
+  if (search && filtered.length === 0 && Object.keys(products).length > 0) {
+    document.getElementById('searchTermDisplay').textContent = `"${search}"`;
+    notFoundBanner.classList.add('show');
+  } else {
+    notFoundBanner.classList.remove('show');
+  }
+
+  return filtered;
 }
 
 function rebuildCategoryOptions(){
@@ -699,6 +743,23 @@ function rebuildCategoryOptions(){
   sel.innerHTML = '<option value="">All</option>' +
     cats.map(c => `<option value="${c}">${c}</option>`).join("");
   sel.value = current;
+}
+
+// ---------- Add Product From Search ----------
+function addProductFromSearch() {
+  editingId = null;
+  document.getElementById("panelTitle").textContent = "Add Product";
+  document.getElementById("productForm").reset();
+  
+  // Pre-fill name with search term
+  if (currentSearchTerm) {
+    document.getElementById("f_name").value = currentSearchTerm;
+  }
+  
+  openPanel();
+  
+  // Hide the banner
+  document.getElementById('searchNotFound').classList.remove('show');
 }
 
 // ---------- Stock Adjustment ----------
@@ -733,11 +794,18 @@ function render(){
   document.getElementById("statValue").textContent = currency(totalValue);
   document.getElementById("statLow").textContent = lowCount;
 
-  if (list.length === 0){
+  if (list.length === 0 && !currentSearchTerm){
     tbody.innerHTML = "";
     empty.style.display = "block";
     return;
   }
+  
+  if (list.length === 0 && currentSearchTerm) {
+    tbody.innerHTML = "";
+    empty.style.display = "none";
+    return;
+  }
+  
   empty.style.display = "none";
 
   tbody.innerHTML = list.map(p => {
@@ -883,13 +951,22 @@ document.getElementById("f_sell").addEventListener("input", () => {
 // ---------- Save Product ----------
 document.getElementById("productForm").addEventListener("submit", (e) => {
   e.preventDefault();
+  
+  const name = document.getElementById("f_name").value.trim();
+  
+  // Name is the only mandatory field
+  if (!name) {
+    alert('Product name is required');
+    return;
+  }
+
   const data = {
-    name: document.getElementById("f_name").value.trim(),
-    sku: document.getElementById("f_sku").value.trim(),
-    category: document.getElementById("f_category").value.trim(),
-    supplier: document.getElementById("f_supplier").value.trim(),
+    name: name,
+    sku: document.getElementById("f_sku").value.trim() || generateSKU(name),
+    category: document.getElementById("f_category").value.trim() || "Uncategorized",
+    supplier: document.getElementById("f_supplier").value.trim() || "",
     quantity: Number(document.getElementById("f_qty").value || 0),
-    reorderLevel: Number(document.getElementById("f_reorder").value || 0),
+    reorderLevel: Number(document.getElementById("f_reorder").value || 5),
     costPrice: Number(document.getElementById("f_cost").value || 0),
     sellPrice: Number(document.getElementById("f_sell").value || 0),
     updatedAt: Date.now()
@@ -933,6 +1010,11 @@ function renderBillProducts() {
   const list = Object.entries(products)
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (list.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">No products in inventory</p>';
+    return;
+  }
 
   container.innerHTML = list.map(p => `
     <div class="bill-item ${selectedBillItems[p.id] ? 'selected' : ''}" onclick="toggleBillItem('${p.id}')">
@@ -1304,10 +1386,14 @@ function importFromExcel(event) {
     if (!confirm(`Import ${jsonData.length} products?`)) return;
 
     jsonData.forEach(row => {
+      const name = row['Name'] || row['name'] || '';
+      
+      if (!name) return; // Skip if no name
+      
       const productData = {
-        name: row['Name'] || row['name'] || '',
-        sku: row['SKU'] || row['sku'] || '',
-        category: row['Category'] || row['category'] || '',
+        name: name,
+        sku: row['SKU'] || row['sku'] || generateSKU(name),
+        category: row['Category'] || row['category'] || 'Uncategorized',
         supplier: row['Supplier'] || row['supplier'] || '',
         quantity: Number(row['Qty'] || row['quantity'] || 0),
         reorderLevel: Number(row['Reorder'] || row['reorderLevel'] || 5),
@@ -1316,9 +1402,7 @@ function importFromExcel(event) {
         updatedAt: Date.now()
       };
 
-      if (productData.name && productData.sku) {
-        inventoryRef.push(productData);
-      }
+      inventoryRef.push(productData);
     });
 
     showToast('Imported!');
