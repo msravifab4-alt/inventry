@@ -116,8 +116,11 @@
     border-radius:8px; padding:9px 12px; font-size:13px; font-family:'Inter',sans-serif;
     outline:none;
   }
+  input[type="date"], input[type="time"]{
+    color-scheme: dark;
+  }
   input:focus, select:focus, textarea:focus{border-color:var(--amber-dim);}
-  #search{flex:1; min-width:150px;}
+  #search, #billProductSearch{flex:1; min-width:150px;}
   .btn{
     border:none; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600;
     cursor:pointer; font-family:'Inter',sans-serif; transition:opacity .15s;
@@ -128,6 +131,7 @@
   .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
   .btn-danger{background:transparent; color:var(--coral); border:1px solid #4a2226;}
   .btn-teal{background:var(--teal); color:#0d1117;}
+  .btn-whatsapp{background:#25D366; color:#fff;}
 
   /* Search not found banner */
   .search-not-found{
@@ -266,6 +270,15 @@
     margin-top:10px;
   }
 
+  /* Bill date/time section */
+  .bill-datetime{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px; margin-bottom:16px;
+  }
+  .bill-datetime h3{
+    font-size:13px; margin-bottom:10px; color:var(--muted);
+  }
+
   /* Bill receipt */
   .bill-receipt{
     background:white; color:#000; padding:20px;
@@ -334,6 +347,13 @@
     body * {visibility:hidden;}
     .bill-receipt, .bill-receipt * {visibility:visible;}
     .bill-receipt{position:absolute; left:0; top:0; width:100%;}
+  }
+
+  /* Hidden element for PDF generation */
+  #pdfContent{
+    position:absolute;
+    left:-9999px;
+    top:0;
   }
 </style>
 </head>
@@ -435,20 +455,37 @@
   <div id="tab-billing" class="tab-content">
     <h2 style="margin-bottom:16px;">Create Bill</h2>
     
+    <!-- Date & Time Section -->
+    <div class="bill-datetime">
+      <h3>📅 Bill Date & Time</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="billDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="billTime">
+        </div>
+      </div>
+    </div>
+
     <div class="field-row" style="margin-bottom:16px;">
       <div class="field">
         <label>Customer Name</label>
         <input type="text" id="billCustomerName" placeholder="Name">
       </div>
       <div class="field">
-        <label>Contact</label>
-        <input type="text" id="billCustomerContact" placeholder="Phone">
+        <label>Contact (with country code)</label>
+        <input type="text" id="billCustomerContact" placeholder="+91XXXXXXXXXX">
       </div>
     </div>
 
     <div class="billing-grid">
       <div>
         <h3 style="margin-bottom:10px; font-size:14px;">Select Products</h3>
+        <!-- Product Search in Billing -->
+        <input type="text" id="billProductSearch" placeholder="Search products..." style="margin-bottom:10px; width:100%;">
         <div class="bill-product-select" id="billProductList"></div>
       </div>
       <div>
@@ -462,8 +499,9 @@
 
     <div id="billReceiptContainer" style="display:none;">
       <div class="bill-receipt" id="billReceipt"></div>
-      <div style="text-align:center; margin-top:10px;">
-        <button class="btn btn-primary" onclick="printBill()">🖨️ Print Bill</button>
+      <div style="text-align:center; margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
+        <button class="btn btn-whatsapp" onclick="sendWhatsApp()" id="whatsappBtn">📱 Send WhatsApp</button>
         <button class="btn btn-ghost" onclick="closeBillReceipt()">Close</button>
       </div>
     </div>
@@ -610,6 +648,9 @@
   </form>
 </div>
 
+<!-- Hidden element for PDF content -->
+<div id="pdfContent"></div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -618,6 +659,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <!-- SheetJS for Excel -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<!-- jsPDF for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- html2canvas for converting HTML to image -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -640,6 +685,21 @@ let bills = {};
 let editingId = null;
 let selectedBillItems = {};
 let currentSearchTerm = '';
+let currentBillData = null;
+let billProductSearchTerm = '';
+
+// ---------- Initialize Bill Date/Time ----------
+function initializeBillDateTime() {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0, 5);
+  
+  document.getElementById('billDate').value = dateStr;
+  document.getElementById('billTime').value = timeStr;
+}
+
+// Initialize on page load
+initializeBillDateTime();
 
 // ---------- Toast Notification ----------
 function showToast(message) {
@@ -679,6 +739,7 @@ function switchTab(tabName) {
   
   if(tabName === 'history') renderBillHistory();
   if(tabName === 'analytics') renderAnalytics();
+  if(tabName === 'billing') initializeBillDateTime();
 }
 
 // ---------- Helpers ----------
@@ -751,14 +812,11 @@ function addProductFromSearch() {
   document.getElementById("panelTitle").textContent = "Add Product";
   document.getElementById("productForm").reset();
   
-  // Pre-fill name with search term
   if (currentSearchTerm) {
     document.getElementById("f_name").value = currentSearchTerm;
   }
   
   openPanel();
-  
-  // Hide the banner
   document.getElementById('searchNotFound').classList.remove('show');
 }
 
@@ -954,7 +1012,6 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
   
   const name = document.getElementById("f_name").value.trim();
   
-  // Name is the only mandatory field
   if (!name) {
     alert('Product name is required');
     return;
@@ -1004,15 +1061,29 @@ function applyGlobalProfit() {
   showToast('Profit applied to all!');
 }
 
+// ---------- Billing Product Search ----------
+document.getElementById("billProductSearch").addEventListener("input", (e) => {
+  billProductSearchTerm = e.target.value.trim().toLowerCase();
+  renderBillProducts();
+});
+
 // ---------- Billing ----------
 function renderBillProducts() {
   const container = document.getElementById("billProductList");
-  const list = Object.entries(products)
+  let list = Object.entries(products)
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  // Filter by search term
+  if (billProductSearchTerm) {
+    list = list.filter(p => 
+      p.name.toLowerCase().includes(billProductSearchTerm) || 
+      (p.sku && p.sku.toLowerCase().includes(billProductSearchTerm))
+    );
+  }
+
   if (list.length === 0) {
-    container.innerHTML = '<p style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">No products in inventory</p>';
+    container.innerHTML = '<p style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">No products found</p>';
     return;
   }
 
@@ -1105,9 +1176,16 @@ function updateBillSummary() {
 function generateBill() {
   const customerName = document.getElementById("billCustomerName").value.trim();
   const customerContact = document.getElementById("billCustomerContact").value.trim();
+  const billDate = document.getElementById("billDate").value;
+  const billTime = document.getElementById("billTime").value;
   
   if (!customerName) {
     alert("Enter customer name");
+    return;
+  }
+
+  if (!billDate || !billTime) {
+    alert("Please select date and time");
     return;
   }
 
@@ -1116,6 +1194,9 @@ function generateBill() {
     alert("Select products");
     return;
   }
+
+  const selectedDateTime = new Date(`${billDate}T${billTime}`);
+  const timestamp = selectedDateTime.getTime();
 
   let totalCost = 0;
   let totalSell = 0;
@@ -1151,7 +1232,9 @@ function generateBill() {
 
   const billData = {
     billId: 'B' + Date.now(),
-    timestamp: Date.now(),
+    timestamp: timestamp,
+    billDate: billDate,
+    billTime: billTime,
     customerName,
     customerContact,
     items: billItems,
@@ -1162,14 +1245,16 @@ function generateBill() {
   };
 
   billsRef.push(billData);
+  currentBillData = billData;
 
-  // Show receipt
   displayBillReceipt(billData);
 
-  // Reset
   selectedBillItems = {};
   document.getElementById("billCustomerName").value = '';
   document.getElementById("billCustomerContact").value = '';
+  billProductSearchTerm = '';
+  document.getElementById("billProductSearch").value = '';
+  initializeBillDateTime();
   renderBillProducts();
 
   showToast('Bill generated!');
@@ -1180,6 +1265,9 @@ function displayBillReceipt(bill) {
   const receipt = document.getElementById("billReceipt");
   
   const date = new Date(bill.timestamp);
+  const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
+  const displayTime = bill.billTime || date.toLocaleTimeString();
+  
   const itemsList = Object.values(bill.items).map(item => `
     <div class="receipt-line">
       <span>${item.name} x${item.qty}</span>
@@ -1191,7 +1279,7 @@ function displayBillReceipt(bill) {
     <div class="receipt-header">
       <h2 style="margin:0;">INVOICE</h2>
       <div style="font-size:11px; margin-top:5px;">Stock Inventory & Billing</div>
-      <div style="font-size:10px; margin-top:2px;">${date.toLocaleString()}</div>
+      <div style="font-size:10px; margin-top:2px;">${displayDate} ${displayTime}</div>
       <div style="font-size:12px; margin-top:5px; font-weight:bold;">Bill: ${bill.billId}</div>
     </div>
     <div style="margin:10px 0; font-size:11px;">
@@ -1222,6 +1310,71 @@ function printBill() {
 
 function closeBillReceipt() {
   document.getElementById("billReceiptContainer").style.display = 'none';
+  currentBillData = null;
+}
+
+// ---------- WhatsApp Integration ----------
+async function sendWhatsApp() {
+  if (!currentBillData) {
+    alert("No bill data available");
+    return;
+  }
+
+  const phone = currentBillData.customerContact;
+  if (!phone) {
+    alert("Customer phone number is required");
+    return;
+  }
+
+  // Clean phone number (remove spaces, dashes, etc.)
+  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  
+  // Validate phone format
+  if (!cleanPhone.startsWith('+')) {
+    alert("Phone number must include country code (e.g., +91XXXXXXXXXX)");
+    return;
+  }
+
+  showToast('Preparing bill...');
+
+  // Generate bill text
+  const billText = generateBillText(currentBillData);
+  
+  // Option 1: Send text only (Simple)
+  const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(billText)}`;
+  
+  // Open WhatsApp
+  window.open(whatsappURL, '_blank');
+  
+  showToast('Opening WhatsApp...');
+}
+
+function generateBillText(bill) {
+  const date = new Date(bill.timestamp);
+  const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
+  const displayTime = bill.billTime || date.toLocaleTimeString();
+  
+  let text = `*INVOICE*\n`;
+  text += `Stock Inventory & Billing\n`;
+  text += `${displayDate} ${displayTime}\n`;
+  text += `Bill: ${bill.billId}\n\n`;
+  text += `*Customer:* ${bill.customerName}\n`;
+  if (bill.customerContact) {
+    text += `*Contact:* ${bill.customerContact}\n`;
+  }
+  text += `\n*ITEMS:*\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  
+  Object.values(bill.items).forEach(item => {
+    text += `${item.name}\n`;
+    text += `  ${item.qty} × ${currency(item.sellPrice)} = ${currency(item.total)}\n`;
+  });
+  
+  text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `*TOTAL: ${currency(bill.totalAmount)}*\n\n`;
+  text += `Thank you for your business!\n`;
+  
+  return text;
 }
 
 // ---------- Bill History ----------
@@ -1245,10 +1398,13 @@ function renderBillHistory() {
 
   tbody.innerHTML = billList.map(bill => {
     const date = new Date(bill.timestamp);
+    const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = bill.billTime || date.toLocaleTimeString();
+    
     return `
       <tr>
         <td class="sku" style="font-size:11px;">${escapeHtml(bill.billId)}</td>
-        <td style="font-size:11px;">${date.toLocaleDateString()}<br>${date.toLocaleTimeString()}</td>
+        <td style="font-size:11px;">${displayDate}<br>${displayTime}</td>
         <td style="font-size:12px;">
           <div>${escapeHtml(bill.customerName)}</div>
           <div style="font-size:10px; color:var(--muted);">${escapeHtml(bill.customerContact || '')}</div>
@@ -1268,6 +1424,7 @@ window.viewBillDetails = function(id) {
   const bill = bills[id];
   if (!bill) return;
   
+  currentBillData = bill;
   displayBillReceipt(bill);
   switchTab('billing');
 };
@@ -1325,16 +1482,20 @@ function downloadAnalytics() {
   const billList = Object.values(bills);
   
   const csvData = [
-    ['Bill ID', 'Date', 'Customer', 'Contact', 'Items', 'Amount', 'Profit'],
-    ...billList.map(b => [
-      b.billId,
-      new Date(b.timestamp).toLocaleString(),
-      b.customerName,
-      b.customerContact || '',
-      b.itemCount,
-      b.totalAmount,
-      b.profit
-    ])
+    ['Bill ID', 'Date', 'Time', 'Customer', 'Contact', 'Items', 'Amount', 'Profit'],
+    ...billList.map(b => {
+      const date = new Date(b.timestamp);
+      return [
+        b.billId,
+        b.billDate || date.toLocaleDateString(),
+        b.billTime || date.toLocaleTimeString(),
+        b.customerName,
+        b.customerContact || '',
+        b.itemCount,
+        b.totalAmount,
+        b.profit
+      ];
+    })
   ];
 
   const csv = csvData.map(row => row.join(',')).join('\n');
@@ -1388,7 +1549,7 @@ function importFromExcel(event) {
     jsonData.forEach(row => {
       const name = row['Name'] || row['name'] || '';
       
-      if (!name) return; // Skip if no name
+      if (!name) return;
       
       const productData = {
         name: name,
