@@ -116,7 +116,7 @@
     color-scheme: dark;
   }
   input:focus, select:focus, textarea:focus{border-color:var(--amber-dim);}
-  #search, #billProductSearch, #stockEntrySearch{flex:1; min-width:150px;}
+  #search, #billProductSearch{flex:1; min-width:150px;}
   .btn{
     border:none; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600;
     cursor:pointer; font-family:'Inter',sans-serif; transition:opacity .15s;
@@ -138,27 +138,6 @@
   .search-not-found.show{display:flex;}
   .search-not-found-text{flex:1; font-size:13px;}
   .search-not-found-text strong{color:var(--amber);}
-
-  .no-products-found{
-    background:var(--panel);
-    border:2px dashed var(--amber);
-    border-radius:12px;
-    padding:40px 20px;
-    text-align:center;
-    margin-top:20px;
-  }
-
-  .no-products-found h3{
-    font-size:16px;
-    color:var(--amber);
-    margin-bottom:8px;
-  }
-
-  .no-products-found p{
-    font-size:13px;
-    color:var(--muted);
-    margin-bottom:16px;
-  }
 
   .table-wrap{
     background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
@@ -1129,7 +1108,7 @@
   <form id="productForm">
     <div class="field">
       <label>Product name</label>
-      <input type="text" id="f_name" placeholder="Product name" required>
+      <input type="text" id="f_name" placeholder="Product name">
       <div class="optional-hint">All fields are optional except name</div>
     </div>
     <div class="field-row">
@@ -1219,13 +1198,13 @@
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCAwx2fQKpiQgGYalohvkVpx5PZIw2cfak",
-  authDomain: "om-s-199a5.firebaseapp.com",
-  databaseURL: "https://om-s-199a5-default-rtdb.firebaseio.com",
-  projectId: "om-s-199a5",
-  storageBucket: "om-s-199a5.firebasestorage.app",
-  messagingSenderId: "943377640957",
-  appId: "1:943377640957:web:6c008f2988d78df86afd94"
+  apiKey: "AIzaSyAx0W0UqjNwr-99bOuBADwaDtNz0U4RBOE",
+  authDomain: "ellectrawebsite-main.firebaseapp.com",
+  databaseURL: "https://ellectrawebsite-main-default-rtdb.firebaseio.com",
+  projectId: "ellectrawebsite-main",
+  storageBucket: "ellectrawebsite-main.appspot.com",
+  messagingSenderId: "615438825",
+  appId: "1:615438825:web:98de136edfe2d07e775378"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -1246,7 +1225,6 @@ let billProductSearchTerm = '';
 let stockEntrySearchTerm = '';
 let currentStockEntryType = 'in';
 let qtyModalCallback = null;
-let addProductContext = null; // 'billing', 'stockEntry', or null
 
 function initializeBillDateTime() {
   const now = new Date();
@@ -1384,7 +1362,6 @@ function rebuildCategoryOptions(){
 
 function addProductFromSearch() {
   editingId = null;
-  addProductContext = null;
   document.getElementById("panelTitle").textContent = "Add Product";
   document.getElementById("productForm").reset();
   
@@ -1394,25 +1371,6 @@ function addProductFromSearch() {
   
   openPanel();
   document.getElementById('searchNotFound').classList.remove('show');
-}
-
-// New functions for adding from billing/stock entry
-function addProductFromBilling(searchTerm) {
-  editingId = null;
-  addProductContext = 'billing';
-  document.getElementById("panelTitle").textContent = "Add New Product";
-  document.getElementById("productForm").reset();
-  document.getElementById("f_name").value = searchTerm || '';
-  openPanel();
-}
-
-function addProductFromStockEntry(searchTerm) {
-  editingId = null;
-  addProductContext = 'stockEntry';
-  document.getElementById("panelTitle").textContent = "Add New Product";
-  document.getElementById("productForm").reset();
-  document.getElementById("f_name").value = searchTerm || '';
-  openPanel();
 }
 
 function adjustStock(id, delta) {
@@ -1532,13 +1490,11 @@ function closePanel(){
   panel.classList.remove("show");
   document.getElementById("productForm").reset();
   editingId = null;
-  addProductContext = null;
   updateProfitIndicator();
 }
 
 document.getElementById("addBtn").onclick = () => {
   editingId = null;
-  addProductContext = null;
   document.getElementById("panelTitle").textContent = "Add Product";
   document.getElementById("productForm").reset();
   openPanel();
@@ -1550,7 +1506,6 @@ window.openEdit = function(id){
   const p = products[id];
   if (!p) return;
   editingId = id;
-  addProductContext = null;
   document.getElementById("panelTitle").textContent = "Edit Product";
   document.getElementById("f_name").value = p.name || "";
   document.getElementById("f_sku").value = p.sku || "";
@@ -1638,18 +1593,8 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
     inventoryRef.child(editingId).update(data);
     showToast('Product updated');
   } else {
-    inventoryRef.push(data).then(() => {
-      showToast('Product added');
-      
-      // Clear search terms after adding
-      if (addProductContext === 'billing') {
-        billProductSearchTerm = '';
-        document.getElementById('billProductSearch').value = '';
-      } else if (addProductContext === 'stockEntry') {
-        stockEntrySearchTerm = '';
-        document.getElementById('stockEntrySearch').value = '';
-      }
-    });
+    inventoryRef.push(data);
+    showToast('Product added');
   }
   closePanel();
 });
@@ -1720,19 +1665,7 @@ function renderStockEntryProducts() {
   document.getElementById('stockEntryProductCount').textContent = `${list.length} products`;
 
   if (list.length === 0) {
-    if (stockEntrySearchTerm && Object.keys(products).length > 0) {
-      container.innerHTML = `
-        <div class="no-products-found" style="grid-column:1/-1;">
-          <h3>🔍 "${escapeHtml(stockEntrySearchTerm)}" not found</h3>
-          <p>This product doesn't exist in inventory</p>
-          <button class="btn btn-primary" onclick="addProductFromStockEntry('${escapeHtml(stockEntrySearchTerm)}')">
-            ➕ Add "${escapeHtml(stockEntrySearchTerm)}" to Inventory
-          </button>
-        </div>
-      `;
-    } else {
-      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
-    }
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
     return;
   }
 
@@ -1955,19 +1888,7 @@ function renderBillingProducts() {
   document.getElementById('productCount').textContent = `${list.length} products`;
 
   if (list.length === 0) {
-    if (billProductSearchTerm && Object.keys(products).length > 0) {
-      container.innerHTML = `
-        <div class="no-products-found" style="grid-column:1/-1;">
-          <h3>🔍 "${escapeHtml(billProductSearchTerm)}" not found</h3>
-          <p>This product doesn't exist in inventory</p>
-          <button class="btn btn-primary" onclick="addProductFromBilling('${escapeHtml(billProductSearchTerm)}')">
-            ➕ Add "${escapeHtml(billProductSearchTerm)}" to Inventory
-          </button>
-        </div>
-      `;
-    } else {
-      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
-    }
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
     return;
   }
 
