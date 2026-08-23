@@ -116,7 +116,7 @@
     color-scheme: dark;
   }
   input:focus, select:focus, textarea:focus{border-color:var(--amber-dim);}
-  #search, #billProductSearch{flex:1; min-width:150px;}
+  #search, #billProductSearch, #stockEntrySearch{flex:1; min-width:150px;}
   .btn{
     border:none; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600;
     cursor:pointer; font-family:'Inter',sans-serif; transition:opacity .15s;
@@ -138,6 +138,27 @@
   .search-not-found.show{display:flex;}
   .search-not-found-text{flex:1; font-size:13px;}
   .search-not-found-text strong{color:var(--amber);}
+
+  .no-products-found{
+    background:var(--panel);
+    border:2px dashed var(--amber);
+    border-radius:12px;
+    padding:40px 20px;
+    text-align:center;
+    margin-top:20px;
+  }
+
+  .no-products-found h3{
+    font-size:16px;
+    color:var(--amber);
+    margin-bottom:8px;
+  }
+
+  .no-products-found p{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:16px;
+  }
 
   .table-wrap{
     background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
@@ -230,7 +251,24 @@
     font-size:10px; color:var(--muted); font-style:italic; margin-top:2px;
   }
 
-  /* IMPROVED BILLING INTERFACE */
+  .phone-input-wrapper{
+    position:relative;
+  }
+
+  .phone-prefix{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--muted);
+    font-size:13px;
+    pointer-events:none;
+  }
+
+  .phone-input{
+    padding-left:42px !important;
+  }
+
   .billing-container{
     display:grid; 
     grid-template-columns:1fr; 
@@ -241,7 +279,6 @@
     .billing-container{grid-template-columns:1.5fr 1fr;}
   }
 
-  /* Product Selection - Card Style */
   .bill-product-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
@@ -266,9 +303,20 @@
     transform:translateY(-2px);
   }
 
-  .product-card.in-cart{
+  .product-card.in-cart, .product-card.in-stock-entry{
     border-color:var(--amber);
     background:var(--amber-dim);
+  }
+
+  .product-card.stock-out{
+    border-color:var(--coral);
+    background:rgba(255,92,108,0.1);
+  }
+
+  .product-card.selected{
+    border-color:var(--teal) !important;
+    background:rgba(32,227,178,0.2) !important;
+    box-shadow:0 0 0 2px var(--teal);
   }
 
   .product-card-name{
@@ -297,9 +345,10 @@
     right:6px;
     background:var(--amber);
     color:#0d1117;
-    width:22px;
+    min-width:22px;
     height:22px;
-    border-radius:50%;
+    padding:0 6px;
+    border-radius:11px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -307,7 +356,11 @@
     font-weight:700;
   }
 
-  /* Cart/Bill Summary */
+  .product-card-badge.out{
+    background:var(--coral);
+    color:#fff;
+  }
+
   .bill-cart{
     background:var(--panel);
     border:1px solid var(--line);
@@ -376,10 +429,21 @@
   }
 
   .qty-display{
-    min-width:32px;
+    min-width:40px;
     text-align:center;
     font-weight:700;
     font-size:15px;
+    cursor:pointer;
+    padding:4px 8px;
+    border-radius:6px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    transition:all .2s;
+  }
+
+  .qty-display:hover{
+    border-color:var(--amber);
+    background:var(--amber-dim);
   }
 
   .cart-remove{
@@ -434,6 +498,52 @@
     font-size:13px;
     margin-bottom:10px;
     color:var(--muted);
+  }
+
+  .stock-type-toggle{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+
+  .stock-type-btn{
+    padding:12px;
+    border:2px solid var(--line);
+    background:var(--panel);
+    border-radius:8px;
+    cursor:pointer;
+    text-align:center;
+    font-weight:600;
+    font-size:14px;
+    transition:all .2s;
+  }
+
+  .stock-type-btn:hover{
+    border-color:var(--amber-dim);
+  }
+
+  .stock-type-btn.active{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .stock-type-btn.in{
+    color:var(--teal);
+  }
+
+  .stock-type-btn.out{
+    color:var(--coral);
+  }
+
+  .stock-type-btn.in.active{
+    border-color:var(--teal);
+    background:rgba(32,227,178,0.15);
+  }
+
+  .stock-type-btn.out.active{
+    border-color:var(--coral);
+    background:rgba(255,92,108,0.15);
   }
 
   .bill-receipt{
@@ -512,20 +622,6 @@
     transform:translateX(0);
   }
 
-  .spinner{
-    display:inline-block;
-    width:14px;
-    height:14px;
-    border:2px solid rgba(255,255,255,0.3);
-    border-top-color:#fff;
-    border-radius:50%;
-    animation:spin 0.6s linear infinite;
-  }
-
-  @keyframes spin{
-    to{transform:rotate(360deg);}
-  }
-
   .whatsapp-modal{
     position:fixed;
     inset:0;
@@ -579,11 +675,78 @@
     color:var(--muted);
   }
 
+  .entry-type-badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:4px;
+    font-size:10px;
+    font-weight:600;
+  }
+
+  .entry-type-badge.in{
+    background:rgba(32,227,178,0.2);
+    color:var(--teal);
+  }
+
+  .entry-type-badge.out{
+    background:rgba(255,92,108,0.2);
+    color:var(--coral);
+  }
+
   footer{
     text-align:center;
     color:var(--muted);
     font-size:10px;
     margin-top:30px;
+  }
+
+  .qty-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,11,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:60;
+  }
+
+  .qty-modal.show{
+    display:flex;
+  }
+
+  .qty-modal-content{
+    background:var(--panel);
+    border:1px solid var(--amber);
+    border-radius:12px;
+    padding:24px;
+    text-align:center;
+    min-width:280px;
+  }
+
+  .qty-modal h3{
+    margin-bottom:20px;
+    font-size:14px;
+    color:var(--muted);
+  }
+
+  .qty-modal-input{
+    font-size:48px;
+    font-weight:700;
+    text-align:center;
+    background:var(--panel-2);
+    border:2px solid var(--amber);
+    color:var(--amber);
+    padding:20px;
+    border-radius:12px;
+    width:100%;
+    font-family:'JetBrains Mono', monospace;
+    margin-bottom:20px;
+  }
+
+  .qty-modal-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
   }
 
   @media (max-width:640px){
@@ -626,6 +789,7 @@
 <main>
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('inventory')">📦 Inventory</button>
+    <button class="tab-btn" onclick="switchTab('stockEntry')">📝 Stock Entry</button>
     <button class="tab-btn" onclick="switchTab('billing')">💳 Billing</button>
     <button class="tab-btn" onclick="switchTab('history')">📊 History</button>
     <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
@@ -661,9 +825,9 @@
 
     <div class="search-not-found" id="searchNotFound">
       <div class="search-not-found-text">
-        <strong id="searchTermDisplay"></strong> not found in inventory
+        <strong id="searchTermDisplay"></strong> not found
       </div>
-      <button class="btn btn-primary" onclick="addProductFromSearch()">+ Add This Product</button>
+      <button class="btn btn-primary" onclick="addProductFromSearch()">+ Add</button>
     </div>
 
     <div class="toolbar">
@@ -684,7 +848,7 @@
             <th>Product</th>
             <th>Category</th>
             <th>Stock</th>
-            <th>Quick Adjust</th>
+            <th>Adjust</th>
             <th>Price</th>
             <th>Profit%</th>
             <th></th>
@@ -699,12 +863,98 @@
     </div>
   </div>
 
-  <!-- BILLING TAB - IMPROVED -->
-  <div id="tab-billing" class="tab-content">
-    <h2 style="margin-bottom:16px;">Create Bill</h2>
+  <!-- STOCK ENTRY TAB -->
+  <div id="tab-stockEntry" class="tab-content">
+    <h2 style="margin-bottom:16px;">Stock Entry</h2>
     
     <div class="bill-datetime">
-      <h3>📅 Bill Date & Time</h3>
+      <h3>📅 Date & Time</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="stockEntryDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="stockEntryTime">
+        </div>
+      </div>
+    </div>
+
+    <div class="stock-type-toggle">
+      <div class="stock-type-btn in active" onclick="setStockEntryType('in')" id="stockTypeIn">
+        ➕ IN
+      </div>
+      <div class="stock-type-btn out" onclick="setStockEntryType('out')" id="stockTypeOut">
+        ➖ OUT
+      </div>
+    </div>
+
+    <div class="billing-container">
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px;">Search & Add</h3>
+        
+        <input type="text" id="stockEntrySearch" placeholder="Type product name..." 
+               style="margin-bottom:12px; width:100%;">
+
+        <div class="bill-product-grid" id="stockEntryProductGrid"></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px;">Entry List</h3>
+        <div class="bill-cart">
+          <div id="stockEntryItems">
+            <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+              <div style="font-size:40px; margin-bottom:8px;">📦</div>
+              <p>Click to add</p>
+            </div>
+          </div>
+          
+          <div class="cart-total" id="stockEntryTotal" style="display:none;">
+            <div class="cart-total-line">
+              <span>Total:</span>
+              <span id="stockEntryTotalQty">0</span>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="saveStockEntry()">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:30px;">
+      <h3 style="font-size:14px; margin-bottom:12px;">History</h3>
+      <div class="toolbar">
+        <input type="date" id="stockHistoryDateFilter">
+        <select id="stockHistoryTypeFilter">
+          <option value="">All</option>
+          <option value="in">IN</option>
+          <option value="out">OUT</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Product</th>
+              <th>Type</th>
+              <th>Qty</th>
+            </tr>
+          </thead>
+          <tbody id="stockEntryHistoryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BILLING TAB -->
+  <div id="tab-billing" class="tab-content">
+    <h2 style="margin-bottom:16px;">Billing</h2>
+    
+    <div class="bill-datetime">
+      <h3>📅 Date & Time</h3>
       <div class="field-row">
         <div class="field">
           <label>Date</label>
@@ -719,35 +969,33 @@
 
     <div class="field-row" style="margin-bottom:20px;">
       <div class="field">
-        <label>Customer Name</label>
+        <label>Name</label>
         <input type="text" id="billCustomerName" placeholder="Name">
       </div>
       <div class="field">
-        <label>Contact (with country code)</label>
-        <input type="text" id="billCustomerContact" placeholder="+91XXXXXXXXXX">
+        <label>Phone</label>
+        <div class="phone-input-wrapper">
+          <span class="phone-prefix">+91</span>
+          <input type="text" id="billCustomerContact" class="phone-input" placeholder="XXXXXXXXXX" maxlength="10">
+        </div>
       </div>
     </div>
 
     <div class="billing-container">
-      <!-- Product Selection -->
       <div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:14px;">Select Products</h3>
-          <span style="font-size:12px; color:var(--muted);" id="productCount">0 products</span>
-        </div>
-        <input type="text" id="billProductSearch" placeholder="🔍 Search products..." 
+        <h3 style="font-size:14px; margin-bottom:12px;">Products</h3>
+        <input type="text" id="billProductSearch" placeholder="Search..." 
                style="margin-bottom:12px; width:100%;">
         <div class="bill-product-grid" id="billProductGrid"></div>
       </div>
 
-      <!-- Cart/Summary -->
       <div>
-        <h3 style="font-size:14px; margin-bottom:12px;">Cart <span id="cartItemCount" style="color:var(--muted);">(0 items)</span></h3>
+        <h3 style="font-size:14px; margin-bottom:12px;">Cart</h3>
         <div class="bill-cart">
           <div id="cartItems">
             <div style="text-align:center; padding:40px 20px; color:var(--muted);">
               <div style="font-size:40px; margin-bottom:8px;">🛒</div>
-              <p>Tap products to add</p>
+              <p>Click to add</p>
             </div>
           </div>
           
@@ -769,7 +1017,7 @@
               <span id="totalAmount">₹0</span>
             </div>
             <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="generateBill()">
-              Generate Bill
+              Generate
             </button>
           </div>
         </div>
@@ -780,16 +1028,16 @@
       <div class="bill-receipt" id="billReceipt"></div>
       <div style="text-align:center; margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
-        <button class="btn btn-teal" onclick="downloadPDF()">📄 Download PDF</button>
+        <button class="btn btn-teal" onclick="downloadPDF()">📄 PDF</button>
         <button class="btn btn-whatsapp" onclick="showWhatsAppOptions()">📱 WhatsApp</button>
         <button class="btn btn-ghost" onclick="closeBillReceipt()">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- BILL HISTORY TAB -->
+  <!-- HISTORY TAB -->
   <div id="tab-history" class="tab-content">
-    <h2 style="margin-bottom:16px;">Bill History</h2>
+    <h2 style="margin-bottom:16px;">History</h2>
     <div class="toolbar">
       <input id="historySearch" type="text" placeholder="Search..." style="flex:1;">
       <button class="btn btn-ghost" onclick="exportBillHistory()">📤 Export</button>
@@ -817,21 +1065,21 @@
     <h2 style="margin-bottom:16px;">Settings</h2>
     
     <div class="settings-card">
-      <h3>Global Profit Margin</h3>
+      <h3>Global Profit</h3>
       <div class="field-row">
         <div class="field">
-          <label>Profit % for all</label>
+          <label>Profit %</label>
           <input type="number" id="globalProfitPercent" min="0" step="0.1" value="10">
         </div>
         <div class="field">
-          <button class="btn btn-primary" onclick="applyGlobalProfit()" style="margin-top:19px;">Apply All</button>
+          <button class="btn btn-primary" onclick="applyGlobalProfit()" style="margin-top:19px;">Apply</button>
         </div>
       </div>
     </div>
 
     <div class="settings-card">
-      <h3>Database</h3>
-      <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+      <h3>Data</h3>
+      <button class="btn btn-danger" onclick="clearAllData()">Clear All</button>
     </div>
   </div>
 
@@ -841,7 +1089,7 @@
     
     <div class="stats">
       <div class="stat">
-        <div class="lbl">Total Bills</div>
+        <div class="lbl">Bills</div>
         <div class="val" id="analyticsTotal">0</div>
       </div>
       <div class="stat value">
@@ -853,22 +1101,22 @@
         <div class="val" id="analyticsProfit">₹0</div>
       </div>
       <div class="stat">
-        <div class="lbl">Avg Bill</div>
+        <div class="lbl">Avg</div>
         <div class="val" id="analyticsAvg">₹0</div>
       </div>
     </div>
 
     <div style="margin-top:16px;">
-      <button class="btn btn-teal" onclick="downloadAnalytics()">📊 Download Report</button>
+      <button class="btn btn-teal" onclick="downloadAnalytics()">📊 Export</button>
     </div>
 
     <div style="margin-top:20px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px;">
-      <h3 style="margin-bottom:12px; font-size:14px;">Top Products</h3>
+      <h3 style="margin-bottom:12px;">Top Products</h3>
       <div id="topProducts"></div>
     </div>
   </div>
 
-  <footer>Stock Inventory & Billing System · Powered by Firebase</footer>
+  <footer>Stock Inventory & Billing System</footer>
 </main>
 
 <!-- Product Panel -->
@@ -878,13 +1126,12 @@
   <form id="productForm">
     <div class="field">
       <label>Product name</label>
-      <input type="text" id="f_name" placeholder="Product name">
-      <div class="optional-hint">All fields are optional except name</div>
+      <input type="text" id="f_name" placeholder="Product name" required>
     </div>
     <div class="field-row">
       <div class="field">
         <label>SKU</label>
-        <input type="text" id="f_sku" placeholder="Auto-generated">
+        <input type="text" id="f_sku" placeholder="Auto">
       </div>
       <div class="field">
         <label>Category</label>
@@ -898,25 +1145,25 @@
     <div class="field-row">
       <div class="field">
         <label>Stock Qty</label>
-        <input type="number" id="f_qty" min="-9999" value="0" placeholder="0">
+        <input type="number" id="f_qty" min="-9999" value="0">
       </div>
       <div class="field">
         <label>Reorder at</label>
-        <input type="number" id="f_reorder" min="0" value="5" placeholder="5">
+        <input type="number" id="f_reorder" min="0" value="5">
       </div>
     </div>
     <div class="field">
-      <label>Cost price (₹)</label>
-      <input type="number" id="f_cost" min="0" step="0.01" placeholder="0">
+      <label>Cost (₹)</label>
+      <input type="number" id="f_cost" min="0" step="1" placeholder="0">
     </div>
     <div class="field-row-3">
       <div class="field">
-        <label>Selling price (₹)</label>
-        <input type="number" id="f_sell" min="0" step="0.01" placeholder="0">
+        <label>Sell (₹)</label>
+        <input type="number" id="f_sell" min="0" step="1" placeholder="0">
       </div>
       <div class="field">
         <label>Profit %</label>
-        <input type="number" id="f_profit_percent" min="0" step="0.1" placeholder="10">
+        <input type="number" id="f_profit_percent" min="0" step="1" placeholder="10">
       </div>
     </div>
     <div class="profit-indicator" id="profitIndicator"></div>
@@ -928,55 +1175,73 @@
   </form>
 </div>
 
+<!-- Quantity Modal -->
+<div class="qty-modal" id="qtyModal">
+  <div class="qty-modal-content">
+    <h3 id="qtyModalLabel">Qty</h3>
+    <input type="number" class="qty-modal-input" id="qtyModalInput" min="1" value="1" autofocus>
+    <div class="qty-modal-actions">
+      <button class="btn btn-ghost" onclick="closeQtyModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmQtyModal()">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- WhatsApp Modal -->
 <div class="whatsapp-modal" id="whatsappModal">
   <div class="whatsapp-modal-content">
-    <h3>Send Bill via WhatsApp</h3>
+    <h3>WhatsApp</h3>
     <div class="whatsapp-option" onclick="sendWhatsAppText()">
-      <h4>📝 Send as Text Message</h4>
-      <p>Simple text-based bill details (Recommended)</p>
+      <h4>📝 Text</h4>
+      <p>Send as text</p>
     </div>
     <div class="whatsapp-option" onclick="sendWhatsAppWithPDF()">
-      <h4>📄 Download PDF & Share</h4>
-      <p>Download PDF first, then share manually</p>
+      <h4>📄 PDF</h4>
+      <p>Download first</p>
     </div>
-    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeWhatsAppModal()">Cancel</button>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeWhatsAppModal()">Close</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<!-- SheetJS -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyAx0W0UqjNwr-99bOuBADwaDtNz0U4RBOE",
-  authDomain: "ellectrawebsite-main.firebaseapp.com",
-  databaseURL: "https://ellectrawebsite-main-default-rtdb.firebaseio.com",
-  projectId: "ellectrawebsite-main",
-  storageBucket: "ellectrawebsite-main.appspot.com",
-  messagingSenderId: "615438825",
-  appId: "1:615438825:web:98de136edfe2d07e775378"
+  apiKey: "AIzaSyCAwx2fQKpiQgGYalohvkVpx5PZIw2cfak",
+  authDomain: "om-s-199a5.firebaseapp.com",
+  databaseURL: "https://om-s-199a5-default-rtdb.firebaseio.com",
+  projectId: "om-s-199a5",
+  storageBucket: "om-s-199a5.firebasestorage.app",
+  messagingSenderId: "943377640957",
+  appId: "1:943377640957:web:6c008f2988d78df86afd94"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const inventoryRef = db.ref("inventory");
 const billsRef = db.ref("bills");
+const stockEntriesRef = db.ref("stockEntries");
 
 let products = {};
 let bills = {};
+let stockEntries = {};
 let editingId = null;
-let cart = {}; // Changed from selectedBillItems to cart
+let cart = {};
+let stockEntry = {};
 let currentSearchTerm = '';
 let currentBillData = null;
 let billProductSearchTerm = '';
+let stockEntrySearchTerm = '';
+let currentStockEntryType = 'in';
+let qtyModalCallback = null;
+let addProductContext = null;
+let stockEntryProductsList = [];
+let selectedProduct = null;
 
 function initializeBillDateTime() {
   const now = new Date();
@@ -987,13 +1252,23 @@ function initializeBillDateTime() {
   document.getElementById('billTime').value = timeStr;
 }
 
+function initializeStockEntryDateTime() {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0, 5);
+  
+  document.getElementById('stockEntryDate').value = dateStr;
+  document.getElementById('stockEntryTime').value = timeStr;
+}
+
 initializeBillDateTime();
+initializeStockEntryDateTime();
 
 function showToast(message) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
 db.ref(".info/connected").on("value", (snap) => {
@@ -1006,12 +1281,18 @@ inventoryRef.on("value", (snap) => {
   products = snap.val() || {};
   render();
   renderBillingProducts();
+  renderStockEntryProducts();
 });
 
 billsRef.on("value", (snap) => {
   bills = snap.val() || {};
   renderBillHistory();
   renderAnalytics();
+});
+
+stockEntriesRef.on("value", (snap) => {
+  stockEntries = snap.val() || {};
+  renderStockEntryHistory();
 });
 
 function switchTab(tabName) {
@@ -1027,10 +1308,15 @@ function switchTab(tabName) {
     initializeBillDateTime();
     renderBillingProducts();
   }
+  if(tabName === 'stockEntry') {
+    initializeStockEntryDateTime();
+    renderStockEntryProducts();
+    renderStockEntryHistory();
+  }
 }
 
 function currency(n){
-  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  return "₹" + Math.round(Number(n || 0)).toLocaleString("en-IN");
 }
 
 function signalLevelClass(qty, reorder){
@@ -1045,7 +1331,7 @@ function signalLevelClass(qty, reorder){
 
 function calculateProfit(cost, sell) {
   if (!cost || cost <= 0) return 0;
-  return ((sell - cost) / cost * 100).toFixed(1);
+  return ((sell - cost) / cost * 100).toFixed(0);
 }
 
 function generateSKU(name) {
@@ -1093,6 +1379,7 @@ function rebuildCategoryOptions(){
 
 function addProductFromSearch() {
   editingId = null;
+  addProductContext = null;
   document.getElementById("panelTitle").textContent = "Add Product";
   document.getElementById("productForm").reset();
   
@@ -1102,6 +1389,24 @@ function addProductFromSearch() {
   
   openPanel();
   document.getElementById('searchNotFound').classList.remove('show');
+}
+
+function addProductFromBilling(searchTerm) {
+  editingId = null;
+  addProductContext = 'billing';
+  document.getElementById("panelTitle").textContent = "Add Product";
+  document.getElementById("productForm").reset();
+  document.getElementById("f_name").value = searchTerm || '';
+  openPanel();
+}
+
+function addProductFromStockEntry(searchTerm) {
+  editingId = null;
+  addProductContext = 'stockEntry';
+  document.getElementById("panelTitle").textContent = "Add Product";
+  document.getElementById("productForm").reset();
+  document.getElementById("f_name").value = searchTerm || '';
+  openPanel();
 }
 
 function adjustStock(id, delta) {
@@ -1114,7 +1419,19 @@ function adjustStock(id, delta) {
     updatedAt: Date.now()
   });
   
-  showToast(`${delta > 0 ? '+' : ''}${delta} ${product.name}`);
+  const entryType = delta > 0 ? 'in' : 'out';
+  stockEntriesRef.push({
+    productId: id,
+    productName: product.name,
+    productSku: product.sku,
+    type: entryType,
+    quantity: Math.abs(delta),
+    timestamp: Date.now(),
+    entryDate: new Date().toISOString().split('T')[0],
+    entryTime: new Date().toTimeString().slice(0, 5)
+  });
+  
+  showToast(`${product.name} ${delta > 0 ? '+' : ''}${delta}`);
 }
 
 function render(){
@@ -1209,11 +1526,13 @@ function closePanel(){
   panel.classList.remove("show");
   document.getElementById("productForm").reset();
   editingId = null;
+  addProductContext = null;
   updateProfitIndicator();
 }
 
 document.getElementById("addBtn").onclick = () => {
   editingId = null;
+  addProductContext = null;
   document.getElementById("panelTitle").textContent = "Add Product";
   document.getElementById("productForm").reset();
   openPanel();
@@ -1225,7 +1544,8 @@ window.openEdit = function(id){
   const p = products[id];
   if (!p) return;
   editingId = id;
-  document.getElementById("panelTitle").textContent = "Edit Product";
+  addProductContext = null;
+  document.getElementById("panelTitle").textContent = "Edit";
   document.getElementById("f_name").value = p.name || "";
   document.getElementById("f_sku").value = p.sku || "";
   document.getElementById("f_category").value = p.category || "";
@@ -1243,7 +1563,7 @@ window.deleteProduct = function(id){
   if (!p) return;
   if (confirm(`Delete "${p.name}"?`)){
     inventoryRef.child(id).remove();
-    showToast('Product deleted');
+    showToast('Deleted');
   }
 };
 
@@ -1254,7 +1574,7 @@ function updateProfitIndicator() {
   
   if (cost > 0 && sell > 0) {
     const profit = sell - cost;
-    const profitPercent = ((profit / cost) * 100).toFixed(2);
+    const profitPercent = ((profit / cost) * 100).toFixed(0);
     indicator.textContent = `Profit: ${currency(profit)} (${profitPercent}%)`;
     indicator.style.color = profit >= 0 ? 'var(--teal)' : 'var(--coral)';
   } else {
@@ -1271,7 +1591,7 @@ document.getElementById("f_profit_percent").addEventListener("input", (e) => {
   
   if (cost > 0 && percent >= 0) {
     const sell = cost + (cost * percent / 100);
-    document.getElementById("f_sell").value = sell.toFixed(2);
+    document.getElementById("f_sell").value = Math.round(sell);
     updateProfitIndicator();
   }
 });
@@ -1281,7 +1601,7 @@ document.getElementById("f_sell").addEventListener("input", () => {
   const sell = Number(document.getElementById("f_sell").value || 0);
   
   if (cost > 0) {
-    const percent = ((sell - cost) / cost * 100).toFixed(2);
+    const percent = ((sell - cost) / cost * 100).toFixed(0);
     document.getElementById("f_profit_percent").value = percent;
   }
 });
@@ -1292,7 +1612,7 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
   const name = document.getElementById("f_name").value.trim();
   
   if (!name) {
-    alert('Product name is required');
+    alert('Name required');
     return;
   }
 
@@ -1310,36 +1630,344 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
 
   if (editingId){
     inventoryRef.child(editingId).update(data);
-    showToast('Product updated');
+    showToast('Updated');
   } else {
-    inventoryRef.push(data);
-    showToast('Product added');
+    inventoryRef.push(data).then(() => {
+      showToast('Added');
+      
+      if (addProductContext === 'billing') {
+        billProductSearchTerm = '';
+        document.getElementById('billProductSearch').value = '';
+      } else if (addProductContext === 'stockEntry') {
+        stockEntrySearchTerm = '';
+        document.getElementById('stockEntrySearch').value = '';
+        selectedProduct = null;
+      }
+    });
   }
   closePanel();
 });
 
-function applyGlobalProfit() {
-  const percent = Number(document.getElementById("globalProfitPercent").value || 0);
-  if (percent < 0) {
-    alert("Enter valid percentage");
-    return;
+function openQtyModal(label, currentValue, callback) {
+  qtyModalCallback = callback;
+  document.getElementById('qtyModalLabel').textContent = label;
+  document.getElementById('qtyModalInput').value = currentValue || 1;
+  document.getElementById('qtyModal').classList.add('show');
+  setTimeout(() => document.getElementById('qtyModalInput').select(), 100);
+}
+
+function closeQtyModal() {
+  document.getElementById('qtyModal').classList.remove('show');
+  qtyModalCallback = null;
+}
+
+function confirmQtyModal() {
+  const value = parseInt(document.getElementById('qtyModalInput').value) || 1;
+  if (qtyModalCallback) {
+    qtyModalCallback(value);
+  }
+  closeQtyModal();
+}
+
+document.getElementById('qtyModalInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    confirmQtyModal();
+  }
+});
+
+// ========== STOCK ENTRY WITH AUTO-SELECT ==========
+
+function setStockEntryType(type) {
+  currentStockEntryType = type;
+  
+  if (type === 'in') {
+    document.getElementById("stockTypeIn").classList.add("active");
+    document.getElementById("stockTypeOut").classList.remove("active");
+  } else {
+    document.getElementById("stockTypeOut").classList.add("active");
+    document.getElementById("stockTypeIn").classList.remove("active");
   }
   
-  if (!confirm(`Apply ${percent}% to all products?`)) return;
+  renderStockEntryProducts();
+}
 
-  Object.entries(products).forEach(([id, product]) => {
-    const cost = Number(product.costPrice || 0);
-    const newSell = cost + (cost * percent / 100);
+function renderStockEntryProducts() {
+  const container = document.getElementById("stockEntryProductGrid");
+  let list = Object.entries(products)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (stockEntrySearchTerm) {
+    list = list.filter(p => 
+      p.name.toLowerCase().includes(stockEntrySearchTerm) || 
+      (p.sku && p.sku.toLowerCase().includes(stockEntrySearchTerm))
+    );
+  }
+
+  stockEntryProductsList = list;
+
+  if (list.length === 0) {
+    if (stockEntrySearchTerm && Object.keys(products).length > 0) {
+      container.innerHTML = `
+        <div class="no-products-found" style="grid-column:1/-1;">
+          <h3>Not found</h3>
+          <button class="btn btn-primary" onclick="addProductFromStockEntry('${escapeHtml(stockEntrySearchTerm)}')">
+            + Add
+          </button>
+        </div>
+      `;
+    } else {
+      container.innerHTML = '';
+    }
+    selectedProduct = null;
+    return;
+  }
+
+  // Auto-select first product
+  if (!selectedProduct && list.length > 0) {
+    selectedProduct = list[0];
+  }
+
+  container.innerHTML = list.map((p) => {
+    const inEntry = stockEntry[p.id];
+    const qty = inEntry ? inEntry.qty : 0;
+    const cardClass = inEntry ? (currentStockEntryType === 'in' ? 'in-stock-entry' : 'stock-out') : '';
+    const isSelected = selectedProduct && selectedProduct.id === p.id;
+    const selectedClass = isSelected ? 'selected' : '';
+    
+    return `
+      <div class="product-card ${cardClass} ${selectedClass}" id="product-${p.id}">
+        ${qty > 0 ? `<div class="product-card-badge">${qty}</div>` : ''}
+        <div class="product-card-name">${escapeHtml(p.name)}</div>
+        <div class="product-card-stock">Stock: ${p.quantity}</div>
+        <div style="font-size:10px; color:var(--muted);">${escapeHtml(p.sku)}</div>
+      </div>
+    `;
+  }).join("");
+
+  updateStockEntryCart();
+  scrollToSelected();
+}
+
+function scrollToSelected() {
+  if (selectedProduct) {
+    const el = document.getElementById(`product-${selectedProduct.id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+}
+
+document.getElementById('stockEntrySearch').addEventListener('input', (e) => {
+  stockEntrySearchTerm = e.target.value.trim().toLowerCase();
+  selectedProduct = null;
+  renderStockEntryProducts();
+});
+
+document.getElementById('stockEntrySearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && selectedProduct) {
+    e.preventDefault();
+    openQtyModal(`${selectedProduct.name}`, 1, (qty) => {
+      if (stockEntry[selectedProduct.id]) {
+        stockEntry[selectedProduct.id].qty += qty;
+      } else {
+        stockEntry[selectedProduct.id] = { qty: qty };
+      }
+      renderStockEntryProducts();
+      showToast(`Added x${qty}`);
+    });
+  } else if (e.key === 'Backspace' && stockEntrySearchTerm === '') {
+    // Move to next product when search is empty
+    if (stockEntryProductsList.length > 0) {
+      const currentIndex = stockEntryProductsList.findIndex(p => selectedProduct && p.id === selectedProduct.id);
+      if (currentIndex < stockEntryProductsList.length - 1) {
+        selectedProduct = stockEntryProductsList[currentIndex + 1];
+      } else if (currentIndex === stockEntryProductsList.length - 1 && currentIndex > 0) {
+        selectedProduct = stockEntryProductsList[0];
+      }
+      renderStockEntryProducts();
+    }
+  }
+});
+
+function addToStockEntry(productId) {
+  const product = products[productId];
+  if (!product) return;
+
+  selectedProduct = product;
+
+  if (stockEntry[productId]) {
+    stockEntry[productId].qty++;
+  } else {
+    stockEntry[productId] = { qty: 1 };
+  }
+
+  renderStockEntryProducts();
+  showToast(`+1`);
+}
+
+function removeFromStockEntry(productId) {
+  delete stockEntry[productId];
+  renderStockEntryProducts();
+  showToast('Removed');
+}
+
+function updateStockEntryQty(productId, newQty) {
+  if (!stockEntry[productId]) return;
+
+  if (newQty <= 0) {
+    delete stockEntry[productId];
+  } else {
+    stockEntry[productId].qty = newQty;
+  }
+
+  renderStockEntryProducts();
+}
+
+function updateStockEntryCart() {
+  const cartContainer = document.getElementById('stockEntryItems');
+  const cartTotalSection = document.getElementById('stockEntryTotal');
+
+  const items = Object.entries(stockEntry);
+
+  if (items.length === 0) {
+    cartContainer.innerHTML = `
+      <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+        <div style="font-size:40px; margin-bottom:8px;">📦</div>
+        <p>Click to add</p>
+      </div>
+    `;
+    cartTotalSection.style.display = 'none';
+    return;
+  }
+
+  let totalQty = 0;
+
+  cartContainer.innerHTML = items.map(([id, data]) => {
+    const product = products[id];
+    if (!product) return '';
+
+    const qty = data.qty;
+    totalQty += qty;
+
+    return `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${escapeHtml(product.name)}</div>
+          <div class="cart-item-price">${currentStockEntryType === 'in' ? '➕ IN' : '➖ OUT'}</div>
+        </div>
+        <div class="cart-qty-controls">
+          <div class="qty-btn" onclick="updateStockEntryQty('${id}', ${qty - 1})">−</div>
+          <div class="qty-display" onclick="openQtyModal('Qty', ${qty}, (val) => updateStockEntryQty('${id}', val))">${qty}</div>
+          <div class="qty-btn" onclick="updateStockEntryQty('${id}', ${qty + 1})">+</div>
+          <div class="cart-remove" onclick="removeFromStockEntry('${id}')">×</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById('stockEntryTotalQty').textContent = totalQty;
+  cartTotalSection.style.display = 'block';
+}
+
+function saveStockEntry() {
+  const entryDate = document.getElementById("stockEntryDate").value;
+  const entryTime = document.getElementById("stockEntryTime").value;
+
+  if (!entryDate || !entryTime) {
+    alert("Select date");
+    return;
+  }
+
+  const items = Object.entries(stockEntry);
+  if (items.length === 0) {
+    alert("Add items!");
+    return;
+  }
+
+  const entryDateTime = new Date(`${entryDate}T${entryTime}`);
+  const timestamp = entryDateTime.getTime();
+
+  items.forEach(([id, data]) => {
+    const product = products[id];
+    if (!product) return;
+    
+    const qty = data.qty;
+    const qtyChange = currentStockEntryType === 'in' ? qty : -qty;
+    const newStock = product.quantity + qtyChange;
+    
     inventoryRef.child(id).update({
-      sellPrice: newSell,
+      quantity: newStock,
       updatedAt: Date.now()
+    });
+
+    stockEntriesRef.push({
+      productId: id,
+      productName: product.name,
+      productSku: product.sku,
+      type: currentStockEntryType,
+      quantity: qty,
+      timestamp: timestamp,
+      entryDate: entryDate,
+      entryTime: entryTime
     });
   });
 
-  showToast('Profit applied to all!');
+  showToast(`Saved!`);
+  
+  stockEntry = {};
+  selectedProduct = null;
+  initializeStockEntryDateTime();
+  document.getElementById('stockEntrySearch').value = '';
+  stockEntrySearchTerm = '';
+  renderStockEntryProducts();
 }
 
-// ========== NEW BILLING INTERFACE ==========
+function renderStockEntryHistory() {
+  const tbody = document.getElementById("stockEntryHistoryBody");
+  const dateFilter = document.getElementById("stockHistoryDateFilter")?.value || '';
+  const typeFilter = document.getElementById("stockHistoryTypeFilter")?.value || '';
+
+  let entryList = Object.entries(stockEntries)
+    .map(([id, e]) => ({ id, ...e }))
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  if (dateFilter) {
+    entryList = entryList.filter(e => e.entryDate === dateFilter);
+  }
+
+  if (typeFilter) {
+    entryList = entryList.filter(e => e.type === typeFilter);
+  }
+
+  if (entryList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted);">No entries</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = entryList.map(entry => {
+    const date = new Date(entry.timestamp);
+    const displayDate = entry.entryDate ? new Date(entry.entryDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = entry.entryTime || date.toLocaleTimeString();
+
+    return `
+      <tr>
+        <td style="font-size:11px;">${displayDate} ${displayTime}</td>
+        <td>
+          <div class="prod-name">${escapeHtml(entry.productName)}</div>
+          <div class="prod-sku sku">${escapeHtml(entry.productSku)}</div>
+        </td>
+        <td><span class="entry-type-badge ${entry.type}">${entry.type === 'in' ? '➕ IN' : '➖ OUT'}</span></td>
+        <td class="num">${entry.quantity}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+document.getElementById("stockHistoryDateFilter")?.addEventListener("change", renderStockEntryHistory);
+document.getElementById("stockHistoryTypeFilter")?.addEventListener("change", renderStockEntryHistory);
+
+// ========== BILLING FUNCTIONS ==========
 
 document.getElementById("billProductSearch").addEventListener("input", (e) => {
   billProductSearchTerm = e.target.value.trim().toLowerCase();
@@ -1359,10 +1987,19 @@ function renderBillingProducts() {
     );
   }
 
-  document.getElementById('productCount').textContent = `${list.length} products`;
-
   if (list.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
+    if (billProductSearchTerm && Object.keys(products).length > 0) {
+      container.innerHTML = `
+        <div class="no-products-found" style="grid-column:1/-1;">
+          <h3>Not found</h3>
+          <button class="btn btn-primary" onclick="addProductFromBilling('${escapeHtml(billProductSearchTerm)}')">
+            + Add
+          </button>
+        </div>
+      `;
+    } else {
+      container.innerHTML = '';
+    }
     return;
   }
 
@@ -1388,30 +2025,28 @@ function addToCart(productId) {
   if (!product) return;
 
   if (cart[productId]) {
-    // Already in cart, increment
     cart[productId].qty++;
   } else {
-    // Add to cart
     cart[productId] = { qty: 1 };
   }
 
   renderBillingProducts();
-  showToast(`Added ${product.name}`);
+  showToast(`Added`);
 }
 
 function removeFromCart(productId) {
   delete cart[productId];
   renderBillingProducts();
-  showToast('Removed from cart');
+  showToast('Removed');
 }
 
-function updateCartQty(productId, delta) {
+function updateCartQty(productId, newQty) {
   if (!cart[productId]) return;
 
-  cart[productId].qty += delta;
-
-  if (cart[productId].qty <= 0) {
+  if (newQty <= 0) {
     delete cart[productId];
+  } else {
+    cart[productId].qty = newQty;
   }
 
   renderBillingProducts();
@@ -1420,7 +2055,6 @@ function updateCartQty(productId, delta) {
 function updateCart() {
   const cartContainer = document.getElementById('cartItems');
   const cartTotalSection = document.getElementById('cartTotal');
-  const cartItemCount = document.getElementById('cartItemCount');
 
   const items = Object.entries(cart);
 
@@ -1428,15 +2062,12 @@ function updateCart() {
     cartContainer.innerHTML = `
       <div style="text-align:center; padding:40px 20px; color:var(--muted);">
         <div style="font-size:40px; margin-bottom:8px;">🛒</div>
-        <p>Tap products to add</p>
+        <p>Click to add</p>
       </div>
     `;
     cartTotalSection.style.display = 'none';
-    cartItemCount.textContent = '(0 items)';
     return;
   }
-
-  cartItemCount.textContent = `(${items.length} items)`;
 
   let totalCost = 0;
   let totalSell = 0;
@@ -1458,13 +2089,13 @@ function updateCart() {
       <div class="cart-item">
         <div class="cart-item-info">
           <div class="cart-item-name">${escapeHtml(product.name)}</div>
-          <div class="cart-item-price">${currency(product.sellPrice)} × ${qty} = ${currency(itemTotal)}</div>
+          <div class="cart-item-price">${currency(product.sellPrice)} × ${qty}</div>
         </div>
         <div class="cart-qty-controls">
-          <div class="qty-btn" onclick="updateCartQty('${id}', -1)">−</div>
-          <div class="qty-display">${qty}</div>
-          <div class="qty-btn" onclick="updateCartQty('${id}', 1)">+</div>
-          <div class="cart-remove" onclick="removeFromCart('${id}')" title="Remove">×</div>
+          <div class="qty-btn" onclick="updateCartQty('${id}', ${qty - 1})">−</div>
+          <div class="qty-display" onclick="openQtyModal('Qty', ${qty}, (val) => updateCartQty('${id}', val))">${qty}</div>
+          <div class="qty-btn" onclick="updateCartQty('${id}', ${qty + 1})">+</div>
+          <div class="cart-remove" onclick="removeFromCart('${id}')">×</div>
         </div>
       </div>
     `;
@@ -1482,24 +2113,28 @@ function updateCart() {
 
 function generateBill() {
   const customerName = document.getElementById("billCustomerName").value.trim();
-  const customerContact = document.getElementById("billCustomerContact").value.trim();
+  let customerContact = document.getElementById("billCustomerContact").value.trim();
   const billDate = document.getElementById("billDate").value;
   const billTime = document.getElementById("billTime").value;
   
   if (!customerName) {
-    alert("Enter customer name");
+    alert("Enter name");
     return;
   }
 
   if (!billDate || !billTime) {
-    alert("Please select date and time");
+    alert("Select date");
     return;
   }
 
   const items = Object.entries(cart);
   if (items.length === 0) {
-    alert("Cart is empty! Add products first.");
+    alert("Add items!");
     return;
+  }
+
+  if (customerContact && !customerContact.startsWith('+')) {
+    customerContact = '+91' + customerContact;
   }
 
   const selectedDateTime = new Date(`${billDate}T${billTime}`);
@@ -1519,6 +2154,17 @@ function generateBill() {
     inventoryRef.child(id).update({
       quantity: newStock,
       updatedAt: Date.now()
+    });
+
+    stockEntriesRef.push({
+      productId: id,
+      productName: product.name,
+      productSku: product.sku,
+      type: 'out',
+      quantity: qty,
+      timestamp: timestamp,
+      entryDate: billDate,
+      entryTime: billTime
     });
 
     const itemCost = product.costPrice * qty;
@@ -1556,7 +2202,6 @@ function generateBill() {
 
   displayBillReceipt(billData);
 
-  // Reset cart
   cart = {};
   document.getElementById("billCustomerName").value = '';
   document.getElementById("billCustomerContact").value = '';
@@ -1565,7 +2210,7 @@ function generateBill() {
   initializeBillDateTime();
   renderBillingProducts();
 
-  showToast('Bill generated!');
+  showToast('Bill created!');
 }
 
 function displayBillReceipt(bill) {
@@ -1586,9 +2231,8 @@ function displayBillReceipt(bill) {
   receipt.innerHTML = `
     <div class="receipt-header">
       <h2 style="margin:0;">INVOICE</h2>
-      <div style="font-size:11px; margin-top:5px;">Stock Inventory & Billing</div>
-      <div style="font-size:10px; margin-top:2px;">${displayDate} ${displayTime}</div>
-      <div style="font-size:12px; margin-top:5px; font-weight:bold;">Bill: ${bill.billId}</div>
+      <div style="font-size:11px;">${displayDate} ${displayTime}</div>
+      <div style="font-size:12px; font-weight:bold; margin-top:5px;">Bill: ${bill.billId}</div>
     </div>
     <div style="margin:10px 0; font-size:11px;">
       <div><strong>Customer:</strong> ${escapeHtml(bill.customerName)}</div>
@@ -1603,9 +2247,7 @@ function displayBillReceipt(bill) {
         <span>${currency(bill.totalAmount)}</span>
       </div>
     </div>
-    <div style="text-align:center; margin-top:15px; font-size:10px; border-top:1px dashed #000; padding-top:8px;">
-      Thank you for your business!
-    </div>
+    <div style="text-align:center; margin-top:15px; font-size:10px;">Thank you!</div>
   `;
   
   container.style.display = 'block';
@@ -1623,11 +2265,9 @@ function closeBillReceipt() {
 
 async function downloadPDF() {
   if (!currentBillData) {
-    alert("No bill data available");
+    alert("No bill");
     return;
   }
-
-  showToast('Generating PDF...');
 
   try {
     const { jsPDF } = window.jspdf;
@@ -1647,14 +2287,13 @@ async function downloadPDF() {
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text('Stock Inventory & Billing', 105, 28, { align: 'center' });
-    doc.text(`${displayDate} ${displayTime}`, 105, 34, { align: 'center' });
+    doc.text(`${displayDate} ${displayTime}`, 105, 30, { align: 'center' });
     
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
-    doc.text(`Bill: ${currentBillData.billId}`, 105, 42, { align: 'center' });
+    doc.text(`Bill: ${currentBillData.billId}`, 105, 40, { align: 'center' });
 
-    let yPos = 55;
+    let yPos = 50;
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     doc.text(`Customer: ${currentBillData.customerName}`, 20, yPos);
@@ -1663,7 +2302,7 @@ async function downloadPDF() {
       doc.text(`Contact: ${currentBillData.customerContact}`, 20, yPos);
     }
 
-    yPos += 10;
+    yPos += 12;
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);
 
@@ -1696,15 +2335,10 @@ async function downloadPDF() {
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);
     yPos += 8;
-    doc.setFontSize(14);
+    doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
     doc.text('TOTAL:', 130, yPos);
     doc.text(currency(currentBillData.totalAmount), 170, yPos);
-
-    yPos += 15;
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'italic');
-    doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
 
     const pdfBlob = doc.output('blob');
     const fileName = `Invoice_${currentBillData.billId}.pdf`;
@@ -1714,23 +2348,22 @@ async function downloadPDF() {
     link.download = fileName;
     link.click();
 
-    showToast('PDF Downloaded!');
+    showToast('Downloaded!');
 
   } catch (error) {
-    console.error('PDF generation error:', error);
-    alert('Error generating PDF');
+    alert('Error');
   }
 }
 
 function showWhatsAppOptions() {
   if (!currentBillData) {
-    alert("No bill data available");
+    alert("No bill");
     return;
   }
 
   const phone = currentBillData.customerContact;
   if (!phone) {
-    alert("Customer phone number is required for WhatsApp");
+    alert("Need phone");
     return;
   }
 
@@ -1745,58 +2378,32 @@ function sendWhatsAppText() {
   closeWhatsAppModal();
 
   const phone = currentBillData.customerContact;
-  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  let cleanPhone = phone.replace(/[^\d+]/g, '');
   
-  if (!cleanPhone.startsWith('+')) {
-    alert("Phone number must include country code (e.g., +91XXXXXXXXXX)");
-    return;
+  if (!cleanPhone.startsWith('+91')) {
+    cleanPhone = '+91' + cleanPhone;
   }
 
   const date = new Date(currentBillData.timestamp);
   const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
-  const displayTime = currentBillData.billTime || date.toLocaleTimeString();
   
-  let message = `*INVOICE*\n\n`;
-  message += `Hi ${currentBillData.customerName},\n\n`;
-  message += `Your bill is ready!\n\n`;
-  message += `📋 *Bill ID:* ${currentBillData.billId}\n`;
-  message += `📅 *Date:* ${displayDate} ${displayTime}\n\n`;
-  message += `*ITEMS:*\n`;
-  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+  let message = `*INVOICE*\n\nBill: ${currentBillData.billId}\n${displayDate}\n\n`;
   
   Object.values(currentBillData.items).forEach(item => {
-    message += `${item.name}\n`;
-    message += `  ${item.qty} × ${currency(item.sellPrice)} = ${currency(item.total)}\n`;
+    message += `${item.name} x${item.qty} = ${currency(item.total)}\n`;
   });
   
-  message += `━━━━━━━━━━━━━━━━━━━━\n`;
-  message += `*TOTAL: ${currency(currentBillData.totalAmount)}*\n\n`;
-  message += `Thank you for your business!\n`;
+  message += `\n*TOTAL: ${currency(currentBillData.totalAmount)}*`;
 
   const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   window.open(whatsappURL, '_blank');
   
-  showToast('WhatsApp opened!');
+  showToast('Opened!');
 }
 
 function sendWhatsAppWithPDF() {
   closeWhatsAppModal();
-  
-  showToast('Downloading PDF... Then share via WhatsApp');
-  
   downloadPDF();
-  
-  setTimeout(() => {
-    const phone = currentBillData.customerContact;
-    const cleanPhone = phone.replace(/[^\d+]/g, '');
-    
-    const message = `Hi ${currentBillData.customerName},\n\nYour invoice (${currentBillData.billId}) is ready!\n\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nPlease find the attached PDF invoice.\n\nThank you!`;
-    
-    const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappURL, '_blank');
-    
-    alert('PDF downloaded! Now attach it to WhatsApp and send.');
-  }, 1500);
 }
 
 function renderBillHistory() {
@@ -1813,28 +2420,24 @@ function renderBillHistory() {
     .sort((a, b) => b.timestamp - a.timestamp);
 
   if (billList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:30px;">No bills</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">No bills</td></tr>';
     return;
   }
 
   tbody.innerHTML = billList.map(bill => {
     const date = new Date(bill.timestamp);
     const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
-    const displayTime = bill.billTime || date.toLocaleTimeString();
     
     return `
       <tr>
         <td class="sku" style="font-size:11px;">${escapeHtml(bill.billId)}</td>
-        <td style="font-size:11px;">${displayDate}<br>${displayTime}</td>
-        <td style="font-size:12px;">
-          <div>${escapeHtml(bill.customerName)}</div>
-          <div style="font-size:10px; color:var(--muted);">${escapeHtml(bill.customerContact || '')}</div>
-        </td>
+        <td style="font-size:11px;">${displayDate}</td>
+        <td>${escapeHtml(bill.customerName)}</td>
         <td>${bill.itemCount}</td>
         <td class="num">${currency(bill.totalAmount)}</td>
         <td class="num" style="color:var(--teal);">${currency(bill.profit)}</td>
         <td>
-          <button class="icon-btn" onclick="viewBillDetails('${bill.id}')" title="View">👁</button>
+          <button class="icon-btn" onclick="viewBillDetails('${bill.id}')">👁</button>
         </td>
       </tr>
     `;
@@ -1881,18 +2484,12 @@ function renderAnalytics() {
 
   const topContainer = document.getElementById("topProducts");
   if (topProducts.length === 0) {
-    topContainer.innerHTML = '<p style="color:var(--muted); font-size:12px;">No sales yet</p>';
+    topContainer.innerHTML = '<p>No sales</p>';
   } else {
     topContainer.innerHTML = topProducts.map(([name, data], i) => `
       <div style="padding:8px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; font-size:12px;">
-        <div>
-          <span style="color:var(--amber); font-weight:700; margin-right:6px;">#${i+1}</span>
-          <span>${escapeHtml(name)}</span>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-weight:600;">${data.qty}</div>
-          <div style="font-size:10px; color:var(--muted);">${currency(data.revenue)}</div>
-        </div>
+        <span>#${i+1} ${escapeHtml(name)}</span>
+        <span style="color:var(--teal);">${data.qty} = ${currency(data.revenue)}</span>
       </div>
     `).join("");
   }
@@ -1902,20 +2499,15 @@ function downloadAnalytics() {
   const billList = Object.values(bills);
   
   const csvData = [
-    ['Bill ID', 'Date', 'Time', 'Customer', 'Contact', 'Items', 'Amount', 'Profit'],
-    ...billList.map(b => {
-      const date = new Date(b.timestamp);
-      return [
-        b.billId,
-        b.billDate || date.toLocaleDateString(),
-        b.billTime || date.toLocaleTimeString(),
-        b.customerName,
-        b.customerContact || '',
-        b.itemCount,
-        b.totalAmount,
-        b.profit
-      ];
-    })
+    ['Bill', 'Date', 'Customer', 'Items', 'Amount', 'Profit'],
+    ...billList.map(b => [
+      b.billId,
+      b.billDate || new Date(b.timestamp).toLocaleDateString(),
+      b.customerName,
+      b.itemCount,
+      b.totalAmount,
+      b.profit
+    ])
   ];
 
   const csv = csvData.map(row => row.join(',')).join('\n');
@@ -1923,7 +2515,7 @@ function downloadAnalytics() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `analytics_${Date.now()}.csv`;
+  a.download = `report_${Date.now()}.csv`;
   a.click();
   showToast('Downloaded!');
 }
@@ -1937,9 +2529,7 @@ function exportToExcel() {
     'Name': p.name,
     'SKU': p.sku,
     'Category': p.category || '',
-    'Supplier': p.supplier || '',
     'Qty': p.quantity,
-    'Reorder': p.reorderLevel,
     'Cost': p.costPrice,
     'Sell': p.sellPrice,
     'Profit%': calculateProfit(p.costPrice, p.sellPrice)
@@ -1963,22 +2553,22 @@ function importFromExcel(event) {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-    if (!confirm(`Import ${jsonData.length} products?`)) return;
+    if (!confirm(`Import ${jsonData.length}?`)) return;
 
     jsonData.forEach(row => {
-      const name = row['Name'] || row['name'] || '';
+      const name = row['Name'] || '';
       
       if (!name) return;
       
       const productData = {
         name: name,
-        sku: row['SKU'] || row['sku'] || generateSKU(name),
-        category: row['Category'] || row['category'] || 'Uncategorized',
-        supplier: row['Supplier'] || row['supplier'] || '',
-        quantity: Number(row['Qty'] || row['quantity'] || 0),
-        reorderLevel: Number(row['Reorder'] || row['reorderLevel'] || 5),
-        costPrice: Number(row['Cost'] || row['costPrice'] || 0),
-        sellPrice: Number(row['Sell'] || row['sellPrice'] || 0),
+        sku: row['SKU'] || generateSKU(name),
+        category: row['Category'] || 'Uncategorized',
+        supplier: row['Supplier'] || '',
+        quantity: Number(row['Qty'] || 0),
+        reorderLevel: Number(row['Reorder'] || 5),
+        costPrice: Number(row['Cost'] || 0),
+        sellPrice: Number(row['Sell'] || 0),
         updatedAt: Date.now()
       };
 
@@ -1992,13 +2582,35 @@ function importFromExcel(event) {
   reader.readAsArrayBuffer(file);
 }
 
+function applyGlobalProfit() {
+  const percent = Number(document.getElementById("globalProfitPercent").value || 0);
+  if (percent < 0) {
+    alert("Valid %");
+    return;
+  }
+  
+  if (!confirm(`Apply ${percent}%?`)) return;
+
+  Object.entries(products).forEach(([id, product]) => {
+    const cost = Number(product.costPrice || 0);
+    const newSell = cost + (cost * percent / 100);
+    inventoryRef.child(id).update({
+      sellPrice: Math.round(newSell),
+      updatedAt: Date.now()
+    });
+  });
+
+  showToast('Applied!');
+}
+
 function clearAllData() {
-  if (!confirm("Delete ALL data?")) return;
-  if (!confirm("FINAL WARNING!")) return;
+  if (!confirm("Delete ALL?")) return;
+  if (!confirm("FINAL?")) return;
 
   inventoryRef.remove();
   billsRef.remove();
-  showToast('All data cleared!');
+  stockEntriesRef.remove();
+  showToast('Cleared!');
 }
 
 document.getElementById("search").addEventListener("input", render);
