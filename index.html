@@ -160,6 +160,105 @@
     margin-bottom:16px;
   }
 
+  /* ON-SCREEN KEYBOARD */
+  .virtual-keyboard{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:12px;
+    display:none;
+  }
+
+  .virtual-keyboard.show{
+    display:block;
+  }
+
+  .keyboard-row{
+    display:flex;
+    gap:6px;
+    margin-bottom:6px;
+    justify-content:center;
+  }
+
+  .key-btn{
+    min-width:40px;
+    height:40px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--text);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .15s;
+    user-select:none;
+    font-family:'Inter', sans-serif;
+  }
+
+  .key-btn:hover{
+    background:var(--amber-dim);
+    border-color:var(--amber);
+  }
+
+  .key-btn:active{
+    transform:scale(0.95);
+    background:var(--amber);
+    color:#0d1117;
+  }
+
+  .key-btn.space{
+    flex:1;
+  }
+
+  .key-btn.backspace{
+    min-width:60px;
+    background:var(--coral);
+    color:#fff;
+    border-color:var(--coral);
+  }
+
+  .key-btn.clear{
+    min-width:60px;
+    background:var(--amber-dim);
+    border-color:var(--amber);
+  }
+
+  .search-with-keyboard{
+    position:relative;
+  }
+
+  .keyboard-toggle{
+    position:absolute;
+    right:8px;
+    top:50%;
+    transform:translateY(-50%);
+    width:32px;
+    height:32px;
+    background:var(--amber-dim);
+    border:1px solid var(--amber);
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+    transition:all .2s;
+  }
+
+  .keyboard-toggle:hover{
+    background:var(--amber);
+    color:#0d1117;
+  }
+
+  .keyboard-toggle.active{
+    background:var(--amber);
+    color:#0d1117;
+  }
+
   .table-wrap{
     background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
     overflow-x:auto;
@@ -269,6 +368,7 @@
     padding-left:42px !important;
   }
 
+  /* BILLING & STOCK ENTRY INTERFACE */
   .billing-container{
     display:grid; 
     grid-template-columns:1fr; 
@@ -355,6 +455,7 @@
     color:#fff;
   }
 
+  /* Cart/Summary */
   .bill-cart{
     background:var(--panel);
     border:1px solid var(--line);
@@ -694,6 +795,7 @@
     margin-top:30px;
   }
 
+  /* Quantity Input Modal */
   .qty-modal{
     position:fixed;
     inset:0;
@@ -743,22 +845,6 @@
     gap:10px;
   }
 
-  /* SEARCH WITH KEYBOARD VISUAL INDICATOR */
-  .search-with-keyboard{
-    position:relative;
-    margin-bottom:12px;
-  }
-
-  .keyboard-status{
-    position:absolute;
-    right:12px;
-    top:50%;
-    transform:translateY(-50%);
-    font-size:18px;
-    pointer-events:none;
-    opacity:0.6;
-  }
-
   @media (max-width:640px){
     header{padding:12px 16px;}
     .brand-text h1{font-size:14px;}
@@ -771,6 +857,7 @@
     .tabs{gap:4px;}
     .tab-btn{padding:8px 12px; font-size:12px;}
     .bill-product-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));}
+    .key-btn{min-width:35px; height:35px; font-size:12px;}
   }
 
   @media print{
@@ -901,23 +988,77 @@
     </div>
 
     <div class="billing-container">
+      <!-- Product Selection -->
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <h3 style="font-size:14px;">Select Products</h3>
           <span style="font-size:12px; color:var(--muted);" id="stockEntryProductCount">0 products</span>
         </div>
         
+        <!-- Search with Keyboard Toggle -->
         <div class="search-with-keyboard">
-          <input type="text" 
-                 id="stockEntrySearch" 
-                 placeholder="Type product name or SKU" 
-                 style="width:100%;">
-          <div class="keyboard-status">⌨️</div>
+          <input type="text" id="stockEntrySearch" placeholder="🔍 Search products..." 
+                 style="margin-bottom:12px; width:100%; padding-right:45px;">
+          <div class="keyboard-toggle" id="keyboardToggle" onclick="toggleVirtualKeyboard()">⌨️</div>
+        </div>
+
+        <!-- Virtual Keyboard -->
+        <div class="virtual-keyboard" id="virtualKeyboard">
+          <div class="keyboard-row">
+            <div class="key-btn" onclick="typeKey('Q')">Q</div>
+            <div class="key-btn" onclick="typeKey('W')">W</div>
+            <div class="key-btn" onclick="typeKey('E')">E</div>
+            <div class="key-btn" onclick="typeKey('R')">R</div>
+            <div class="key-btn" onclick="typeKey('T')">T</div>
+            <div class="key-btn" onclick="typeKey('Y')">Y</div>
+            <div class="key-btn" onclick="typeKey('U')">U</div>
+            <div class="key-btn" onclick="typeKey('I')">I</div>
+            <div class="key-btn" onclick="typeKey('O')">O</div>
+            <div class="key-btn" onclick="typeKey('P')">P</div>
+          </div>
+          <div class="keyboard-row">
+            <div class="key-btn" onclick="typeKey('A')">A</div>
+            <div class="key-btn" onclick="typeKey('S')">S</div>
+            <div class="key-btn" onclick="typeKey('D')">D</div>
+            <div class="key-btn" onclick="typeKey('F')">F</div>
+            <div class="key-btn" onclick="typeKey('G')">G</div>
+            <div class="key-btn" onclick="typeKey('H')">H</div>
+            <div class="key-btn" onclick="typeKey('J')">J</div>
+            <div class="key-btn" onclick="typeKey('K')">K</div>
+            <div class="key-btn" onclick="typeKey('L')">L</div>
+          </div>
+          <div class="keyboard-row">
+            <div class="key-btn" onclick="typeKey('Z')">Z</div>
+            <div class="key-btn" onclick="typeKey('X')">X</div>
+            <div class="key-btn" onclick="typeKey('C')">C</div>
+            <div class="key-btn" onclick="typeKey('V')">V</div>
+            <div class="key-btn" onclick="typeKey('B')">B</div>
+            <div class="key-btn" onclick="typeKey('N')">N</div>
+            <div class="key-btn" onclick="typeKey('M')">M</div>
+            <div class="key-btn backspace" onclick="typeBackspace()">⌫</div>
+          </div>
+          <div class="keyboard-row">
+            <div class="key-btn" onclick="typeKey('1')">1</div>
+            <div class="key-btn" onclick="typeKey('2')">2</div>
+            <div class="key-btn" onclick="typeKey('3')">3</div>
+            <div class="key-btn" onclick="typeKey('4')">4</div>
+            <div class="key-btn" onclick="typeKey('5')">5</div>
+            <div class="key-btn" onclick="typeKey('6')">6</div>
+            <div class="key-btn" onclick="typeKey('7')">7</div>
+            <div class="key-btn" onclick="typeKey('8')">8</div>
+            <div class="key-btn" onclick="typeKey('9')">9</div>
+            <div class="key-btn" onclick="typeKey('0')">0</div>
+          </div>
+          <div class="keyboard-row">
+            <div class="key-btn space" onclick="typeKey(' ')">SPACE</div>
+            <div class="key-btn clear" onclick="clearSearch()">CLEAR</div>
+          </div>
         </div>
 
         <div class="bill-product-grid" id="stockEntryProductGrid"></div>
       </div>
 
+      <!-- Entry Summary -->
       <div>
         <h3 style="font-size:14px; margin-bottom:12px;">Entry List <span id="stockEntryItemCount" style="color:var(--muted);">(0 items)</span></h3>
         <div class="bill-cart">
@@ -1005,13 +1146,8 @@
           <h3 style="font-size:14px;">Select Products</h3>
           <span style="font-size:12px; color:var(--muted);" id="productCount">0 products</span>
         </div>
-        <div class="search-with-keyboard">
-          <input type="text" 
-                 id="billProductSearch" 
-                 placeholder="Type product name or SKU" 
-                 style="width:100%;">
-          <div class="keyboard-status">⌨️</div>
-        </div>
+        <input type="text" id="billProductSearch" placeholder="🔍 Search products..." 
+               style="margin-bottom:12px; width:100%;">
         <div class="bill-product-grid" id="billProductGrid"></div>
       </div>
 
@@ -1095,7 +1231,7 @@
       <div class="field-row">
         <div class="field">
           <label>Profit % for all</label>
-          <input type="number" id="globalProfitPercent" min="0" step="0.01" value="10">
+          <input type="number" id="globalProfitPercent" min="0" step="0.1" value="10">
         </div>
         <div class="field">
           <button class="btn btn-primary" onclick="applyGlobalProfit()" style="margin-top:19px;">Apply All</button>
@@ -1172,11 +1308,11 @@
     <div class="field-row">
       <div class="field">
         <label>Stock Qty</label>
-        <input type="number" id="f_qty" min="-9999" value="0" placeholder="0" step="0.01">
+        <input type="number" id="f_qty" min="-9999" value="0" placeholder="0">
       </div>
       <div class="field">
         <label>Reorder at</label>
-        <input type="number" id="f_reorder" min="0" value="5" placeholder="5" step="0.01">
+        <input type="number" id="f_reorder" min="0" value="5" placeholder="5">
       </div>
     </div>
     <div class="field">
@@ -1190,7 +1326,7 @@
       </div>
       <div class="field">
         <label>Profit %</label>
-        <input type="number" id="f_profit_percent" min="0" step="0.01" placeholder="10">
+        <input type="number" id="f_profit_percent" min="0" step="0.1" placeholder="10">
       </div>
     </div>
     <div class="profit-indicator" id="profitIndicator"></div>
@@ -1206,7 +1342,7 @@
 <div class="qty-modal" id="qtyModal">
   <div class="qty-modal-content">
     <h3 id="qtyModalLabel">Enter Quantity</h3>
-    <input type="number" class="qty-modal-input" id="qtyModalInput" min="0.01" value="1" step="0.01" autofocus>
+    <input type="number" class="qty-modal-input" id="qtyModalInput" min="1" value="1" autofocus>
     <div class="qty-modal-actions">
       <button class="btn btn-ghost" onclick="closeQtyModal()">Cancel</button>
       <button class="btn btn-primary" onclick="confirmQtyModal()">OK</button>
@@ -1270,9 +1406,50 @@ let stockEntrySearchTerm = '';
 let currentStockEntryType = 'in';
 let qtyModalCallback = null;
 let addProductContext = null;
+let keyboardVisible = false;
 
-// PHYSICAL KEYBOARD SUPPORT - NO VIRTUAL KEYBOARD
-// Just use your physical keyboard directly to type
+// ========== VIRTUAL KEYBOARD FUNCTIONS ==========
+
+function toggleVirtualKeyboard() {
+  keyboardVisible = !keyboardVisible;
+  const keyboard = document.getElementById('virtualKeyboard');
+  const toggle = document.getElementById('keyboardToggle');
+  
+  if (keyboardVisible) {
+    keyboard.classList.add('show');
+    toggle.classList.add('active');
+  } else {
+    keyboard.classList.remove('show');
+    toggle.classList.remove('active');
+  }
+}
+
+function typeKey(char) {
+  const searchInput = document.getElementById('stockEntrySearch');
+  searchInput.value += char;
+  stockEntrySearchTerm = searchInput.value.trim().toLowerCase();
+  renderStockEntryProducts();
+}
+
+function typeBackspace() {
+  const searchInput = document.getElementById('stockEntrySearch');
+  searchInput.value = searchInput.value.slice(0, -1);
+  stockEntrySearchTerm = searchInput.value.trim().toLowerCase();
+  renderStockEntryProducts();
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById('stockEntrySearch');
+  searchInput.value = '';
+  stockEntrySearchTerm = '';
+  renderStockEntryProducts();
+}
+
+// Allow regular keyboard input as well
+document.getElementById('stockEntrySearch').addEventListener('input', (e) => {
+  stockEntrySearchTerm = e.target.value.trim().toLowerCase();
+  renderStockEntryProducts();
+});
 
 function initializeBillDateTime() {
   const now = new Date();
@@ -1347,13 +1524,7 @@ function switchTab(tabName) {
 }
 
 function currency(n){
-  const num = parseFloat(n || 0);
-  return "₹" + num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function formatDecimal(num, places = 2) {
-  const factor = Math.pow(10, places);
-  return Math.round(num * factor) / factor;
+  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 }
 
 function signalLevelClass(qty, reorder){
@@ -1368,8 +1539,7 @@ function signalLevelClass(qty, reorder){
 
 function calculateProfit(cost, sell) {
   if (!cost || cost <= 0) return 0;
-  const profit = ((sell - cost) / cost * 100);
-  return formatDecimal(profit, 2);
+  return ((sell - cost) / cost * 100).toFixed(1);
 }
 
 function generateSKU(name) {
@@ -1451,7 +1621,7 @@ function adjustStock(id, delta) {
   const product = products[id];
   if (!product) return;
   
-  const newQty = formatDecimal(Number(product.quantity || 0) + delta, 2);
+  const newQty = Number(product.quantity || 0) + delta;
   inventoryRef.child(id).update({
     quantity: newQty,
     updatedAt: Date.now()
@@ -1612,7 +1782,7 @@ function updateProfitIndicator() {
   
   if (cost > 0 && sell > 0) {
     const profit = sell - cost;
-    const profitPercent = formatDecimal((profit / cost) * 100, 2);
+    const profitPercent = ((profit / cost) * 100).toFixed(2);
     indicator.textContent = `Profit: ${currency(profit)} (${profitPercent}%)`;
     indicator.style.color = profit >= 0 ? 'var(--teal)' : 'var(--coral)';
   } else {
@@ -1628,8 +1798,8 @@ document.getElementById("f_profit_percent").addEventListener("input", (e) => {
   const percent = Number(e.target.value || 0);
   
   if (cost > 0 && percent >= 0) {
-    const sell = formatDecimal(cost + (cost * percent / 100), 2);
-    document.getElementById("f_sell").value = sell;
+    const sell = cost + (cost * percent / 100);
+    document.getElementById("f_sell").value = sell.toFixed(2);
     updateProfitIndicator();
   }
 });
@@ -1639,7 +1809,7 @@ document.getElementById("f_sell").addEventListener("input", () => {
   const sell = Number(document.getElementById("f_sell").value || 0);
   
   if (cost > 0) {
-    const percent = formatDecimal((sell - cost) / cost * 100, 2);
+    const percent = ((sell - cost) / cost * 100).toFixed(2);
     document.getElementById("f_profit_percent").value = percent;
   }
 });
@@ -1659,10 +1829,10 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
     sku: document.getElementById("f_sku").value.trim() || generateSKU(name),
     category: document.getElementById("f_category").value.trim() || "Uncategorized",
     supplier: document.getElementById("f_supplier").value.trim() || "",
-    quantity: formatDecimal(Number(document.getElementById("f_qty").value || 0), 2),
-    reorderLevel: formatDecimal(Number(document.getElementById("f_reorder").value || 5), 2),
-    costPrice: formatDecimal(Number(document.getElementById("f_cost").value || 0), 2),
-    sellPrice: formatDecimal(Number(document.getElementById("f_sell").value || 0), 2),
+    quantity: Number(document.getElementById("f_qty").value || 0),
+    reorderLevel: Number(document.getElementById("f_reorder").value || 5),
+    costPrice: Number(document.getElementById("f_cost").value || 0),
+    sellPrice: Number(document.getElementById("f_sell").value || 0),
     updatedAt: Date.now()
   };
 
@@ -1679,6 +1849,7 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
       } else if (addProductContext === 'stockEntry') {
         stockEntrySearchTerm = '';
         document.getElementById('stockEntrySearch').value = '';
+        clearSearch();
       }
     });
   }
@@ -1701,9 +1872,9 @@ function closeQtyModal() {
 }
 
 function confirmQtyModal() {
-  const value = parseFloat(document.getElementById('qtyModalInput').value) || 1;
+  const value = parseInt(document.getElementById('qtyModalInput').value) || 1;
   if (qtyModalCallback) {
-    qtyModalCallback(formatDecimal(value, 2));
+    qtyModalCallback(value);
   }
   closeQtyModal();
 }
@@ -1762,7 +1933,7 @@ function renderStockEntryProducts() {
     return;
   }
 
-  container.innerHTML = list.map((p) => {
+  container.innerHTML = list.map(p => {
     const inEntry = stockEntry[p.id];
     const qty = inEntry ? inEntry.qty : 0;
     const cardClass = inEntry ? (currentStockEntryType === 'in' ? 'in-stock-entry' : 'stock-out') : '';
@@ -1786,7 +1957,7 @@ function addToStockEntry(productId) {
   if (!product) return;
 
   if (stockEntry[productId]) {
-    stockEntry[productId].qty = formatDecimal(stockEntry[productId].qty + 1, 2);
+    stockEntry[productId].qty++;
     renderStockEntryProducts();
     showToast(`+1 ${product.name}`);
   } else {
@@ -1804,8 +1975,6 @@ function removeFromStockEntry(productId) {
 
 function updateStockEntryQty(productId, newQty) {
   if (!stockEntry[productId]) return;
-
-  newQty = formatDecimal(newQty, 2);
 
   if (newQty <= 0) {
     delete stockEntry[productId];
@@ -1862,7 +2031,7 @@ function updateStockEntryCart() {
     `;
   }).join("");
 
-  document.getElementById('stockEntryTotalQty').textContent = formatDecimal(totalQty, 2);
+  document.getElementById('stockEntryTotalQty').textContent = totalQty;
   cartTotalSection.style.display = 'block';
 }
 
@@ -1890,7 +2059,7 @@ function saveStockEntry() {
     
     const qty = data.qty;
     const qtyChange = currentStockEntryType === 'in' ? qty : -qty;
-    const newStock = formatDecimal(product.quantity + qtyChange, 2);
+    const newStock = product.quantity + qtyChange;
     
     inventoryRef.child(id).update({
       quantity: newStock,
@@ -1913,8 +2082,7 @@ function saveStockEntry() {
   
   stockEntry = {};
   initializeStockEntryDateTime();
-  document.getElementById('stockEntrySearch').value = '';
-  stockEntrySearchTerm = '';
+  clearSearch();
   renderStockEntryProducts();
 }
 
@@ -1961,11 +2129,6 @@ function renderStockEntryHistory() {
 
 document.getElementById("stockHistoryDateFilter")?.addEventListener("change", renderStockEntryHistory);
 document.getElementById("stockHistoryTypeFilter")?.addEventListener("change", renderStockEntryHistory);
-
-document.getElementById("stockEntrySearch").addEventListener("input", (e) => {
-  stockEntrySearchTerm = e.target.value.trim().toLowerCase();
-  renderStockEntryProducts();
-});
 
 // ========== BILLING FUNCTIONS ==========
 
@@ -2028,7 +2191,7 @@ function addToCart(productId) {
   if (!product) return;
 
   if (cart[productId]) {
-    cart[productId].qty = formatDecimal(cart[productId].qty + 1, 2);
+    cart[productId].qty++;
   } else {
     cart[productId] = { qty: 1 };
   }
@@ -2045,8 +2208,6 @@ function removeFromCart(productId) {
 
 function updateCartQty(productId, newQty) {
   if (!cart[productId]) return;
-
-  newQty = formatDecimal(newQty, 2);
 
   if (newQty <= 0) {
     delete cart[productId];
@@ -2087,12 +2248,12 @@ function updateCart() {
     if (!product) return '';
 
     const qty = data.qty;
-    const itemTotal = formatDecimal(product.sellPrice * qty, 2);
-    const itemCost = formatDecimal(product.costPrice * qty, 2);
+    const itemTotal = product.sellPrice * qty;
+    const itemCost = product.costPrice * qty;
 
-    totalCost = formatDecimal(totalCost + itemCost, 2);
-    totalSell = formatDecimal(totalSell + itemTotal, 2);
-    totalQty = formatDecimal(totalQty + qty, 2);
+    totalCost += itemCost;
+    totalSell += itemTotal;
+    totalQty += qty;
 
     return `
       <div class="cart-item">
@@ -2110,9 +2271,9 @@ function updateCart() {
     `;
   }).join("");
 
-  const profit = formatDecimal(totalSell - totalCost, 2);
+  const profit = totalSell - totalCost;
 
-  document.getElementById('totalItems').textContent = formatDecimal(totalQty, 2);
+  document.getElementById('totalItems').textContent = totalQty;
   document.getElementById('subtotalAmount').textContent = currency(totalSell);
   document.getElementById('profitAmount').textContent = currency(profit);
   document.getElementById('totalAmount').textContent = currency(totalSell);
@@ -2158,7 +2319,7 @@ function generateBill() {
     if (!product) return;
     
     const qty = data.qty;
-    const newStock = formatDecimal(product.quantity - qty, 2);
+    const newStock = product.quantity - qty;
     
     inventoryRef.child(id).update({
       quantity: newStock,
@@ -2176,11 +2337,11 @@ function generateBill() {
       entryTime: billTime
     });
 
-    const itemCost = formatDecimal(product.costPrice * qty, 2);
-    const itemSell = formatDecimal(product.sellPrice * qty, 2);
+    const itemCost = product.costPrice * qty;
+    const itemSell = product.sellPrice * qty;
     
-    totalCost = formatDecimal(totalCost + itemCost, 2);
-    totalSell = formatDecimal(totalSell + itemSell, 2);
+    totalCost += itemCost;
+    totalSell += itemSell;
 
     billItems[id] = {
       name: product.name,
@@ -2202,7 +2363,7 @@ function generateBill() {
     items: billItems,
     totalAmount: totalSell,
     totalCost: totalCost,
-    profit: formatDecimal(totalSell - totalCost, 2),
+    profit: totalSell - totalCost,
     itemCount: items.length
   };
 
@@ -2514,7 +2675,7 @@ function renderAnalytics() {
   const totalBills = billList.length;
   const totalRevenue = billList.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
   const totalProfit = billList.reduce((sum, b) => sum + (b.profit || 0), 0);
-  const avgBill = totalBills > 0 ? formatDecimal(totalRevenue / totalBills, 2) : 0;
+  const avgBill = totalBills > 0 ? totalRevenue / totalBills : 0;
 
   document.getElementById("analyticsTotal").textContent = totalBills;
   document.getElementById("analyticsRevenue").textContent = currency(totalRevenue);
@@ -2527,8 +2688,8 @@ function renderAnalytics() {
       if (!productSales[item.name]) {
         productSales[item.name] = { qty: 0, revenue: 0 };
       }
-      productSales[item.name].qty = formatDecimal(productSales[item.name].qty + item.qty, 2);
-      productSales[item.name].revenue = formatDecimal(productSales[item.name].revenue + item.total, 2);
+      productSales[item.name].qty += item.qty;
+      productSales[item.name].revenue += item.total;
     });
   });
 
@@ -2575,7 +2736,7 @@ function downloadAnalytics() {
     })
   ];
 
-  const csv = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  const csv = csvData.map(row => row.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2632,10 +2793,10 @@ function importFromExcel(event) {
         sku: row['SKU'] || row['sku'] || generateSKU(name),
         category: row['Category'] || row['category'] || 'Uncategorized',
         supplier: row['Supplier'] || row['supplier'] || '',
-        quantity: formatDecimal(Number(row['Qty'] || row['quantity'] || 0), 2),
-        reorderLevel: formatDecimal(Number(row['Reorder'] || row['reorderLevel'] || 5), 2),
-        costPrice: formatDecimal(Number(row['Cost'] || row['costPrice'] || 0), 2),
-        sellPrice: formatDecimal(Number(row['Sell'] || row['sellPrice'] || 0), 2),
+        quantity: Number(row['Qty'] || row['quantity'] || 0),
+        reorderLevel: Number(row['Reorder'] || row['reorderLevel'] || 5),
+        costPrice: Number(row['Cost'] || row['costPrice'] || 0),
+        sellPrice: Number(row['Sell'] || row['sellPrice'] || 0),
         updatedAt: Date.now()
       };
 
@@ -2660,7 +2821,7 @@ function applyGlobalProfit() {
 
   Object.entries(products).forEach(([id, product]) => {
     const cost = Number(product.costPrice || 0);
-    const newSell = formatDecimal(cost + (cost * percent / 100), 2);
+    const newSell = cost + (cost * percent / 100);
     inventoryRef.child(id).update({
       sellPrice: newSell,
       updatedAt: Date.now()
