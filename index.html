@@ -248,7 +248,6 @@
     padding-left:42px !important;
   }
 
-  /* BILLING & STOCK ENTRY INTERFACE */
   .billing-container{
     display:grid; 
     grid-template-columns:1fr; 
@@ -335,7 +334,6 @@
     color:#fff;
   }
 
-  /* Cart/Summary */
   .bill-cart{
     background:var(--panel);
     border:1px solid var(--line);
@@ -616,8 +614,10 @@
     border:1px solid var(--line);
     border-radius:12px;
     padding:24px;
-    max-width:400px;
+    max-width:600px;
     width:90%;
+    max-height:80vh;
+    overflow-y:auto;
   }
 
   .whatsapp-modal h3{
@@ -668,14 +668,6 @@
     color:var(--coral);
   }
 
-  footer{
-    text-align:center;
-    color:var(--muted);
-    font-size:10px;
-    margin-top:30px;
-  }
-
-  /* Quantity Input Modal */
   .qty-modal{
     position:fixed;
     inset:0;
@@ -725,6 +717,84 @@
     gap:10px;
   }
 
+  .dc-info{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px;
+    margin-top:8px;
+    font-size:11px;
+  }
+
+  .dc-badge{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:4px;
+    background:var(--amber-dim);
+    color:var(--amber);
+    font-size:10px;
+    font-weight:600;
+    margin-right:6px;
+  }
+
+  .supplier-summary-card{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+
+  .supplier-summary-card:hover{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .supplier-summary-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+
+  .supplier-name{
+    font-size:16px;
+    font-weight:700;
+    color:var(--amber);
+  }
+
+  .supplier-stats{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+
+  .supplier-stat{
+    text-align:center;
+  }
+
+  .supplier-stat-label{
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+
+  .supplier-stat-value{
+    font-size:16px;
+    font-weight:700;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:10px;
+    margin-top:30px;
+  }
+
   @media (max-width:640px){
     header{padding:12px 16px;}
     .brand-text h1{font-size:14px;}
@@ -737,12 +807,21 @@
     .tabs{gap:4px;}
     .tab-btn{padding:8px 12px; font-size:12px;}
     .bill-product-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));}
+    .supplier-stats{grid-template-columns:1fr;}
   }
 
   @media print{
     body * {visibility:hidden;}
     .bill-receipt, .bill-receipt * {visibility:visible;}
     .bill-receipt{position:absolute; left:0; top:0; width:100%;}
+  }
+
+  .datalist-wrapper{
+    position:relative;
+  }
+
+  input[list]::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
   }
 </style>
 </head>
@@ -765,8 +844,11 @@
 <main>
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('inventory')">📦 Inventory</button>
-    <button class="tab-btn" onclick="switchTab('stockEntry')">📝 Stock Entry</button>
-    <button class="tab-btn" onclick="switchTab('billing')">💳 Billing</button>
+    <button class="tab-btn" onclick="switchTab('stockEntry')">📝 Purchase DC</button>
+    <button class="tab-btn" onclick="switchTab('billing')">💳 Sales DC</button>
+    <button class="tab-btn" onclick="switchTab('supplierReports')">🏭 Supplier Reports</button>
+    <button class="tab-btn" onclick="switchTab('dcReports')">📋 Purchase Reports</button>
+    <button class="tab-btn" onclick="switchTab('billReports')">📋 Sales Reports</button>
     <button class="tab-btn" onclick="switchTab('history')">📊 History</button>
     <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
     <button class="tab-btn" onclick="switchTab('analytics')">📈 Analytics</button>
@@ -825,6 +907,7 @@
             <th>Category</th>
             <th>Stock</th>
             <th>Quick Adjust</th>
+            <th>Avg Cost</th>
             <th>Price</th>
             <th>Profit%</th>
             <th></th>
@@ -841,7 +924,7 @@
 
   <!-- STOCK ENTRY TAB -->
   <div id="tab-stockEntry" class="tab-content">
-    <h2 style="margin-bottom:16px;">Stock Entry</h2>
+    <h2 style="margin-bottom:16px;">Purchase DC Entry</h2>
     
     <div class="bill-datetime">
       <h3>📅 Entry Date & Time</h3>
@@ -857,6 +940,21 @@
       </div>
     </div>
 
+    <div class="bill-datetime">
+      <h3>📄 DC (Delivery Challan) Details</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>DC Number</label>
+          <input type="text" id="stockEntryDC" placeholder="DC-001">
+        </div>
+        <div class="field">
+          <label>Supplier Name</label>
+          <input type="text" id="stockEntrySupplier" list="supplierList" placeholder="Select or type supplier">
+          <datalist id="supplierList"></datalist>
+        </div>
+      </div>
+    </div>
+
     <div class="stock-type-toggle">
       <div class="stock-type-btn in active" onclick="setStockEntryType('in')" id="stockTypeIn">
         ➕ Stock IN
@@ -867,7 +965,6 @@
     </div>
 
     <div class="billing-container">
-      <!-- Product Selection -->
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <h3 style="font-size:14px;">Select Products</h3>
@@ -878,7 +975,6 @@
         <div class="bill-product-grid" id="stockEntryProductGrid"></div>
       </div>
 
-      <!-- Entry Summary -->
       <div>
         <h3 style="font-size:14px; margin-bottom:12px;">Entry List <span id="stockEntryItemCount" style="color:var(--muted);">(0 items)</span></h3>
         <div class="bill-cart">
@@ -893,6 +989,10 @@
             <div class="cart-total-line">
               <span>Total Items:</span>
               <span id="stockEntryTotalQty">0</span>
+            </div>
+            <div class="cart-total-line">
+              <span>Total Value:</span>
+              <span id="stockEntryTotalValue">₹0</span>
             </div>
             <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="saveStockEntry()">
               Save Entry
@@ -911,15 +1011,20 @@
           <option value="in">Stock In</option>
           <option value="out">Stock Out</option>
         </select>
+        <input type="text" id="stockHistoryDCFilter" placeholder="DC Number">
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Date & Time</th>
+              <th>DC Number</th>
+              <th>Supplier</th>
               <th>Product</th>
               <th>Type</th>
               <th>Quantity</th>
+              <th>Rate</th>
+              <th>Total</th>
             </tr>
           </thead>
           <tbody id="stockEntryHistoryBody"></tbody>
@@ -930,7 +1035,7 @@
 
   <!-- BILLING TAB -->
   <div id="tab-billing" class="tab-content">
-    <h2 style="margin-bottom:16px;">Create Bill</h2>
+    <h2 style="margin-bottom:16px;">Sales DC Entry</h2>
     
     <div class="bill-datetime">
       <h3>📅 Bill Date & Time</h3>
@@ -942,6 +1047,16 @@
         <div class="field">
           <label>Time</label>
           <input type="time" id="billTime">
+        </div>
+      </div>
+    </div>
+
+    <div class="bill-datetime">
+      <h3>📄 Sales DC Details</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>DC Number</label>
+          <input type="text" id="billDCNumber" placeholder="SDC-001">
         </div>
       </div>
     </div>
@@ -994,12 +1109,12 @@
               <span>Profit:</span>
               <span id="profitAmount">₹0</span>
             </div>
-            <div class="cart-total-line cart-total-final">
+            <div class="cart-total-final">
               <span>TOTAL:</span>
               <span id="totalAmount">₹0</span>
             </div>
             <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="generateBill()">
-              Generate Bill
+              Generate DC
             </button>
           </div>
         </div>
@@ -1017,6 +1132,118 @@
     </div>
   </div>
 
+  <!-- SUPPLIER REPORTS TAB -->
+  <div id="tab-supplierReports" class="tab-content">
+    <h2 style="margin-bottom:16px;">Supplier Purchase Reports</h2>
+    
+    <div class="stats" style="margin-bottom:20px;">
+      <div class="stat value">
+        <div class="lbl">Total Purchase Value</div>
+        <div class="val" id="totalPurchaseValue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Suppliers</div>
+        <div class="val" id="totalSuppliers">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total DCs</div>
+        <div class="val" id="totalPurchaseDCs">0</div>
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="supplierReportSearch" placeholder="Search Supplier...">
+      <button class="btn btn-ghost" onclick="exportSupplierReport()">📤 Export</button>
+    </div>
+
+    <div id="supplierReportContainer"></div>
+  </div>
+
+  <!-- PURCHASE DC REPORTS TAB -->
+  <div id="tab-dcReports" class="tab-content">
+    <h2 style="margin-bottom:16px;">Purchase DC Reports</h2>
+    
+    <div class="stats" style="margin-bottom:20px;">
+      <div class="stat value">
+        <div class="lbl">Total Purchase Value</div>
+        <div class="val" id="dcReportTotalValue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total DCs</div>
+        <div class="val" id="dcReportTotalDCs">0</div>
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="dcReportSearch" placeholder="Search DC Number...">
+      <input type="date" id="dcReportDateFilter">
+      <input type="text" id="dcReportSupplierFilter" placeholder="Supplier" list="dcSupplierList">
+      <datalist id="dcSupplierList"></datalist>
+      <button class="btn btn-ghost" onclick="exportDCReport()">📤 Export</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DC Number</th>
+            <th>Date</th>
+            <th>Supplier</th>
+            <th>Total Items</th>
+            <th>Total Qty</th>
+            <th>Total Value</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="dcReportBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SALES BILLS REPORTS TAB -->
+  <div id="tab-billReports" class="tab-content">
+    <h2 style="margin-bottom:16px;">Sales DC Reports</h2>
+    
+    <div class="stats" style="margin-bottom:20px;">
+      <div class="stat value">
+        <div class="lbl">Total Sales Value</div>
+        <div class="val" id="billReportTotalValue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Sales DCs</div>
+        <div class="val" id="billReportTotalDCs">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Profit</div>
+        <div class="val" id="billReportTotalProfit">₹0</div>
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="billReportSearch" placeholder="Search DC Number...">
+      <input type="date" id="billReportDateFilter">
+      <button class="btn btn-ghost" onclick="exportBillReport()">📤 Export</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DC Number</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Total Items</th>
+            <th>Total Qty</th>
+            <th>Total Amount</th>
+            <th>Profit</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="billReportBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- BILL HISTORY TAB -->
   <div id="tab-history" class="tab-content">
     <h2 style="margin-bottom:16px;">Bill History</h2>
@@ -1028,7 +1255,7 @@
       <table>
         <thead>
           <tr>
-            <th>Bill ID</th>
+            <th>DC Number</th>
             <th>Date</th>
             <th>Customer</th>
             <th>Items</th>
@@ -1136,8 +1363,9 @@
       </div>
     </div>
     <div class="field">
-      <label>Cost price (₹)</label>
+      <label>Default Cost price (₹)</label>
       <input type="number" id="f_cost" min="0" step="0.01" placeholder="0">
+      <div class="optional-hint">Average cost will be calculated from DC entries</div>
     </div>
     <div class="field-row-3">
       <div class="field">
@@ -1158,14 +1386,36 @@
   </form>
 </div>
 
-<!-- Quantity Input Modal -->
-<div class="qty-modal" id="qtyModal">
+<!-- Rate Entry Modal -->
+<div class="qty-modal" id="rateModal">
   <div class="qty-modal-content">
-    <h3 id="qtyModalLabel">Enter Quantity</h3>
-    <input type="number" class="qty-modal-input" id="qtyModalInput" min="1" value="1" autofocus>
+    <h3 id="rateModalLabel">Enter Rate & Quantity</h3>
+    <div style="margin-bottom:16px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">RATE (₹)</label>
+      <input type="number" class="qty-modal-input" id="rateModalInput" min="0" step="0.01" placeholder="0.00" style="margin-bottom:12px; font-size:32px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY</label>
+      <input type="number" class="qty-modal-input" id="qtyModalInput" min="1" value="1" style="font-size:32px;">
+    </div>
     <div class="qty-modal-actions">
-      <button class="btn btn-ghost" onclick="closeQtyModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmQtyModal()">OK</button>
+      <button class="btn btn-ghost" onclick="closeRateModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRateModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Selling Price Modal for Billing -->
+<div class="qty-modal" id="sellPriceModal">
+  <div class="qty-modal-content">
+    <h3 id="sellPriceModalLabel">Enter Selling Price & Quantity</h3>
+    <div style="margin-bottom:16px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">SELLING PRICE (₹)</label>
+      <input type="number" class="qty-modal-input" id="sellPriceModalInput" min="0" step="0.01" placeholder="0.00" style="margin-bottom:12px; font-size:32px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY</label>
+      <input type="number" class="qty-modal-input" id="sellQtyModalInput" min="1" value="1" style="font-size:32px;">
+    </div>
+    <div class="qty-modal-actions">
+      <button class="btn btn-ghost" onclick="closeSellPriceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSellPriceModal()">OK</button>
     </div>
   </div>
 </div>
@@ -1186,6 +1436,33 @@
   </div>
 </div>
 
+<!-- DC Details Modal -->
+<div class="whatsapp-modal" id="dcDetailsModal">
+  <div class="whatsapp-modal-content" style="max-width:600px;">
+    <h3 id="dcDetailsTitle">DC Details</h3>
+    <div id="dcDetailsContent"></div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeDCDetailsModal()">Close</button>
+  </div>
+</div>
+
+<!-- Bill Details Modal -->
+<div class="whatsapp-modal" id="billDetailsModal">
+  <div class="whatsapp-modal-content" style="max-width:600px;">
+    <h3 id="billDetailsTitle">Bill Details</h3>
+    <div id="billDetailsContent"></div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeBillDetailsModal()">Close</button>
+  </div>
+</div>
+
+<!-- Supplier Details Modal -->
+<div class="whatsapp-modal" id="supplierDetailsModal">
+  <div class="whatsapp-modal-content" style="max-width:800px;">
+    <h3 id="supplierDetailsTitle">Supplier Purchase Details</h3>
+    <div id="supplierDetailsContent"></div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeSupplierDetailsModal()">Close</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Firebase -->
@@ -1198,13 +1475,13 @@
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyAx0W0UqjNwr-99bOuBADwaDtNz0U4RBOE",
-  authDomain: "ellectrawebsite-main.firebaseapp.com",
-  databaseURL: "https://ellectrawebsite-main-default-rtdb.firebaseio.com",
-  projectId: "ellectrawebsite-main",
-  storageBucket: "ellectrawebsite-main.appspot.com",
-  messagingSenderId: "615438825",
-  appId: "1:615438825:web:98de136edfe2d07e775378"
+  apiKey: "AIzaSyCAwx2fQKpiQgGYalohvkVpx5PZIw2cfak",
+  authDomain: "om-s-199a5.firebaseapp.com",
+  databaseURL: "https://om-s-199a5-default-rtdb.firebaseio.com",
+  projectId: "om-s-199a5",
+  storageBucket: "om-s-199a5.firebasestorage.app",
+  messagingSenderId: "943377640957",
+  appId: "1:943377640957:web:6c008f2988d78df86afd94"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -1224,7 +1501,9 @@ let currentBillData = null;
 let billProductSearchTerm = '';
 let stockEntrySearchTerm = '';
 let currentStockEntryType = 'in';
-let qtyModalCallback = null;
+let rateModalCallback = null;
+let currentEditingProductId = null;
+let currentEditingBillProductId = null;
 
 function initializeBillDateTime() {
   const now = new Date();
@@ -1265,18 +1544,41 @@ inventoryRef.on("value", (snap) => {
   render();
   renderBillingProducts();
   renderStockEntryProducts();
+  updateSupplierDatalist();
 });
 
 billsRef.on("value", (snap) => {
   bills = snap.val() || {};
   renderBillHistory();
   renderAnalytics();
+  renderBillReports();
 });
 
 stockEntriesRef.on("value", (snap) => {
   stockEntries = snap.val() || {};
   renderStockEntryHistory();
+  renderDCReports();
+  renderSupplierReports();
+  updateDCSupplierDatalist();
 });
+
+function updateSupplierDatalist() {
+  const suppliers = [...new Set(Object.values(stockEntries)
+    .filter(e => e.supplier && e.supplier.trim())
+    .map(e => e.supplier))].sort();
+  
+  const datalist = document.getElementById('supplierList');
+  datalist.innerHTML = suppliers.map(s => `<option value="${escapeHtml(s)}">`).join('');
+}
+
+function updateDCSupplierDatalist() {
+  const suppliers = [...new Set(Object.values(stockEntries)
+    .filter(e => e.supplier && e.supplier.trim())
+    .map(e => e.supplier))].sort();
+  
+  const datalist = document.getElementById('dcSupplierList');
+  datalist.innerHTML = suppliers.map(s => `<option value="${escapeHtml(s)}">`).join('');
+}
 
 function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1296,10 +1598,13 @@ function switchTab(tabName) {
     renderStockEntryProducts();
     renderStockEntryHistory();
   }
+  if(tabName === 'dcReports') renderDCReports();
+  if(tabName === 'billReports') renderBillReports();
+  if(tabName === 'supplierReports') renderSupplierReports();
 }
 
 function currency(n){
-  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
 function signalLevelClass(qty, reorder){
@@ -1323,6 +1628,26 @@ function generateSKU(name) {
   return `${prefix}-${timestamp}`;
 }
 
+function calculateAverageCost(productId) {
+  const entries = Object.values(stockEntries).filter(e => 
+    e.productId === productId && 
+    e.type === 'in' && 
+    e.rate > 0
+  );
+  
+  if (entries.length === 0) return 0;
+  
+  let totalCost = 0;
+  let totalQty = 0;
+  
+  entries.forEach(e => {
+    totalCost += e.rate * e.quantity;
+    totalQty += e.quantity;
+  });
+  
+  return totalQty > 0 ? totalCost / totalQty : 0;
+}
+
 function getFilteredList(){
   const search = document.getElementById("search").value.trim().toLowerCase();
   currentSearchTerm = search;
@@ -1330,7 +1655,11 @@ function getFilteredList(){
   const stockMode = document.getElementById("stockFilter").value;
 
   const filtered = Object.entries(products)
-    .map(([id, p]) => ({ id, ...p }))
+    .map(([id, p]) => ({ 
+      id, 
+      ...p,
+      avgCost: calculateAverageCost(id)
+    }))
     .filter(p => {
       if (search && !(`${p.name} ${p.sku}`.toLowerCase().includes(search))) return false;
       if (cat && p.category !== cat) return false;
@@ -1392,7 +1721,11 @@ function adjustStock(id, delta) {
     quantity: Math.abs(delta),
     timestamp: Date.now(),
     entryDate: new Date().toISOString().split('T')[0],
-    entryTime: new Date().toTimeString().slice(0, 5)
+    entryTime: new Date().toTimeString().slice(0, 5),
+    dcNumber: 'MANUAL',
+    supplier: '',
+    rate: 0,
+    total: 0
   });
   
   showToast(`${delta > 0 ? '+' : ''}${delta} ${product.name}`);
@@ -1404,10 +1737,14 @@ function render(){
   const tbody = document.getElementById("tableBody");
   const empty = document.getElementById("emptyState");
 
-  const all = Object.values(products);
+  const all = Object.values(products).map(p => ({
+    ...p,
+    avgCost: calculateAverageCost(Object.keys(products).find(id => products[id] === p))
+  }));
+  
   const totalCount = all.length;
   const totalUnits = all.reduce((s,p) => s + Number(p.quantity || 0), 0);
-  const totalValue = all.reduce((s,p) => s + (Number(p.quantity||0) * Number(p.costPrice||0)), 0);
+  const totalValue = all.reduce((s,p) => s + (Number(p.quantity||0) * Number(p.avgCost||0)), 0);
   const lowCount = all.filter(p => Number(p.quantity||0) <= Number(p.reorderLevel||0) && Number(p.quantity||0) > 0).length;
 
   document.getElementById("statCount").textContent = totalCount;
@@ -1434,7 +1771,7 @@ function render(){
     const reorder = Number(p.reorderLevel||0);
     const isLow = qty <= reorder && qty > 0;
     const lvl = signalLevelClass(qty, reorder);
-    const profit = calculateProfit(p.costPrice, p.sellPrice);
+    const profit = calculateProfit(p.avgCost || p.costPrice, p.sellPrice);
 
     return `
       <tr>
@@ -1456,9 +1793,11 @@ function render(){
             <button class="stock-btn" onclick="adjustStock('${p.id}', 1)">+</button>
           </div>
         </td>
-        <td class="num" style="font-size:11px;">
-          <div>${currency(p.costPrice)}</div>
-          <div style="color:var(--amber);">${currency(p.sellPrice)}</div>
+        <td class="num" style="font-size:12px; color:var(--amber);">
+          ${currency(p.avgCost || p.costPrice)}
+        </td>
+        <td class="num" style="font-size:12px;">
+          ${currency(p.sellPrice)}
         </td>
         <td class="num" style="color:${profit > 0 ? 'var(--teal)' : 'var(--coral)'}; font-size:12px;">${profit}%</td>
         <td>
@@ -1599,32 +1938,101 @@ document.getElementById("productForm").addEventListener("submit", (e) => {
   closePanel();
 });
 
-// ========== QUANTITY MODAL ==========
+// ========== RATE MODAL (FOR STOCK ENTRY) ==========
 
-function openQtyModal(label, currentValue, callback) {
-  qtyModalCallback = callback;
-  document.getElementById('qtyModalLabel').textContent = label;
-  document.getElementById('qtyModalInput').value = currentValue || 1;
-  document.getElementById('qtyModal').classList.add('show');
-  setTimeout(() => document.getElementById('qtyModalInput').select(), 100);
+function openRateModal(productId, productName, currentQty = 1) {
+  currentEditingProductId = productId;
+  const product = products[productId];
+  
+  document.getElementById('rateModalLabel').textContent = `${productName}`;
+  document.getElementById('rateModalInput').value = product?.costPrice || 0;
+  document.getElementById('qtyModalInput').value = currentQty;
+  document.getElementById('rateModal').classList.add('show');
+  
+  setTimeout(() => document.getElementById('rateModalInput').select(), 100);
 }
 
-function closeQtyModal() {
-  document.getElementById('qtyModal').classList.remove('show');
-  qtyModalCallback = null;
+function closeRateModal() {
+  document.getElementById('rateModal').classList.remove('show');
+  currentEditingProductId = null;
 }
 
-function confirmQtyModal() {
-  const value = parseInt(document.getElementById('qtyModalInput').value) || 1;
-  if (qtyModalCallback) {
-    qtyModalCallback(value);
+function confirmRateModal() {
+  const rate = parseFloat(document.getElementById('rateModalInput').value) || 0;
+  const qty = parseInt(document.getElementById('qtyModalInput').value) || 1;
+  
+  if (currentEditingProductId && rate > 0 && qty > 0) {
+    if (stockEntry[currentEditingProductId]) {
+      stockEntry[currentEditingProductId].qty = qty;
+      stockEntry[currentEditingProductId].rate = rate;
+    } else {
+      stockEntry[currentEditingProductId] = { qty, rate };
+    }
+    
+    renderStockEntryProducts();
   }
-  closeQtyModal();
+  
+  closeRateModal();
 }
+
+document.getElementById('rateModalInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('qtyModalInput').focus();
+  }
+});
 
 document.getElementById('qtyModalInput').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
-    confirmQtyModal();
+    confirmRateModal();
+  }
+});
+
+// ========== SELLING PRICE MODAL (FOR BILLING) ==========
+
+function openSellPriceModal(productId, productName, currentQty = 1) {
+  currentEditingBillProductId = productId;
+  const product = products[productId];
+  
+  document.getElementById('sellPriceModalLabel').textContent = `${productName}`;
+  document.getElementById('sellPriceModalInput').value = product?.sellPrice || 0;
+  document.getElementById('sellQtyModalInput').value = currentQty;
+  document.getElementById('sellPriceModal').classList.add('show');
+  
+  setTimeout(() => document.getElementById('sellPriceModalInput').select(), 100);
+}
+
+function closeSellPriceModal() {
+  document.getElementById('sellPriceModal').classList.remove('show');
+  currentEditingBillProductId = null;
+}
+
+function confirmSellPriceModal() {
+  const price = parseFloat(document.getElementById('sellPriceModalInput').value) || 0;
+  const qty = parseInt(document.getElementById('sellQtyModalInput').value) || 1;
+  
+  if (currentEditingBillProductId && price > 0 && qty > 0) {
+    if (cart[currentEditingBillProductId]) {
+      cart[currentEditingBillProductId].qty = qty;
+      cart[currentEditingBillProductId].customPrice = price;
+    } else {
+      cart[currentEditingBillProductId] = { qty, customPrice: price };
+    }
+    
+    renderBillingProducts();
+  }
+  
+  closeSellPriceModal();
+}
+
+document.getElementById('sellPriceModalInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('sellQtyModalInput').focus();
+  }
+});
+
+document.getElementById('sellQtyModalInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    confirmSellPriceModal();
   }
 });
 
@@ -1672,13 +2080,15 @@ function renderStockEntryProducts() {
   container.innerHTML = list.map(p => {
     const inEntry = stockEntry[p.id];
     const qty = inEntry ? inEntry.qty : 0;
+    const rate = inEntry ? inEntry.rate : 0;
     const cardClass = inEntry ? (currentStockEntryType === 'in' ? 'in-stock-entry' : 'stock-out') : '';
     const badgeClass = currentStockEntryType === 'out' ? 'out' : '';
     
     return `
-      <div class="product-card ${cardClass}" onclick="addToStockEntry('${p.id}')">
+      <div class="product-card ${cardClass}" onclick="openRateModal('${p.id}', '${escapeHtml(p.name)}', ${qty || 1})">
         ${qty > 0 ? `<div class="product-card-badge ${badgeClass}">${qty}</div>` : ''}
         <div class="product-card-name">${escapeHtml(p.name)}</div>
+        ${rate > 0 ? `<div class="product-card-price">${currency(rate)}</div>` : ''}
         <div class="product-card-stock">Stock: ${p.quantity}</div>
         <div style="font-size:10px; color:var(--muted); margin-top:4px;">${escapeHtml(p.sku)}</div>
       </div>
@@ -1688,37 +2098,10 @@ function renderStockEntryProducts() {
   updateStockEntryCart();
 }
 
-function addToStockEntry(productId) {
-  const product = products[productId];
-  if (!product) return;
-
-  if (stockEntry[productId]) {
-    stockEntry[productId].qty++;
-    renderStockEntryProducts();
-    showToast(`+1 ${product.name}`);
-  } else {
-    stockEntry[productId] = { qty: 1 };
-    renderStockEntryProducts();
-    showToast(`Added ${product.name}`);
-  }
-}
-
 function removeFromStockEntry(productId) {
   delete stockEntry[productId];
   renderStockEntryProducts();
   showToast('Removed from entry');
-}
-
-function updateStockEntryQty(productId, newQty) {
-  if (!stockEntry[productId]) return;
-
-  if (newQty <= 0) {
-    delete stockEntry[productId];
-  } else {
-    stockEntry[productId].qty = newQty;
-  }
-
-  renderStockEntryProducts();
 }
 
 function updateStockEntryCart() {
@@ -1743,24 +2126,31 @@ function updateStockEntryCart() {
   cartItemCount.textContent = `(${items.length} items)`;
 
   let totalQty = 0;
+  let totalValue = 0;
 
   cartContainer.innerHTML = items.map(([id, data]) => {
     const product = products[id];
     if (!product) return '';
 
     const qty = data.qty;
+    const rate = data.rate || 0;
+    const itemTotal = rate * qty;
+    
     totalQty += qty;
+    totalValue += itemTotal;
 
     return `
       <div class="cart-item">
         <div class="cart-item-info">
           <div class="cart-item-name">${escapeHtml(product.name)}</div>
-          <div class="cart-item-price">${currentStockEntryType === 'in' ? '➕ Stock IN' : '➖ Stock OUT'}</div>
+          <div class="cart-item-price">
+            ${qty} × ${currency(rate)} = ${currency(itemTotal)}
+          </div>
         </div>
         <div class="cart-qty-controls">
-          <div class="qty-btn" onclick="updateStockEntryQty('${id}', ${qty - 1})">−</div>
-          <div class="qty-display" onclick="openQtyModal('Quantity for ${escapeHtml(product.name)}', ${qty}, (val) => updateStockEntryQty('${id}', val))">${qty}</div>
-          <div class="qty-btn" onclick="updateStockEntryQty('${id}', ${qty + 1})">+</div>
+          <div class="qty-display" onclick="openRateModal('${id}', '${escapeHtml(product.name)}', ${qty})" style="min-width:60px;">
+            ${qty} @ ${currency(rate)}
+          </div>
           <div class="cart-remove" onclick="removeFromStockEntry('${id}')" title="Remove">×</div>
         </div>
       </div>
@@ -1768,15 +2158,28 @@ function updateStockEntryCart() {
   }).join("");
 
   document.getElementById('stockEntryTotalQty').textContent = totalQty;
+  document.getElementById('stockEntryTotalValue').textContent = currency(totalValue);
   cartTotalSection.style.display = 'block';
 }
 
 function saveStockEntry() {
   const entryDate = document.getElementById("stockEntryDate").value;
   const entryTime = document.getElementById("stockEntryTime").value;
+  const dcNumber = document.getElementById("stockEntryDC").value.trim();
+  const supplier = document.getElementById("stockEntrySupplier").value.trim();
 
   if (!entryDate || !entryTime) {
     alert("Please select date and time");
+    return;
+  }
+
+  if (!dcNumber && currentStockEntryType === 'in') {
+    alert("Please enter DC number for stock IN");
+    return;
+  }
+
+  if (!supplier && currentStockEntryType === 'in') {
+    alert("Please enter supplier name for stock IN");
     return;
   }
 
@@ -1794,6 +2197,7 @@ function saveStockEntry() {
     if (!product) return;
     
     const qty = data.qty;
+    const rate = data.rate || 0;
     const qtyChange = currentStockEntryType === 'in' ? qty : -qty;
     const newStock = product.quantity + qtyChange;
     
@@ -1808,15 +2212,21 @@ function saveStockEntry() {
       productSku: product.sku,
       type: currentStockEntryType,
       quantity: qty,
+      rate: rate,
+      total: rate * qty,
       timestamp: timestamp,
       entryDate: entryDate,
-      entryTime: entryTime
+      entryTime: entryTime,
+      dcNumber: dcNumber || 'MANUAL',
+      supplier: supplier || ''
     });
   });
 
   showToast(`Stock entry saved! (${items.length} items)`);
   
   stockEntry = {};
+  document.getElementById("stockEntryDC").value = '';
+  document.getElementById("stockEntrySupplier").value = '';
   initializeStockEntryDateTime();
   renderStockEntryProducts();
 }
@@ -1825,6 +2235,7 @@ function renderStockEntryHistory() {
   const tbody = document.getElementById("stockEntryHistoryBody");
   const dateFilter = document.getElementById("stockHistoryDateFilter")?.value || '';
   const typeFilter = document.getElementById("stockHistoryTypeFilter")?.value || '';
+  const dcFilter = document.getElementById("stockHistoryDCFilter")?.value.toLowerCase() || '';
 
   let entryList = Object.entries(stockEntries)
     .map(([id, e]) => ({ id, ...e }))
@@ -1837,9 +2248,13 @@ function renderStockEntryHistory() {
   if (typeFilter) {
     entryList = entryList.filter(e => e.type === typeFilter);
   }
+  
+  if (dcFilter) {
+    entryList = entryList.filter(e => e.dcNumber?.toLowerCase().includes(dcFilter));
+  }
 
   if (entryList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:30px;">No entries</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--muted); padding:30px;">No entries</td></tr>';
     return;
   }
 
@@ -1850,13 +2265,17 @@ function renderStockEntryHistory() {
 
     return `
       <tr>
-        <td style="font-size:11px;">${displayDate}<br>${displayTime}</td>
+        <td style="font-size:11px;">${displayDate}<br/>${displayTime}</td>
+        <td><span class="dc-badge">${escapeHtml(entry.dcNumber || 'N/A')}</span></td>
+        <td style="font-size:11px;">${escapeHtml(entry.supplier || '—')}</td>
         <td>
           <div class="prod-name">${escapeHtml(entry.productName)}</div>
           <div class="prod-sku sku">${escapeHtml(entry.productSku)}</div>
         </td>
         <td><span class="entry-type-badge ${entry.type}">${entry.type === 'in' ? '➕ IN' : '➖ OUT'}</span></td>
         <td class="num" style="font-weight:600;">${entry.quantity}</td>
+        <td class="num" style="color:var(--amber);">${currency(entry.rate || 0)}</td>
+        <td class="num" style="font-weight:600;">${currency(entry.total || 0)}</td>
       </tr>
     `;
   }).join("");
@@ -1864,6 +2283,524 @@ function renderStockEntryHistory() {
 
 document.getElementById("stockHistoryDateFilter")?.addEventListener("change", renderStockEntryHistory);
 document.getElementById("stockHistoryTypeFilter")?.addEventListener("change", renderStockEntryHistory);
+document.getElementById("stockHistoryDCFilter")?.addEventListener("input", renderStockEntryHistory);
+
+// ========== SUPPLIER REPORTS ==========
+
+function renderSupplierReports() {
+  const container = document.getElementById("supplierReportContainer");
+  const searchFilter = document.getElementById("supplierReportSearch")?.value.toLowerCase() || '';
+  
+  const supplierGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.supplier || entry.supplier.trim() === '') return;
+    
+    if (!supplierGroups[entry.supplier]) {
+      supplierGroups[entry.supplier] = {
+        supplier: entry.supplier,
+        dcCount: new Set(),
+        totalQty: 0,
+        totalValue: 0,
+        entries: []
+      };
+    }
+    
+    supplierGroups[entry.supplier].dcCount.add(entry.dcNumber);
+    supplierGroups[entry.supplier].totalQty += entry.quantity;
+    supplierGroups[entry.supplier].totalValue += (entry.rate * entry.quantity);
+    supplierGroups[entry.supplier].entries.push(entry);
+  });
+  
+  let supplierList = Object.values(supplierGroups).map(s => ({
+    ...s,
+    dcCount: s.dcCount.size
+  })).sort((a, b) => b.totalValue - a.totalValue);
+  
+  if (searchFilter) {
+    supplierList = supplierList.filter(s => 
+      s.supplier.toLowerCase().includes(searchFilter)
+    );
+  }
+  
+  // Update stats
+  const totalPurchaseValue = supplierList.reduce((sum, s) => sum + s.totalValue, 0);
+  const totalSuppliers = supplierList.length;
+  const totalDCs = supplierList.reduce((sum, s) => sum + s.dcCount, 0);
+  
+  document.getElementById("totalPurchaseValue").textContent = currency(totalPurchaseValue);
+  document.getElementById("totalSuppliers").textContent = totalSuppliers;
+  document.getElementById("totalPurchaseDCs").textContent = totalDCs;
+  
+  if (supplierList.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:50px; color:var(--muted);">No supplier purchases found</div>';
+    return;
+  }
+  
+  container.innerHTML = supplierList.map(supplier => `
+    <div class="supplier-summary-card" onclick="viewSupplierDetails('${escapeHtml(supplier.supplier)}')">
+      <div class="supplier-summary-header">
+        <div class="supplier-name">🏭 ${escapeHtml(supplier.supplier)}</div>
+      </div>
+      <div class="supplier-stats">
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">DCs</div>
+          <div class="supplier-stat-value">${supplier.dcCount}</div>
+        </div>
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">Total Qty</div>
+          <div class="supplier-stat-value">${supplier.totalQty}</div>
+        </div>
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">Total Value</div>
+          <div class="supplier-stat-value" style="color:var(--teal);">${currency(supplier.totalValue)}</div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+window.viewSupplierDetails = function(supplierName) {
+  const entries = Object.values(stockEntries).filter(e => 
+    e.supplier === supplierName && e.type === 'in'
+  );
+  
+  if (entries.length === 0) return;
+  
+  const dcGroups = {};
+  entries.forEach(entry => {
+    if (!dcGroups[entry.dcNumber]) {
+      dcGroups[entry.dcNumber] = {
+        dcNumber: entry.dcNumber,
+        date: entry.entryDate,
+        items: [],
+        totalValue: 0
+      };
+    }
+    dcGroups[entry.dcNumber].items.push(entry);
+    dcGroups[entry.dcNumber].totalValue += (entry.rate * entry.quantity);
+  });
+  
+  const dcList = Object.values(dcGroups).sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
+  
+  let grandTotal = 0;
+  
+  const dcsHtml = dcList.map(dc => {
+    grandTotal += dc.totalValue;
+    
+    const itemsHtml = dc.items.map(item => `
+      <div style="padding:8px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; font-size:11px;">
+        <div>${escapeHtml(item.productName)}</div>
+        <div class="num">${item.quantity}</div>
+        <div class="num">${currency(item.rate)}</div>
+        <div class="num" style="font-weight:600;">${currency(item.total)}</div>
+      </div>
+    `).join("");
+    
+    return `
+      <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; margin-bottom:16px; overflow:hidden;">
+        <div style="padding:12px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span class="dc-badge">${escapeHtml(dc.dcNumber)}</span>
+            <span style="font-size:11px; color:var(--muted); margin-left:8px;">${new Date(dc.date).toLocaleDateString()}</span>
+          </div>
+          <div style="font-weight:700; color:var(--teal);">${currency(dc.totalValue)}</div>
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; padding:10px; background:var(--panel); border-bottom:1px solid var(--line); font-size:10px; color:var(--muted); font-weight:600;">
+          <div>PRODUCT</div>
+          <div class="num">QTY</div>
+          <div class="num">RATE</div>
+          <div class="num">TOTAL</div>
+        </div>
+        ${itemsHtml}
+      </div>
+    `;
+  }).join("");
+  
+  const content = `
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:20px; font-weight:700; color:var(--amber); margin-bottom:8px;">🏭 ${escapeHtml(supplierName)}</div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:12px;">
+        <div style="text-align:center;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Total DCs</div>
+          <div style="font-size:20px; font-weight:700;">${dcList.length}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Total Items</div>
+          <div style="font-size:20px; font-weight:700;">${entries.length}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Grand Total</div>
+          <div style="font-size:20px; font-weight:700; color:var(--teal);">${currency(grandTotal)}</div>
+        </div>
+      </div>
+    </div>
+    
+    <h4 style="margin-bottom:12px; font-size:14px;">DC-wise Breakdown</h4>
+    ${dcsHtml}
+  `;
+  
+  document.getElementById('supplierDetailsTitle').textContent = 'Supplier Purchase Details';
+  document.getElementById('supplierDetailsContent').innerHTML = content;
+  document.getElementById('supplierDetailsModal').classList.add('show');
+};
+
+function closeSupplierDetailsModal() {
+  document.getElementById('supplierDetailsModal').classList.remove('show');
+}
+
+document.getElementById("supplierReportSearch")?.addEventListener("input", renderSupplierReports);
+
+function exportSupplierReport() {
+  const supplierGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.supplier || entry.supplier.trim() === '') return;
+    
+    if (!supplierGroups[entry.supplier]) {
+      supplierGroups[entry.supplier] = [];
+    }
+    
+    supplierGroups[entry.supplier].push({
+      'Supplier': entry.supplier,
+      'DC Number': entry.dcNumber,
+      'Date': entry.entryDate,
+      'Product': entry.productName,
+      'SKU': entry.productSku,
+      'Quantity': entry.quantity,
+      'Rate': entry.rate,
+      'Total': entry.rate * entry.quantity
+    });
+  });
+  
+  const allData = Object.values(supplierGroups).flat();
+  
+  const ws = XLSX.utils.json_to_sheet(allData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Supplier Report");
+  XLSX.writeFile(wb, `supplier_report_${Date.now()}.xlsx`);
+  showToast('Supplier Report exported!');
+}
+
+// ========== DC REPORTS ==========
+
+function renderDCReports() {
+  const tbody = document.getElementById("dcReportBody");
+  const searchFilter = document.getElementById("dcReportSearch")?.value.toLowerCase() || '';
+  const dateFilter = document.getElementById("dcReportDateFilter")?.value || '';
+  const supplierFilter = document.getElementById("dcReportSupplierFilter")?.value.toLowerCase() || '';
+  
+  const dcGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.dcNumber || entry.dcNumber === 'MANUAL') return;
+    
+    if (!dcGroups[entry.dcNumber]) {
+      dcGroups[entry.dcNumber] = {
+        dcNumber: entry.dcNumber,
+        supplier: entry.supplier || '',
+        date: entry.entryDate,
+        items: [],
+        totalQty: 0,
+        totalValue: 0
+      };
+    }
+    
+    dcGroups[entry.dcNumber].items.push(entry);
+    dcGroups[entry.dcNumber].totalQty += entry.quantity;
+    dcGroups[entry.dcNumber].totalValue += (entry.rate * entry.quantity);
+  });
+  
+  let dcList = Object.values(dcGroups).sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
+  
+  if (searchFilter) {
+    dcList = dcList.filter(dc => 
+      dc.dcNumber.toLowerCase().includes(searchFilter)
+    );
+  }
+  
+  if (dateFilter) {
+    dcList = dcList.filter(dc => dc.date === dateFilter);
+  }
+  
+  if (supplierFilter) {
+    dcList = dcList.filter(dc => 
+      dc.supplier.toLowerCase().includes(supplierFilter)
+    );
+  }
+  
+  // Update stats
+  const totalValue = dcList.reduce((sum, dc) => sum + dc.totalValue, 0);
+  const totalDCs = dcList.length;
+  
+  document.getElementById("dcReportTotalValue").textContent = currency(totalValue);
+  document.getElementById("dcReportTotalDCs").textContent = totalDCs;
+  
+  if (dcList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:30px;">No DC entries</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = dcList.map(dc => `
+    <tr>
+      <td>
+        <span class="dc-badge">${escapeHtml(dc.dcNumber)}</span>
+      </td>
+      <td style="font-size:11px;">${new Date(dc.date).toLocaleDateString()}</td>
+      <td>${escapeHtml(dc.supplier)}</td>
+      <td class="num">${dc.items.length}</td>
+      <td class="num" style="font-weight:600;">${dc.totalQty}</td>
+      <td class="num" style="color:var(--teal); font-weight:600;">${currency(dc.totalValue)}</td>
+      <td>
+        <button class="icon-btn" onclick="viewDCDetails('${escapeHtml(dc.dcNumber)}')" title="View">👁</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+window.viewDCDetails = function(dcNumber) {
+  const entries = Object.values(stockEntries).filter(e => e.dcNumber === dcNumber);
+  
+  if (entries.length === 0) return;
+  
+  const firstEntry = entries[0];
+  let totalValue = 0;
+  
+  const itemsHtml = entries.map(entry => {
+    const itemTotal = entry.rate * entry.quantity;
+    totalValue += itemTotal;
+    
+    return `
+      <div style="padding:10px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; font-size:12px;">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(entry.productName)}</div>
+          <div style="font-size:10px; color:var(--muted);">${escapeHtml(entry.productSku)}</div>
+        </div>
+        <div class="num">${entry.quantity}</div>
+        <div class="num" style="color:var(--amber);">${currency(entry.rate)}</div>
+        <div class="num" style="font-weight:600;">${currency(itemTotal)}</div>
+      </div>
+    `;
+  }).join("");
+  
+  const content = `
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:16px;">
+      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">DC NUMBER</div>
+      <div style="font-size:18px; font-weight:700; color:var(--amber); margin-bottom:8px;">${escapeHtml(dcNumber)}</div>
+      <div style="font-size:11px; color:var(--muted);">Supplier: ${escapeHtml(firstEntry.supplier || 'N/A')}</div>
+      <div style="font-size:11px; color:var(--muted);">Date: ${new Date(firstEntry.entryDate).toLocaleDateString()}</div>
+    </div>
+    
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; padding:10px; background:var(--panel); border-bottom:1px solid var(--line); font-size:10px; color:var(--muted); font-weight:600;">
+        <div>PRODUCT</div>
+        <div class="num">QTY</div>
+        <div class="num">RATE</div>
+        <div class="num">TOTAL</div>
+      </div>
+      ${itemsHtml}
+      <div style="padding:12px; background:var(--panel); border-top:2px solid var(--line); display:flex; justify-content:space-between; font-weight:700;">
+        <span>TOTAL VALUE:</span>
+        <span style="color:var(--teal); font-size:18px;">${currency(totalValue)}</span>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('dcDetailsTitle').textContent = 'DC Details';
+  document.getElementById('dcDetailsContent').innerHTML = content;
+  document.getElementById('dcDetailsModal').classList.add('show');
+};
+
+function closeDCDetailsModal() {
+  document.getElementById('dcDetailsModal').classList.remove('show');
+}
+
+document.getElementById("dcReportSearch")?.addEventListener("input", renderDCReports);
+document.getElementById("dcReportDateFilter")?.addEventListener("change", renderDCReports);
+document.getElementById("dcReportSupplierFilter")?.addEventListener("input", renderDCReports);
+
+function exportDCReport() {
+  const dcGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.dcNumber || entry.dcNumber === 'MANUAL') return;
+    
+    if (!dcGroups[entry.dcNumber]) {
+      dcGroups[entry.dcNumber] = [];
+    }
+    
+    dcGroups[entry.dcNumber].push({
+      'DC Number': entry.dcNumber,
+      'Date': entry.entryDate,
+      'Supplier': entry.supplier || '',
+      'Product': entry.productName,
+      'SKU': entry.productSku,
+      'Quantity': entry.quantity,
+      'Rate': entry.rate,
+      'Total': entry.rate * entry.quantity
+    });
+  });
+  
+  const allData = Object.values(dcGroups).flat();
+  
+  const ws = XLSX.utils.json_to_sheet(allData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DC Report");
+  XLSX.writeFile(wb, `dc_report_${Date.now()}.xlsx`);
+  showToast('DC Report exported!');
+}
+
+// ========== BILL REPORTS ==========
+
+function renderBillReports() {
+  const tbody = document.getElementById("billReportBody");
+  const searchFilter = document.getElementById("billReportSearch")?.value.toLowerCase() || '';
+  const dateFilter = document.getElementById("billReportDateFilter")?.value || '';
+  
+  let billList = Object.entries(bills)
+    .map(([id, b]) => ({ id, ...b }))
+    .sort((a, b) => b.timestamp - a.timestamp);
+  
+  if (searchFilter) {
+    billList = billList.filter(b => 
+      (b.billDCNumber && b.billDCNumber.toLowerCase().includes(searchFilter)) ||
+      b.billId.toLowerCase().includes(searchFilter) ||
+      b.customerName.toLowerCase().includes(searchFilter)
+    );
+  }
+  
+  if (dateFilter) {
+    billList = billList.filter(b => b.billDate === dateFilter);
+  }
+  
+  // Update stats
+  const totalValue = billList.reduce((sum, b) => sum + b.totalAmount, 0);
+  const totalDCs = billList.length;
+  const totalProfit = billList.reduce((sum, b) => sum + b.profit, 0);
+  
+  document.getElementById("billReportTotalValue").textContent = currency(totalValue);
+  document.getElementById("billReportTotalDCs").textContent = totalDCs;
+  document.getElementById("billReportTotalProfit").textContent = currency(totalProfit);
+  
+  if (billList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--muted); padding:30px;">No bills</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = billList.map(bill => {
+    const totalQty = Object.values(bill.items || {}).reduce((sum, item) => sum + item.qty, 0);
+    
+    return `
+      <tr>
+        <td>
+          <span class="dc-badge">${escapeHtml(bill.billDCNumber || bill.billId)}</span>
+        </td>
+        <td style="font-size:11px;">${new Date(bill.billDate).toLocaleDateString()}</td>
+        <td>${escapeHtml(bill.customerName)}</td>
+        <td class="num">${bill.itemCount}</td>
+        <td class="num" style="font-weight:600;">${totalQty}</td>
+        <td class="num" style="color:var(--teal); font-weight:600;">${currency(bill.totalAmount)}</td>
+        <td class="num" style="color:var(--teal); font-weight:600;">${currency(bill.profit)}</td>
+        <td>
+          <button class="icon-btn" onclick="viewBillDetailsReport('${bill.id}')" title="View">👁</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.viewBillDetailsReport = function(billId) {
+  const bill = bills[billId];
+  
+  if (!bill) return;
+  
+  let totalValue = 0;
+  
+  const itemsHtml = Object.values(bill.items).map(item => {
+    const itemTotal = item.total;
+    totalValue += itemTotal;
+    
+    return `
+      <div style="padding:10px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; font-size:12px;">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(item.name)}</div>
+          <div style="font-size:10px; color:var(--muted);">${escapeHtml(item.sku)}</div>
+        </div>
+        <div class="num">${item.qty}</div>
+        <div class="num" style="color:var(--amber);">${currency(item.sellPrice)}</div>
+        <div class="num" style="font-weight:600;">${currency(itemTotal)}</div>
+      </div>
+    `;
+  }).join("");
+  
+  const content = `
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:16px;">
+      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">DC NUMBER</div>
+      <div style="font-size:18px; font-weight:700; color:var(--amber); margin-bottom:8px;">${escapeHtml(bill.billDCNumber || bill.billId)}</div>
+      <div style="font-size:11px; color:var(--muted);">Customer: ${escapeHtml(bill.customerName)}</div>
+      <div style="font-size:11px; color:var(--muted);">Contact: ${escapeHtml(bill.customerContact || 'N/A')}</div>
+      <div style="font-size:11px; color:var(--muted);">Date: ${new Date(bill.billDate).toLocaleDateString()}</div>
+    </div>
+    
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; padding:10px; background:var(--panel); border-bottom:1px solid var(--line); font-size:10px; color:var(--muted); font-weight:600;">
+        <div>PRODUCT</div>
+        <div class="num">QTY</div>
+        <div class="num">PRICE</div>
+        <div class="num">TOTAL</div>
+      </div>
+      ${itemsHtml}
+      <div style="padding:12px; background:var(--panel); border-top:2px solid var(--line);">
+        <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:8px;">
+          <span>TOTAL AMOUNT:</span>
+          <span style="color:var(--teal); font-size:18px;">${currency(bill.totalAmount)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--teal);">
+          <span>PROFIT:</span>
+          <span style="font-weight:600;">${currency(bill.profit)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('billDetailsTitle').textContent = 'Sales DC Details';
+  document.getElementById('billDetailsContent').innerHTML = content;
+  document.getElementById('billDetailsModal').classList.add('show');
+};
+
+function closeBillDetailsModal() {
+  document.getElementById('billDetailsModal').classList.remove('show');
+}
+
+document.getElementById("billReportSearch")?.addEventListener("input", renderBillReports);
+document.getElementById("billReportDateFilter")?.addEventListener("change", renderBillReports);
+
+function exportBillReport() {
+  const billsData = Object.values(bills).map(b => {
+    const items = Object.values(b.items || {});
+    return items.map(item => ({
+      'DC Number': b.billDCNumber || b.billId,
+      'Date': b.billDate,
+      'Customer': b.customerName,
+      'Contact': b.customerContact || '',
+      'Product': item.name,
+      'SKU': item.sku,
+      'Quantity': item.qty,
+      'Selling Price': item.sellPrice,
+      'Total': item.total
+    }));
+  }).flat();
+  
+  const ws = XLSX.utils.json_to_sheet(billsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Bill Report");
+  XLSX.writeFile(wb, `bill_report_${Date.now()}.xlsx`);
+  showToast('Bill Report exported!');
+}
 
 // ========== BILLING FUNCTIONS ==========
 
@@ -1895,12 +2832,13 @@ function renderBillingProducts() {
   container.innerHTML = list.map(p => {
     const inCart = cart[p.id];
     const qty = inCart ? inCart.qty : 0;
+    const customPrice = inCart?.customPrice;
     
     return `
-      <div class="product-card ${inCart ? 'in-cart' : ''}" onclick="addToCart('${p.id}')">
+      <div class="product-card ${inCart ? 'in-cart' : ''}" onclick="openSellPriceModal('${p.id}', '${escapeHtml(p.name)}', ${qty || 1})">
         ${qty > 0 ? `<div class="product-card-badge">${qty}</div>` : ''}
         <div class="product-card-name">${escapeHtml(p.name)}</div>
-        <div class="product-card-price">${currency(p.sellPrice)}</div>
+        <div class="product-card-price">${currency(customPrice || p.sellPrice)}</div>
         <div class="product-card-stock">Stock: ${p.quantity}</div>
       </div>
     `;
@@ -1909,36 +2847,10 @@ function renderBillingProducts() {
   updateCart();
 }
 
-function addToCart(productId) {
-  const product = products[productId];
-  if (!product) return;
-
-  if (cart[productId]) {
-    cart[productId].qty++;
-  } else {
-    cart[productId] = { qty: 1 };
-  }
-
-  renderBillingProducts();
-  showToast(`Added ${product.name}`);
-}
-
 function removeFromCart(productId) {
   delete cart[productId];
   renderBillingProducts();
   showToast('Removed from cart');
-}
-
-function updateCartQty(productId, newQty) {
-  if (!cart[productId]) return;
-
-  if (newQty <= 0) {
-    delete cart[productId];
-  } else {
-    cart[productId].qty = newQty;
-  }
-
-  renderBillingProducts();
 }
 
 function updateCart() {
@@ -1971,8 +2883,10 @@ function updateCart() {
     if (!product) return '';
 
     const qty = data.qty;
-    const itemTotal = product.sellPrice * qty;
-    const itemCost = product.costPrice * qty;
+    const sellPrice = data.customPrice || product.sellPrice;
+    const itemTotal = sellPrice * qty;
+    const avgCost = calculateAverageCost(id) || product.costPrice;
+    const itemCost = avgCost * qty;
 
     totalCost += itemCost;
     totalSell += itemTotal;
@@ -1982,12 +2896,12 @@ function updateCart() {
       <div class="cart-item">
         <div class="cart-item-info">
           <div class="cart-item-name">${escapeHtml(product.name)}</div>
-          <div class="cart-item-price">${currency(product.sellPrice)} × ${qty} = ${currency(itemTotal)}</div>
+          <div class="cart-item-price">${currency(sellPrice)} × ${qty} = ${currency(itemTotal)}</div>
         </div>
         <div class="cart-qty-controls">
-          <div class="qty-btn" onclick="updateCartQty('${id}', ${qty - 1})">−</div>
-          <div class="qty-display" onclick="openQtyModal('Quantity for ${escapeHtml(product.name)}', ${qty}, (val) => updateCartQty('${id}', val))">${qty}</div>
-          <div class="qty-btn" onclick="updateCartQty('${id}', ${qty + 1})">+</div>
+          <div class="qty-display" onclick="openSellPriceModal('${id}', '${escapeHtml(product.name)}', ${qty})" style="min-width:60px;">
+            ${qty} @ ${currency(sellPrice)}
+          </div>
           <div class="cart-remove" onclick="removeFromCart('${id}')" title="Remove">×</div>
         </div>
       </div>
@@ -2009,6 +2923,7 @@ function generateBill() {
   let customerContact = document.getElementById("billCustomerContact").value.trim();
   const billDate = document.getElementById("billDate").value;
   const billTime = document.getElementById("billTime").value;
+  const billDCNumber = document.getElementById("billDCNumber").value.trim();
   
   if (!customerName) {
     alert("Enter customer name");
@@ -2017,6 +2932,11 @@ function generateBill() {
 
   if (!billDate || !billTime) {
     alert("Please select date and time");
+    return;
+  }
+
+  if (!billDCNumber) {
+    alert("Please enter DC number");
     return;
   }
 
@@ -2042,6 +2962,7 @@ function generateBill() {
     if (!product) return;
     
     const qty = data.qty;
+    const sellPrice = data.customPrice || product.sellPrice;
     const newStock = product.quantity - qty;
     
     inventoryRef.child(id).update({
@@ -2055,13 +2976,18 @@ function generateBill() {
       productSku: product.sku,
       type: 'out',
       quantity: qty,
+      rate: sellPrice,
+      total: sellPrice * qty,
       timestamp: timestamp,
       entryDate: billDate,
-      entryTime: billTime
+      entryTime: billTime,
+      dcNumber: billDCNumber,
+      supplier: ''
     });
 
-    const itemCost = product.costPrice * qty;
-    const itemSell = product.sellPrice * qty;
+    const avgCost = calculateAverageCost(id) || product.costPrice;
+    const itemCost = avgCost * qty;
+    const itemSell = sellPrice * qty;
     
     totalCost += itemCost;
     totalSell += itemSell;
@@ -2070,14 +2996,15 @@ function generateBill() {
       name: product.name,
       sku: product.sku,
       qty: qty,
-      costPrice: product.costPrice,
-      sellPrice: product.sellPrice,
+      costPrice: avgCost,
+      sellPrice: sellPrice,
       total: itemSell
     };
   });
 
   const billData = {
     billId: 'B' + Date.now(),
+    billDCNumber: billDCNumber,
     timestamp: timestamp,
     billDate: billDate,
     billTime: billTime,
@@ -2098,12 +3025,13 @@ function generateBill() {
   cart = {};
   document.getElementById("billCustomerName").value = '';
   document.getElementById("billCustomerContact").value = '';
+  document.getElementById("billDCNumber").value = '';
   billProductSearchTerm = '';
   document.getElementById("billProductSearch").value = '';
   initializeBillDateTime();
   renderBillingProducts();
 
-  showToast('Bill generated!');
+  showToast('Sales DC generated!');
 }
 
 function displayBillReceipt(bill) {
@@ -2123,10 +3051,10 @@ function displayBillReceipt(bill) {
 
   receipt.innerHTML = `
     <div class="receipt-header">
-      <h2 style="margin:0;">INVOICE</h2>
+      <h2 style="margin:0;">SALES DC</h2>
       <div style="font-size:11px; margin-top:5px;">Stock Inventory & Billing</div>
       <div style="font-size:10px; margin-top:2px;">${displayDate} ${displayTime}</div>
-      <div style="font-size:12px; margin-top:5px; font-weight:bold;">Bill: ${bill.billId}</div>
+      <div style="font-size:12px; margin-top:5px; font-weight:bold;">DC: ${bill.billDCNumber || bill.billId}</div>
     </div>
     <div style="margin:10px 0; font-size:11px;">
       <div><strong>Customer:</strong> ${escapeHtml(bill.customerName)}</div>
@@ -2181,7 +3109,7 @@ async function downloadPDF() {
 
     doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
-    doc.text('INVOICE', 105, 20, { align: 'center' });
+    doc.text('SALES DC', 105, 20, { align: 'center' });
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -2190,7 +3118,7 @@ async function downloadPDF() {
     
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text(`Bill: ${currentBillData.billId}`, 105, 42, { align: 'center' });
+    doc.text(`DC: ${currentBillData.billDCNumber || currentBillData.billId}`, 105, 42, { align: 'center' });
 
     let yPos = 55;
     doc.setFontSize(10);
@@ -2245,7 +3173,7 @@ async function downloadPDF() {
     doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
 
     const pdfBlob = doc.output('blob');
-    const fileName = `Invoice_${currentBillData.billId}.pdf`;
+    const fileName = `SalesDC_${currentBillData.billDCNumber || currentBillData.billId}.pdf`;
     
     const link = document.createElement('a');
     link.href = URL.createObjectURL(pdfBlob);
@@ -2293,10 +3221,10 @@ function sendWhatsAppText() {
   const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
   const displayTime = currentBillData.billTime || date.toLocaleTimeString();
   
-  let message = `*INVOICE*\n\n`;
+  let message = `*SALES DC*\n\n`;
   message += `Hi ${currentBillData.customerName},\n\n`;
-  message += `Your bill is ready!\n\n`;
-  message += `📋 *Bill ID:* ${currentBillData.billId}\n`;
+  message += `Your sales DC is ready!\n\n`;
+  message += `📋 *DC Number:* ${currentBillData.billDCNumber || currentBillData.billId}\n`;
   message += `📅 *Date:* ${displayDate} ${displayTime}\n\n`;
   message += `*ITEMS:*\n`;
   message += `━━━━━━━━━━━━━━━━━━━━\n`;
@@ -2331,7 +3259,7 @@ function sendWhatsAppWithPDF() {
       cleanPhone = '+91' + cleanPhone;
     }
     
-    const message = `Hi ${currentBillData.customerName},\n\nYour invoice (${currentBillData.billId}) is ready!\n\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nPlease find the attached PDF invoice.\n\nThank you!`;
+    const message = `Hi ${currentBillData.customerName},\n\nYour sales DC (${currentBillData.billDCNumber || currentBillData.billId}) is ready!\n\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nPlease find the attached PDF DC.\n\nThank you!`;
     
     const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappURL, '_blank');
@@ -2348,7 +3276,8 @@ function renderBillHistory() {
     .map(([id, b]) => ({ id, ...b }))
     .filter(b => {
       if (!search) return true;
-      return b.billId.toLowerCase().includes(search) || 
+      return (b.billDCNumber && b.billDCNumber.toLowerCase().includes(search)) ||
+             b.billId.toLowerCase().includes(search) || 
              b.customerName.toLowerCase().includes(search);
     })
     .sort((a, b) => b.timestamp - a.timestamp);
@@ -2365,8 +3294,8 @@ function renderBillHistory() {
     
     return `
       <tr>
-        <td class="sku" style="font-size:11px;">${escapeHtml(bill.billId)}</td>
-        <td style="font-size:11px;">${displayDate}<br>${displayTime}</td>
+        <td class="sku" style="font-size:11px;">${escapeHtml(bill.billDCNumber || bill.billId)}</td>
+        <td style="font-size:11px;">${displayDate}<br/>${displayTime}</td>
         <td style="font-size:12px;">
           <div>${escapeHtml(bill.customerName)}</div>
           <div style="font-size:10px; color:var(--muted);">${escapeHtml(bill.customerContact || '')}</div>
@@ -2443,11 +3372,11 @@ function downloadAnalytics() {
   const billList = Object.values(bills);
   
   const csvData = [
-    ['Bill ID', 'Date', 'Time', 'Customer', 'Contact', 'Items', 'Amount', 'Profit'],
+    ['DC Number', 'Date', 'Time', 'Customer', 'Contact', 'Items', 'Amount', 'Profit'],
     ...billList.map(b => {
       const date = new Date(b.timestamp);
       return [
-        b.billId,
+        b.billDCNumber || b.billId,
         b.billDate || date.toLocaleDateString(),
         b.billTime || date.toLocaleTimeString(),
         b.customerName,
@@ -2481,9 +3410,9 @@ function exportToExcel() {
     'Supplier': p.supplier || '',
     'Qty': p.quantity,
     'Reorder': p.reorderLevel,
-    'Cost': p.costPrice,
+    'Avg Cost': calculateAverageCost(id),
     'Sell': p.sellPrice,
-    'Profit%': calculateProfit(p.costPrice, p.sellPrice)
+    'Profit%': calculateProfit(calculateAverageCost(id) || p.costPrice, p.sellPrice)
   }));
 
   const ws = XLSX.utils.json_to_sheet(data);
@@ -2543,7 +3472,7 @@ function applyGlobalProfit() {
   if (!confirm(`Apply ${percent}% to all products?`)) return;
 
   Object.entries(products).forEach(([id, product]) => {
-    const cost = Number(product.costPrice || 0);
+    const cost = calculateAverageCost(id) || Number(product.costPrice || 0);
     const newSell = cost + (cost * percent / 100);
     inventoryRef.child(id).update({
       sellPrice: newSell,
