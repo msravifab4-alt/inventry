@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -671,7 +671,7 @@
   .qty-modal{
     position:fixed;
     inset:0;
-    background:rgba(5,8,11,0.9);
+    background:rgba(5,8,11,0.95);
     display:none;
     align-items:center;
     justify-content:center;
@@ -684,17 +684,17 @@
 
   .qty-modal-content{
     background:var(--panel);
-    border:1px solid var(--amber);
+    border:2px solid var(--amber);
     border-radius:12px;
     padding:24px;
     text-align:center;
-    min-width:280px;
+    min-width:320px;
   }
 
   .qty-modal h3{
     margin-bottom:20px;
     font-size:14px;
-    color:var(--muted);
+    color:var(--amber);
   }
 
   .qty-modal-input{
@@ -708,13 +708,20 @@
     border-radius:12px;
     width:100%;
     font-family:'JetBrains Mono', monospace;
-    margin-bottom:20px;
+    margin-bottom:10px;
+  }
+
+  .qty-modal-input:focus{
+    outline:none;
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(32,227,178,0.2);
   }
 
   .qty-modal-actions{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
+    margin-top:20px;
   }
 
   .dc-info{
@@ -788,6 +795,36 @@
     font-family:'JetBrains Mono', monospace;
   }
 
+  .input-focus-indicator{
+    font-size:11px;
+    color:var(--teal);
+    margin-top:4px;
+    font-weight:600;
+  }
+
+  .keyboard-hint{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:8px 12px;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .keyboard-hint strong{
+    color:var(--amber);
+  }
+
+  datalist {
+    background: var(--panel-2);
+  }
+
+  input[list]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+  }
+
   footer{
     text-align:center;
     color:var(--muted);
@@ -814,14 +851,6 @@
     body * {visibility:hidden;}
     .bill-receipt, .bill-receipt * {visibility:visible;}
     .bill-receipt{position:absolute; left:0; top:0; width:100%;}
-  }
-
-  .datalist-wrapper{
-    position:relative;
-  }
-
-  input[list]::-webkit-calendar-picker-indicator {
-    opacity: 0.6;
   }
 </style>
 </head>
@@ -926,6 +955,10 @@
   <div id="tab-stockEntry" class="tab-content">
     <h2 style="margin-bottom:16px;">Purchase DC Entry</h2>
     
+    <div class="keyboard-hint">
+      <strong>⌨️ Keyboard Shortcuts:</strong> Enter = Next field | Up/Down Arrow = Change Rate/Qty | ESC = Cancel | Tab = Navigate
+    </div>
+
     <div class="bill-datetime">
       <h3>📅 Entry Date & Time</h3>
       <div class="field-row">
@@ -944,11 +977,11 @@
       <h3>📄 DC (Delivery Challan) Details</h3>
       <div class="field-row">
         <div class="field">
-          <label>DC Number</label>
+          <label>DC Number (Press Enter to continue)</label>
           <input type="text" id="stockEntryDC" placeholder="DC-001">
         </div>
         <div class="field">
-          <label>Supplier Name</label>
+          <label>Supplier Name (Type and press Enter)</label>
           <input type="text" id="stockEntrySupplier" list="supplierList" placeholder="Select or type supplier">
           <datalist id="supplierList"></datalist>
         </div>
@@ -970,7 +1003,7 @@
           <h3 style="font-size:14px;">Select Products</h3>
           <span style="font-size:12px; color:var(--muted);" id="stockEntryProductCount">0 products</span>
         </div>
-        <input type="text" id="stockEntrySearch" placeholder="🔍 Search products..." 
+        <input type="text" id="stockEntrySearch" placeholder="🔍 Search products (Type and click or Enter)..." 
                style="margin-bottom:12px; width:100%;">
         <div class="bill-product-grid" id="stockEntryProductGrid"></div>
       </div>
@@ -995,7 +1028,7 @@
               <span id="stockEntryTotalValue">₹0</span>
             </div>
             <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="saveStockEntry()">
-              Save Entry
+              Save Entry (Ctrl+S)
             </button>
           </div>
         </div>
@@ -1037,6 +1070,10 @@
   <div id="tab-billing" class="tab-content">
     <h2 style="margin-bottom:16px;">Sales DC Entry</h2>
     
+    <div class="keyboard-hint">
+      <strong>⌨️ Keyboard Shortcuts:</strong> Enter = Next field | Up/Down Arrow = Change Price/Qty | ESC = Cancel | Tab = Navigate
+    </div>
+
     <div class="bill-datetime">
       <h3>📅 Bill Date & Time</h3>
       <div class="field-row">
@@ -1055,7 +1092,7 @@
       <h3>📄 Sales DC Details</h3>
       <div class="field-row">
         <div class="field">
-          <label>DC Number</label>
+          <label>DC Number (Press Enter)</label>
           <input type="text" id="billDCNumber" placeholder="SDC-001">
         </div>
       </div>
@@ -1063,11 +1100,11 @@
 
     <div class="field-row" style="margin-bottom:20px;">
       <div class="field">
-        <label>Customer Name</label>
+        <label>Customer Name (Press Enter)</label>
         <input type="text" id="billCustomerName" placeholder="Name">
       </div>
       <div class="field">
-        <label>Contact</label>
+        <label>Contact (Press Enter)</label>
         <div class="phone-input-wrapper">
           <span class="phone-prefix">+91</span>
           <input type="text" id="billCustomerContact" class="phone-input" placeholder="XXXXXXXXXX" maxlength="10">
@@ -1081,7 +1118,7 @@
           <h3 style="font-size:14px;">Select Products</h3>
           <span style="font-size:12px; color:var(--muted);" id="productCount">0 products</span>
         </div>
-        <input type="text" id="billProductSearch" placeholder="🔍 Search products..." 
+        <input type="text" id="billProductSearch" placeholder="🔍 Search products (Type and click or Enter)..." 
                style="margin-bottom:12px; width:100%;">
         <div class="bill-product-grid" id="billProductGrid"></div>
       </div>
@@ -1114,7 +1151,7 @@
               <span id="totalAmount">₹0</span>
             </div>
             <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="generateBill()">
-              Generate DC
+              Generate DC (Ctrl+S)
             </button>
           </div>
         </div>
@@ -1391,14 +1428,15 @@
   <div class="qty-modal-content">
     <h3 id="rateModalLabel">Enter Rate & Quantity</h3>
     <div style="margin-bottom:16px;">
-      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">RATE (₹)</label>
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">RATE (₹) - Use ↑↓ arrows</label>
       <input type="number" class="qty-modal-input" id="rateModalInput" min="0" step="0.01" placeholder="0.00" style="margin-bottom:12px; font-size:32px;">
-      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY</label>
-      <input type="number" class="qty-modal-input" id="qtyModalInput" min="1" value="1" style="font-size:32px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY - Use ↑↓ arrows</label>
+      <input type="number" class="qty-modal-input" id="qtyModalInput" min="0" value="1" style="font-size:32px;">
+      <div class="input-focus-indicator" id="modalFocusIndicator">Press Enter to switch • ↑↓ to adjust</div>
     </div>
     <div class="qty-modal-actions">
-      <button class="btn btn-ghost" onclick="closeRateModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmRateModal()">OK</button>
+      <button class="btn btn-ghost" onclick="closeRateModal()">Cancel (ESC)</button>
+      <button class="btn btn-primary" onclick="confirmRateModal()">OK (Enter)</button>
     </div>
   </div>
 </div>
@@ -1408,14 +1446,15 @@
   <div class="qty-modal-content">
     <h3 id="sellPriceModalLabel">Enter Selling Price & Quantity</h3>
     <div style="margin-bottom:16px;">
-      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">SELLING PRICE (₹)</label>
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">SELLING PRICE (₹) - Use ↑↓ arrows</label>
       <input type="number" class="qty-modal-input" id="sellPriceModalInput" min="0" step="0.01" placeholder="0.00" style="margin-bottom:12px; font-size:32px;">
-      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY</label>
-      <input type="number" class="qty-modal-input" id="sellQtyModalInput" min="1" value="1" style="font-size:32px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY - Use ↑↓ arrows</label>
+      <input type="number" class="qty-modal-input" id="sellQtyModalInput" min="0" value="1" style="font-size:32px;">
+      <div class="input-focus-indicator" id="sellModalFocusIndicator">Press Enter to switch • ↑↓ to adjust</div>
     </div>
     <div class="qty-modal-actions">
-      <button class="btn btn-ghost" onclick="closeSellPriceModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmSellPriceModal()">OK</button>
+      <button class="btn btn-ghost" onclick="closeSellPriceModal()">Cancel (ESC)</button>
+      <button class="btn btn-primary" onclick="confirmSellPriceModal()">OK (Enter)</button>
     </div>
   </div>
 </div>
@@ -1475,13 +1514,13 @@
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCAwx2fQKpiQgGYalohvkVpx5PZIw2cfak",
-  authDomain: "om-s-199a5.firebaseapp.com",
-  databaseURL: "https://om-s-199a5-default-rtdb.firebaseio.com",
-  projectId: "om-s-199a5",
-  storageBucket: "om-s-199a5.firebasestorage.app",
-  messagingSenderId: "943377640957",
-  appId: "1:943377640957:web:6c008f2988d78df86afd94"
+  apiKey: "AIzaSyAy9oLAJMzlyZk9MmFljA6hERaMjYFJvBc",
+  authDomain: "stock-f5f68.firebaseapp.com",
+  databaseURL: "https://stock-f5f68-default-rtdb.firebaseio.com",
+  projectId: "stock-f5f68",
+  storageBucket: "stock-f5f68.firebasestorage.app",
+  messagingSenderId: "744020795401",
+  appId: "1:744020795401:web:29736d52f71bee371758d8"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -1489,10 +1528,12 @@ const db = firebase.database();
 const inventoryRef = db.ref("inventory");
 const billsRef = db.ref("bills");
 const stockEntriesRef = db.ref("stockEntries");
+const lastRatesRef = db.ref("lastRates");
 
 let products = {};
 let bills = {};
 let stockEntries = {};
+let lastRates = {}; // Store last rates for products
 let editingId = null;
 let cart = {};
 let stockEntry = {};
@@ -1501,7 +1542,6 @@ let currentBillData = null;
 let billProductSearchTerm = '';
 let stockEntrySearchTerm = '';
 let currentStockEntryType = 'in';
-let rateModalCallback = null;
 let currentEditingProductId = null;
 let currentEditingBillProductId = null;
 
@@ -1562,6 +1602,10 @@ stockEntriesRef.on("value", (snap) => {
   updateDCSupplierDatalist();
 });
 
+lastRatesRef.on("value", (snap) => {
+  lastRates = snap.val() || {};
+});
+
 function updateSupplierDatalist() {
   const suppliers = [...new Set(Object.values(stockEntries)
     .filter(e => e.supplier && e.supplier.trim())
@@ -1580,6 +1624,186 @@ function updateDCSupplierDatalist() {
   datalist.innerHTML = suppliers.map(s => `<option value="${escapeHtml(s)}">`).join('');
 }
 
+// ========== KEYBOARD NAVIGATION SYSTEM ==========
+
+// Setup keyboard navigation for stock entry
+document.getElementById('stockEntryDC').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('stockEntrySupplier').focus();
+  }
+});
+
+document.getElementById('stockEntrySupplier').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('stockEntrySearch').focus();
+  }
+});
+
+document.getElementById('stockEntrySearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && stockEntrySearchTerm) {
+    e.preventDefault();
+    selectFirstProduct('stock');
+  }
+});
+
+// Setup keyboard navigation for billing
+document.getElementById('billDCNumber').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('billCustomerName').focus();
+  }
+});
+
+document.getElementById('billCustomerName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('billCustomerContact').focus();
+  }
+});
+
+document.getElementById('billCustomerContact').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('billProductSearch').focus();
+  }
+});
+
+document.getElementById('billProductSearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && billProductSearchTerm) {
+    e.preventDefault();
+    selectFirstProduct('bill');
+  }
+});
+
+function selectFirstProduct(type) {
+  const grid = type === 'stock' ? 
+    document.getElementById('stockEntryProductGrid') : 
+    document.getElementById('billProductGrid');
+  
+  const firstCard = grid.querySelector('.product-card');
+  if (firstCard) {
+    firstCard.click();
+  }
+}
+
+// Rate Modal keyboard navigation
+let currentFocusField = 'rate';
+
+document.getElementById('rateModalInput').addEventListener('focus', () => {
+  currentFocusField = 'rate';
+  updateModalFocusIndicator();
+});
+
+document.getElementById('qtyModalInput').addEventListener('focus', () => {
+  currentFocusField = 'qty';
+  updateModalFocusIndicator();
+});
+
+function updateModalFocusIndicator() {
+  const indicator = document.getElementById('modalFocusIndicator');
+  if (currentFocusField === 'rate') {
+    indicator.textContent = 'Editing: RATE • Press Enter for Quantity';
+  } else {
+    indicator.textContent = 'Editing: QUANTITY • Press Enter to Save';
+  }
+}
+
+// Arrow key navigation in rate modal
+document.getElementById('rateModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('qtyModalInput').focus();
+    document.getElementById('qtyModalInput').select();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = (currentValue + 1).toFixed(2);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1).toFixed(2);
+  } else if (e.key === 'Escape') {
+    closeRateModal();
+  }
+});
+
+document.getElementById('qtyModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    confirmRateModal();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = currentValue + 1;
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1);
+  } else if (e.key === 'Escape') {
+    closeRateModal();
+  }
+});
+
+// Selling price modal keyboard navigation
+document.getElementById('sellPriceModalInput').addEventListener('focus', () => {
+  document.getElementById('sellModalFocusIndicator').textContent = 'Editing: PRICE • Press Enter for Quantity';
+});
+
+document.getElementById('sellQtyModalInput').addEventListener('focus', () => {
+  document.getElementById('sellModalFocusIndicator').textContent = 'Editing: QUANTITY • Press Enter to Save';
+});
+
+document.getElementById('sellPriceModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('sellQtyModalInput').focus();
+    document.getElementById('sellQtyModalInput').select();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = (currentValue + 1).toFixed(2);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1).toFixed(2);
+  } else if (e.key === 'Escape') {
+    closeSellPriceModal();
+  }
+});
+
+document.getElementById('sellQtyModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    confirmSellPriceModal();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = currentValue + 1;
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1);
+  } else if (e.key === 'Escape') {
+    closeSellPriceModal();
+  }
+});
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl+S to save
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    const activeTab = document.querySelector('.tab-content.active').id;
+    if (activeTab === 'tab-stockEntry' && Object.keys(stockEntry).length > 0) {
+      saveStockEntry();
+    } else if (activeTab === 'tab-billing' && Object.keys(cart).length > 0) {
+      generateBill();
+    }
+  }
+});
+
 function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1592,11 +1816,13 @@ function switchTab(tabName) {
   if(tabName === 'billing') {
     initializeBillDateTime();
     renderBillingProducts();
+    setTimeout(() => document.getElementById('billDCNumber').focus(), 100);
   }
   if(tabName === 'stockEntry') {
     initializeStockEntryDateTime();
     renderStockEntryProducts();
     renderStockEntryHistory();
+    setTimeout(() => document.getElementById('stockEntryDC').focus(), 100);
   }
   if(tabName === 'dcReports') renderDCReports();
   if(tabName === 'billReports') renderBillReports();
@@ -1646,6 +1872,19 @@ function calculateAverageCost(productId) {
   });
   
   return totalQty > 0 ? totalCost / totalQty : 0;
+}
+
+function getLastRate(productId, type = 'purchase') {
+  if (lastRates[productId] && lastRates[productId][type]) {
+    return lastRates[productId][type];
+  }
+  return 0;
+}
+
+function saveLastRate(productId, rate, type = 'purchase') {
+  const updates = {};
+  updates[`${productId}/${type}`] = rate;
+  lastRatesRef.update(updates);
 }
 
 function getFilteredList(){
@@ -1944,24 +2183,40 @@ function openRateModal(productId, productName, currentQty = 1) {
   currentEditingProductId = productId;
   const product = products[productId];
   
+  // Get last rate or default to product cost
+  const lastRate = getLastRate(productId, 'purchase') || product?.costPrice || 0;
+  
   document.getElementById('rateModalLabel').textContent = `${productName}`;
-  document.getElementById('rateModalInput').value = product?.costPrice || 0;
+  document.getElementById('rateModalInput').value = lastRate;
   document.getElementById('qtyModalInput').value = currentQty;
   document.getElementById('rateModal').classList.add('show');
   
-  setTimeout(() => document.getElementById('rateModalInput').select(), 100);
+  currentFocusField = 'rate';
+  setTimeout(() => {
+    document.getElementById('rateModalInput').focus();
+    document.getElementById('rateModalInput').select();
+    updateModalFocusIndicator();
+  }, 100);
 }
 
 function closeRateModal() {
   document.getElementById('rateModal').classList.remove('show');
   currentEditingProductId = null;
+  
+  // Return focus to search
+  setTimeout(() => {
+    document.getElementById('stockEntrySearch').focus();
+  }, 100);
 }
 
 function confirmRateModal() {
   const rate = parseFloat(document.getElementById('rateModalInput').value) || 0;
-  const qty = parseInt(document.getElementById('qtyModalInput').value) || 1;
+  const qty = parseInt(document.getElementById('qtyModalInput').value) || 0;
   
   if (currentEditingProductId && rate > 0 && qty > 0) {
+    // Save last rate
+    saveLastRate(currentEditingProductId, rate, 'purchase');
+    
     if (stockEntry[currentEditingProductId]) {
       stockEntry[currentEditingProductId].qty = qty;
       stockEntry[currentEditingProductId].rate = rate;
@@ -1970,22 +2225,11 @@ function confirmRateModal() {
     }
     
     renderStockEntryProducts();
+    showToast(`Added: ${qty} units @ ${currency(rate)}`);
   }
   
   closeRateModal();
 }
-
-document.getElementById('rateModalInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    document.getElementById('qtyModalInput').focus();
-  }
-});
-
-document.getElementById('qtyModalInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    confirmRateModal();
-  }
-});
 
 // ========== SELLING PRICE MODAL (FOR BILLING) ==========
 
@@ -1993,24 +2237,38 @@ function openSellPriceModal(productId, productName, currentQty = 1) {
   currentEditingBillProductId = productId;
   const product = products[productId];
   
+  // Get last selling rate or default to product sell price
+  const lastRate = getLastRate(productId, 'selling') || product?.sellPrice || 0;
+  
   document.getElementById('sellPriceModalLabel').textContent = `${productName}`;
-  document.getElementById('sellPriceModalInput').value = product?.sellPrice || 0;
+  document.getElementById('sellPriceModalInput').value = lastRate;
   document.getElementById('sellQtyModalInput').value = currentQty;
   document.getElementById('sellPriceModal').classList.add('show');
   
-  setTimeout(() => document.getElementById('sellPriceModalInput').select(), 100);
+  setTimeout(() => {
+    document.getElementById('sellPriceModalInput').focus();
+    document.getElementById('sellPriceModalInput').select();
+  }, 100);
 }
 
 function closeSellPriceModal() {
   document.getElementById('sellPriceModal').classList.remove('show');
   currentEditingBillProductId = null;
+  
+  // Return focus to search
+  setTimeout(() => {
+    document.getElementById('billProductSearch').focus();
+  }, 100);
 }
 
 function confirmSellPriceModal() {
   const price = parseFloat(document.getElementById('sellPriceModalInput').value) || 0;
-  const qty = parseInt(document.getElementById('sellQtyModalInput').value) || 1;
+  const qty = parseInt(document.getElementById('sellQtyModalInput').value) || 0;
   
   if (currentEditingBillProductId && price > 0 && qty > 0) {
+    // Save last selling rate
+    saveLastRate(currentEditingBillProductId, price, 'selling');
+    
     if (cart[currentEditingBillProductId]) {
       cart[currentEditingBillProductId].qty = qty;
       cart[currentEditingBillProductId].customPrice = price;
@@ -2019,22 +2277,11 @@ function confirmSellPriceModal() {
     }
     
     renderBillingProducts();
+    showToast(`Added: ${qty} units @ ${currency(price)}`);
   }
   
   closeSellPriceModal();
 }
-
-document.getElementById('sellPriceModalInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    document.getElementById('sellQtyModalInput').focus();
-  }
-});
-
-document.getElementById('sellQtyModalInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    confirmSellPriceModal();
-  }
-});
 
 // ========== STOCK ENTRY FUNCTIONS ==========
 
@@ -2080,7 +2327,7 @@ function renderStockEntryProducts() {
   container.innerHTML = list.map(p => {
     const inEntry = stockEntry[p.id];
     const qty = inEntry ? inEntry.qty : 0;
-    const rate = inEntry ? inEntry.rate : 0;
+    const rate = inEntry ? inEntry.rate : (getLastRate(p.id, 'purchase') || 0);
     const cardClass = inEntry ? (currentStockEntryType === 'in' ? 'in-stock-entry' : 'stock-out') : '';
     const badgeClass = currentStockEntryType === 'out' ? 'out' : '';
     
@@ -2229,6 +2476,11 @@ function saveStockEntry() {
   document.getElementById("stockEntrySupplier").value = '';
   initializeStockEntryDateTime();
   renderStockEntryProducts();
+  
+  // Focus back to DC number for next entry
+  setTimeout(() => {
+    document.getElementById('stockEntryDC').focus();
+  }, 100);
 }
 
 function renderStockEntryHistory() {
@@ -2285,6 +2537,12 @@ document.getElementById("stockHistoryDateFilter")?.addEventListener("change", re
 document.getElementById("stockHistoryTypeFilter")?.addEventListener("change", renderStockEntryHistory);
 document.getElementById("stockHistoryDCFilter")?.addEventListener("input", renderStockEntryHistory);
 
+// Continue in next part due to length...
+</script>
+
+<!-- Part 2 of JavaScript continues here -->
+<script>
+
 // ========== SUPPLIER REPORTS ==========
 
 function renderSupplierReports() {
@@ -2323,7 +2581,6 @@ function renderSupplierReports() {
     );
   }
   
-  // Update stats
   const totalPurchaseValue = supplierList.reduce((sum, s) => sum + s.totalValue, 0);
   const totalSuppliers = supplierList.length;
   const totalDCs = supplierList.reduce((sum, s) => sum + s.dcCount, 0);
@@ -2533,7 +2790,6 @@ function renderDCReports() {
     );
   }
   
-  // Update stats
   const totalValue = dcList.reduce((sum, dc) => sum + dc.totalValue, 0);
   const totalDCs = dcList.length;
   
@@ -2677,7 +2933,6 @@ function renderBillReports() {
     billList = billList.filter(b => b.billDate === dateFilter);
   }
   
-  // Update stats
   const totalValue = billList.reduce((sum, b) => sum + b.totalAmount, 0);
   const totalDCs = billList.length;
   const totalProfit = billList.reduce((sum, b) => sum + b.profit, 0);
@@ -2832,13 +3087,13 @@ function renderBillingProducts() {
   container.innerHTML = list.map(p => {
     const inCart = cart[p.id];
     const qty = inCart ? inCart.qty : 0;
-    const customPrice = inCart?.customPrice;
+    const customPrice = inCart?.customPrice || getLastRate(p.id, 'selling') || p.sellPrice;
     
     return `
       <div class="product-card ${inCart ? 'in-cart' : ''}" onclick="openSellPriceModal('${p.id}', '${escapeHtml(p.name)}', ${qty || 1})">
         ${qty > 0 ? `<div class="product-card-badge">${qty}</div>` : ''}
         <div class="product-card-name">${escapeHtml(p.name)}</div>
-        <div class="product-card-price">${currency(customPrice || p.sellPrice)}</div>
+        <div class="product-card-price">${currency(customPrice)}</div>
         <div class="product-card-stock">Stock: ${p.quantity}</div>
       </div>
     `;
@@ -3032,6 +3287,11 @@ function generateBill() {
   renderBillingProducts();
 
   showToast('Sales DC generated!');
+  
+  // Focus back to DC number for next bill
+  setTimeout(() => {
+    document.getElementById('billDCNumber').focus();
+  }, 100);
 }
 
 function displayBillReceipt(bill) {
@@ -3490,6 +3750,7 @@ function clearAllData() {
   inventoryRef.remove();
   billsRef.remove();
   stockEntriesRef.remove();
+  lastRatesRef.remove();
   showToast('All data cleared!');
 }
 
