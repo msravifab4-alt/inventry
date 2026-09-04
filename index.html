@@ -1,0 +1,3785 @@
+<!DOCTYPE DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Inventory & Billing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#141b22;
+    --panel-2:#1a232c;
+    --line:#232e38;
+    --amber:#ffb300;
+    --amber-dim:#8a6a1f;
+    --teal:#20e3b2;
+    --coral:#ff5c6c;
+    --text:#e8edf2;
+    --muted:#7c8a99;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  h1,h2,h3,.mono{font-family:'Space Grotesk', sans-serif;}
+  .num, .sku, td.num-cell{font-family:'JetBrains Mono', monospace;}
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, #10161d, #0d1117);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:32px; height:32px; border-radius:8px;
+    background:conic-gradient(from 220deg, var(--amber), #7a5b12, var(--amber));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; color:#0d1117; font-size:15px;
+  }
+  .brand-text h1{font-size:16px; font-weight:700; letter-spacing:0.2px;}
+  .brand-text span{font-size:10px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase;}
+  .sync{
+    display:flex; align-items:center; gap:8px;
+    font-size:11px; color:var(--muted);
+    border:1px solid var(--line); border-radius:20px; padding:5px 10px;
+    background:var(--panel);
+  }
+  .pulse-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--teal);
+    box-shadow:0 0 0 0 rgba(32,227,178,0.6);
+    animation:pulse 1.8s infinite;
+  }
+  .pulse-dot.off{background:var(--coral); animation:none;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(32,227,178,0.55);}
+    70%{box-shadow:0 0 0 7px rgba(32,227,178,0);}
+    100%{box-shadow:0 0 0 0 rgba(32,227,178,0);}
+  }
+
+  main{max-width:1380px; margin:0 auto; padding:20px 16px;}
+
+  .tabs{
+    display:flex; gap:6px; margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:0;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tab-btn{
+    background:transparent; border:none; color:var(--muted);
+    padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer;
+    border-bottom:2px solid transparent; transition:all .2s;
+    font-family:'Inter',sans-serif;
+    white-space:nowrap;
+  }
+  .tab-btn.active{color:var(--amber); border-bottom-color:var(--amber);}
+  .tab-btn:hover{color:var(--text);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  .stats{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;
+    margin-bottom:20px;
+  }
+  .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; position:relative; overflow:hidden;
+  }
+  .stat::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--stat-accent, var(--amber));
+  }
+  .stat .lbl{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+  .stat .val{font-size:22px; font-weight:700; font-family:'Space Grotesk',sans-serif;}
+  .stat.low{--stat-accent:var(--coral);}
+  .stat.value{--stat-accent:var(--teal);}
+
+  .toolbar{
+    display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;
+    position:relative;
+  }
+  input, select, textarea{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:9px 12px; font-size:13px; font-family:'Inter',sans-serif;
+    outline:none;
+  }
+  input[type="date"], input[type="time"]{
+    color-scheme: dark;
+  }
+  input:focus, select:focus, textarea:focus{border-color:var(--amber-dim);}
+  #search, #billProductSearch{flex:1; min-width:150px;}
+  .btn{
+    border:none; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:'Inter',sans-serif; transition:opacity .15s;
+    white-space:nowrap;
+  }
+  .btn:hover{opacity:0.85;}
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .btn-primary{background:var(--amber); color:#0d1117;}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
+  .btn-danger{background:transparent; color:var(--coral); border:1px solid #4a2226;}
+  .btn-teal{background:var(--teal); color:#0d1117;}
+  .btn-whatsapp{background:#25D366; color:#fff;}
+
+  .search-not-found{
+    background:var(--panel); border:1px solid var(--amber); border-radius:10px;
+    padding:14px 18px; margin-bottom:14px; display:none;
+    align-items:center; justify-content:space-between; gap:12px;
+  }
+  .search-not-found.show{display:flex;}
+  .search-not-found-text{flex:1; font-size:13px;}
+  .search-not-found-text strong{color:var(--amber);}
+
+  .table-wrap{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
+    overflow-x:auto;
+  }
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:600px;}
+  thead th{
+    text-align:left; padding:10px 12px; color:var(--muted); font-weight:600;
+    font-size:10px; text-transform:uppercase; letter-spacing:0.5px;
+    border-bottom:1px solid var(--line); background:var(--panel-2);
+  }
+  tbody tr{border-bottom:1px solid var(--line);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#171f27;}
+  td{padding:10px 12px; vertical-align:middle;}
+  .prod-name{font-weight:600; font-size:13px;}
+  .prod-sku{color:var(--muted); font-size:10px;}
+  .cat-tag{
+    display:inline-block; font-size:10px; padding:3px 8px; border-radius:20px;
+    background:#1e2933; color:var(--muted); border:1px solid var(--line);
+  }
+
+  .signal{display:flex; align-items:flex-end; gap:2px; height:14px;}
+  .signal i{width:3px; border-radius:1px; background:var(--line); display:block;}
+  .signal i:nth-child(1){height:4px;}
+  .signal i:nth-child(2){height:8px;}
+  .signal i:nth-child(3){height:11px;}
+  .signal i:nth-child(4){height:14px;}
+  .signal.lvl-1 i:nth-child(1){background:var(--coral);}
+  .signal.lvl-2 i:nth-child(1),.signal.lvl-2 i:nth-child(2){background:#ffb300;}
+  .signal.lvl-3 i:nth-child(1),.signal.lvl-3 i:nth-child(2),.signal.lvl-3 i:nth-child(3){background:#ffb300;}
+  .signal.lvl-4 i{background:var(--teal);}
+  .qty-row{display:flex; align-items:center; gap:6px;}
+  .qty-num{font-weight:600; min-width:30px;}
+  .low-flag{color:var(--coral); font-size:10px; font-weight:600;}
+  .negative-stock{color:var(--coral); font-weight:700;}
+
+  .stock-controls{
+    display:flex; gap:4px; align-items:center;
+  }
+  .stock-btn{
+    width:26px; height:26px; border-radius:6px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--amber); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    font-weight:700; transition:all .15s;
+  }
+  .stock-btn:hover{background:var(--amber); color:#0d1117; border-color:var(--amber);}
+  .stock-btn:active{transform:scale(0.95);}
+
+  .row-actions{display:flex; gap:4px;}
+  .icon-btn{
+    width:26px; height:26px; border-radius:6px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--muted); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:12px;
+  }
+  .icon-btn:hover{color:var(--text); border-color:var(--amber-dim);}
+
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--muted);
+  }
+  .empty-state h3{color:var(--text); margin-bottom:6px; font-size:15px;}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(5,8,11,0.7);
+    display:none; z-index:40;
+  }
+  .overlay.show{display:block;}
+  .panel{
+    position:fixed; top:0; right:0; height:100%; width:min(420px, 100vw);
+    background:var(--panel); border-left:1px solid var(--line);
+    transform:translateX(100%); transition:transform .25s ease; z-index:41;
+    padding:20px; overflow-y:auto;
+  }
+  .panel.show{transform:translateX(0);}
+  .panel h2{font-size:16px; margin-bottom:16px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:10px; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;}
+  .field input, .field select, .field textarea{width:100%;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .field-row-3{display:grid; grid-template-columns:2fr 1fr; gap:10px; align-items:end;}
+  .panel-actions{display:flex; gap:8px; margin-top:18px;}
+  .panel-actions .btn{flex:1;}
+
+  .profit-indicator{
+    font-size:11px; color:var(--teal); margin-top:4px;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .optional-hint{
+    font-size:10px; color:var(--muted); font-style:italic; margin-top:2px;
+  }
+
+  .phone-input-wrapper{
+    position:relative;
+  }
+
+  .phone-prefix{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--muted);
+    font-size:13px;
+    pointer-events:none;
+  }
+
+  .phone-input{
+    padding-left:42px !important;
+  }
+
+  .billing-container{
+    display:grid; 
+    grid-template-columns:1fr; 
+    gap:20px;
+  }
+
+  @media (min-width:768px){
+    .billing-container{grid-template-columns:1.5fr 1fr;}
+  }
+
+  .bill-product-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap:12px;
+    max-height:500px;
+    overflow-y:auto;
+    padding:4px;
+  }
+
+  .product-card{
+    background:var(--panel-2);
+    border:2px solid var(--line);
+    border-radius:10px;
+    padding:12px;
+    cursor:pointer;
+    transition:all .2s;
+    position:relative;
+  }
+
+  .product-card:hover{
+    border-color:var(--amber-dim);
+    transform:translateY(-2px);
+  }
+
+  .product-card.in-cart, .product-card.in-stock-entry{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .product-card.stock-out{
+    border-color:var(--coral);
+    background:rgba(255,92,108,0.1);
+  }
+
+  .product-card-name{
+    font-weight:600;
+    font-size:13px;
+    margin-bottom:4px;
+    line-height:1.3;
+  }
+
+  .product-card-price{
+    color:var(--teal);
+    font-size:14px;
+    font-weight:700;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .product-card-stock{
+    font-size:10px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .product-card-badge{
+    position:absolute;
+    top:6px;
+    right:6px;
+    background:var(--amber);
+    color:#0d1117;
+    min-width:22px;
+    height:22px;
+    padding:0 6px;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  .product-card-badge.out{
+    background:var(--coral);
+    color:#fff;
+  }
+
+  .bill-cart{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+    position:sticky;
+    top:80px;
+  }
+
+  .cart-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    background:var(--panel-2);
+    border-radius:8px;
+    margin-bottom:10px;
+    border:1px solid var(--line);
+  }
+
+  .cart-item-info{
+    flex:1;
+  }
+
+  .cart-item-name{
+    font-weight:600;
+    font-size:13px;
+    margin-bottom:2px;
+  }
+
+  .cart-item-price{
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .cart-qty-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .qty-btn{
+    width:32px;
+    height:32px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--amber);
+    font-size:18px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:all .15s;
+    user-select:none;
+  }
+
+  .qty-btn:hover{
+    background:var(--amber);
+    color:#0d1117;
+  }
+
+  .qty-btn:active{
+    transform:scale(0.9);
+  }
+
+  .qty-display{
+    min-width:40px;
+    text-align:center;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    padding:4px 8px;
+    border-radius:6px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    transition:all .2s;
+  }
+
+  .qty-display:hover{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .cart-remove{
+    width:32px;
+    height:32px;
+    border-radius:6px;
+    border:1px solid var(--coral);
+    background:transparent;
+    color:var(--coral);
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:all .15s;
+  }
+
+  .cart-remove:hover{
+    background:var(--coral);
+    color:#fff;
+  }
+
+  .cart-total{
+    border-top:2px solid var(--line);
+    margin-top:16px;
+    padding-top:16px;
+  }
+
+  .cart-total-line{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:8px;
+    font-size:13px;
+  }
+
+  .cart-total-final{
+    font-size:20px;
+    font-weight:700;
+    color:var(--amber);
+    margin-top:12px;
+  }
+
+  .bill-datetime{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:16px;
+  }
+
+  .bill-datetime h3{
+    font-size:13px;
+    margin-bottom:10px;
+    color:var(--muted);
+  }
+
+  .stock-type-toggle{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+
+  .stock-type-btn{
+    padding:12px;
+    border:2px solid var(--line);
+    background:var(--panel);
+    border-radius:8px;
+    cursor:pointer;
+    text-align:center;
+    font-weight:600;
+    font-size:14px;
+    transition:all .2s;
+  }
+
+  .stock-type-btn:hover{
+    border-color:var(--amber-dim);
+  }
+
+  .stock-type-btn.active{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .stock-type-btn.in{
+    color:var(--teal);
+  }
+
+  .stock-type-btn.out{
+    color:var(--coral);
+  }
+
+  .stock-type-btn.in.active{
+    border-color:var(--teal);
+    background:rgba(32,227,178,0.15);
+  }
+
+  .stock-type-btn.out.active{
+    border-color:var(--coral);
+    background:rgba(255,92,108,0.15);
+  }
+
+  .bill-receipt{
+    background:white;
+    color:#000;
+    padding:20px;
+    max-width:400px;
+    margin:20px auto;
+    font-family:monospace;
+    border-radius:8px;
+  }
+
+  .receipt-header{
+    text-align:center;
+    border-bottom:2px dashed #000;
+    padding-bottom:10px;
+    margin-bottom:10px;
+  }
+
+  .receipt-line{
+    display:flex;
+    justify-content:space-between;
+    padding:4px 0;
+    font-size:12px;
+  }
+
+  .receipt-total{
+    border-top:2px solid #000;
+    margin-top:10px;
+    padding-top:10px;
+    font-weight:bold;
+    font-size:14px;
+  }
+
+  .settings-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+
+  .settings-card h3{
+    margin-bottom:12px;
+    font-size:14px;
+  }
+
+  .import-export{
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+
+  input[type="file"]{
+    display:none;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    z-index:100;
+    background:var(--panel);
+    border:1px solid var(--amber);
+    border-radius:8px;
+    padding:12px 18px;
+    color:var(--text);
+    font-size:13px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    transform:translateX(400px);
+    transition:transform .3s ease;
+  }
+
+  .toast.show{
+    transform:translateX(0);
+  }
+
+  .whatsapp-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,11,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+
+  .whatsapp-modal.show{
+    display:flex;
+  }
+
+  .whatsapp-modal-content{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:24px;
+    max-width:600px;
+    width:90%;
+    max-height:80vh;
+    overflow-y:auto;
+  }
+
+  .whatsapp-modal h3{
+    margin-bottom:16px;
+    font-size:16px;
+  }
+
+  .whatsapp-option{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+
+  .whatsapp-option:hover{
+    background:var(--amber-dim);
+    border-color:var(--amber);
+  }
+
+  .whatsapp-option h4{
+    font-size:14px;
+    margin-bottom:4px;
+  }
+
+  .whatsapp-option p{
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .entry-type-badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:4px;
+    font-size:10px;
+    font-weight:600;
+  }
+
+  .entry-type-badge.in{
+    background:rgba(32,227,178,0.2);
+    color:var(--teal);
+  }
+
+  .entry-type-badge.out{
+    background:rgba(255,92,108,0.2);
+    color:var(--coral);
+  }
+
+  .qty-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,11,0.95);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:60;
+  }
+
+  .qty-modal.show{
+    display:flex;
+  }
+
+  .qty-modal-content{
+    background:var(--panel);
+    border:2px solid var(--amber);
+    border-radius:12px;
+    padding:24px;
+    text-align:center;
+    min-width:320px;
+  }
+
+  .qty-modal h3{
+    margin-bottom:20px;
+    font-size:14px;
+    color:var(--amber);
+  }
+
+  .qty-modal-input{
+    font-size:48px;
+    font-weight:700;
+    text-align:center;
+    background:var(--panel-2);
+    border:2px solid var(--amber);
+    color:var(--amber);
+    padding:20px;
+    border-radius:12px;
+    width:100%;
+    font-family:'JetBrains Mono', monospace;
+    margin-bottom:10px;
+  }
+
+  .qty-modal-input:focus{
+    outline:none;
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(32,227,178,0.2);
+  }
+
+  .qty-modal-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:20px;
+  }
+
+  .dc-info{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px;
+    margin-top:8px;
+    font-size:11px;
+  }
+
+  .dc-badge{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:4px;
+    background:var(--amber-dim);
+    color:var(--amber);
+    font-size:10px;
+    font-weight:600;
+    margin-right:6px;
+  }
+
+  .supplier-summary-card{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+
+  .supplier-summary-card:hover{
+    border-color:var(--amber);
+    background:var(--amber-dim);
+  }
+
+  .supplier-summary-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+
+  .supplier-name{
+    font-size:16px;
+    font-weight:700;
+    color:var(--amber);
+  }
+
+  .supplier-stats{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+
+  .supplier-stat{
+    text-align:center;
+  }
+
+  .supplier-stat-label{
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+
+  .supplier-stat-value{
+    font-size:16px;
+    font-weight:700;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .input-focus-indicator{
+    font-size:11px;
+    color:var(--teal);
+    margin-top:4px;
+    font-weight:600;
+  }
+
+  .keyboard-hint{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:8px 12px;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .keyboard-hint strong{
+    color:var(--amber);
+  }
+
+  datalist {
+    background: var(--panel-2);
+  }
+
+  input[list]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:10px;
+    margin-top:30px;
+  }
+
+  @media (max-width:640px){
+    header{padding:12px 16px;}
+    .brand-text h1{font-size:14px;}
+    .brand-text span{font-size:9px;}
+    main{padding:16px 12px;}
+    .stats{grid-template-columns:repeat(2, 1fr);}
+    .stat .val{font-size:20px;}
+    table{font-size:12px;}
+    .prod-name{font-size:12px;}
+    .tabs{gap:4px;}
+    .tab-btn{padding:8px 12px; font-size:12px;}
+    .bill-product-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));}
+    .supplier-stats{grid-template-columns:1fr;}
+  }
+
+  @media print{
+    body * {visibility:hidden;}
+    .bill-receipt, .bill-receipt * {visibility:visible;}
+    .bill-receipt{position:absolute; left:0; top:0; width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div class="brand-text">
+      <h1>Stock Inventory</h1>
+      <span>& Billing System</span>
+    </div>
+  </div>
+  <div class="sync" id="syncBadge">
+    <span class="pulse-dot" id="pulseDot"></span>
+    <span id="syncText">Sync</span>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('inventory')">📦 Inventory</button>
+    <button class="tab-btn" onclick="switchTab('stockEntry')">📝 Purchase DC</button>
+    <button class="tab-btn" onclick="switchTab('billing')">💳 Sales DC</button>
+    <button class="tab-btn" onclick="switchTab('supplierReports')">🏭 Supplier Reports</button>
+    <button class="tab-btn" onclick="switchTab('dcReports')">📋 Purchase Reports</button>
+    <button class="tab-btn" onclick="switchTab('billReports')">📋 Sales Reports</button>
+    <button class="tab-btn" onclick="switchTab('history')">📊 History</button>
+    <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+    <button class="tab-btn" onclick="switchTab('analytics')">📈 Analytics</button>
+  </div>
+
+  <!-- INVENTORY TAB -->
+  <div id="tab-inventory" class="tab-content active">
+    <div class="stats">
+      <div class="stat">
+        <div class="lbl">Products</div>
+        <div class="val" id="statCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">In Stock</div>
+        <div class="val" id="statUnits">0</div>
+      </div>
+      <div class="stat value">
+        <div class="lbl">Value</div>
+        <div class="val" id="statValue">₹0</div>
+      </div>
+      <div class="stat low">
+        <div class="lbl">Low Stock</div>
+        <div class="val" id="statLow">0</div>
+      </div>
+    </div>
+
+    <div class="import-export">
+      <button class="btn btn-teal" onclick="document.getElementById('importFile').click()">📥 Import</button>
+      <button class="btn btn-ghost" onclick="exportToExcel()">📤 Export</button>
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" onchange="importFromExcel(event)">
+    </div>
+
+    <div class="search-not-found" id="searchNotFound">
+      <div class="search-not-found-text">
+        <strong id="searchTermDisplay"></strong> not found in inventory
+      </div>
+      <button class="btn btn-primary" onclick="addProductFromSearch()">+ Add This Product</button>
+    </div>
+
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Search...">
+      <select id="categoryFilter"><option value="">All</option></select>
+      <select id="stockFilter">
+        <option value="">All stock</option>
+        <option value="low">Low stock</option>
+        <option value="negative">Negative</option>
+      </select>
+      <button class="btn btn-primary" id="addBtn">+ Add</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Quick Adjust</th>
+            <th>Avg Cost</th>
+            <th>Price</th>
+            <th>Profit%</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <h3>No products</h3>
+        <p>Add your first item</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOCK ENTRY TAB -->
+  <div id="tab-stockEntry" class="tab-content">
+    <h2 style="margin-bottom:16px;">Purchase DC Entry</h2>
+    
+    <div class="keyboard-hint">
+      <strong>⌨️ Keyboard Shortcuts:</strong> Enter = Next field | Up/Down Arrow = Change Rate/Qty | ESC = Cancel | Tab = Navigate
+    </div>
+
+    <div class="bill-datetime">
+      <h3>📅 Entry Date & Time</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="stockEntryDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="stockEntryTime">
+        </div>
+      </div>
+    </div>
+
+    <div class="bill-datetime">
+      <h3>📄 DC (Delivery Challan) Details</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>DC Number (Press Enter to continue)</label>
+          <input type="text" id="stockEntryDC" value="001" readonly>
+        </div>
+        <div class="field">
+          <label>Supplier Name</label>
+          <select id="stockEntrySupplier">
+            <option value="">Select supplier</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="stock-type-toggle">
+      <div class="stock-type-btn in active" onclick="setStockEntryType('in')" id="stockTypeIn">
+        ➕ Stock IN
+      </div>
+      <div class="stock-type-btn out" onclick="setStockEntryType('out')" id="stockTypeOut">
+        ➖ Stock OUT
+      </div>
+    </div>
+
+    <div class="billing-container">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:14px;">Select Products</h3>
+          <span style="font-size:12px; color:var(--muted);" id="stockEntryProductCount">0 products</span>
+        </div>
+        <input type="text" id="stockEntrySearch" placeholder="🔍 Search products (Type and click or Enter)..." 
+               style="margin-bottom:12px; width:100%;">
+        <div class="bill-product-grid" id="stockEntryProductGrid"></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px;">Entry List <span id="stockEntryItemCount" style="color:var(--muted);">(0 items)</span></h3>
+        <div class="bill-cart">
+          <div id="stockEntryItems">
+            <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+              <div style="font-size:40px; margin-bottom:8px;">📦</div>
+              <p>Click products to add</p>
+            </div>
+          </div>
+          
+          <div class="cart-total" id="stockEntryTotal" style="display:none;">
+            <div class="cart-total-line">
+              <span>Total Items:</span>
+              <span id="stockEntryTotalQty">0</span>
+            </div>
+            <div class="cart-total-line">
+              <span>Total Value:</span>
+              <span id="stockEntryTotalValue">₹0</span>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="saveStockEntry()">
+              Save Entry (Ctrl+S)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:30px;">
+      <h3 style="font-size:14px; margin-bottom:12px;">Recent Entries</h3>
+      <div class="toolbar">
+        <input type="date" id="stockHistoryDateFilter">
+        <select id="stockHistoryTypeFilter">
+          <option value="">All Types</option>
+          <option value="in">Stock In</option>
+          <option value="out">Stock Out</option>
+        </select>
+        <input type="text" id="stockHistoryDCFilter" placeholder="DC Number">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>DC Number</th>
+              <th>Supplier</th>
+              <th>Product</th>
+              <th>Type</th>
+              <th>Quantity</th>
+              <th>Rate</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="stockEntryHistoryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BILLING TAB -->
+  <div id="tab-billing" class="tab-content">
+    <h2 style="margin-bottom:16px;">Sales DC Entry</h2>
+    
+    <div class="keyboard-hint">
+      <strong>⌨️ Keyboard Shortcuts:</strong> Enter = Next field | Up/Down Arrow = Change Price/Qty | ESC = Cancel | Tab = Navigate
+    </div>
+
+    <div class="bill-datetime">
+      <h3>📅 Bill Date & Time</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="billDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="billTime">
+        </div>
+      </div>
+    </div>
+
+    <div class="bill-datetime">
+      <h3>📄 Sales DC Details</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>DC Number (Press Enter)</label>
+          <input type="text" id="billDCNumber" value="001" readonly>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row" style="margin-bottom:20px;">
+      <div class="field">
+        <label>Customer Name (Press Enter)</label>
+        <input type="text" id="billCustomerName" placeholder="Name">
+      </div>
+      <div class="field">
+        <label>Contact (Press Enter)</label>
+        <div class="phone-input-wrapper">
+          <span class="phone-prefix">+91</span>
+          <input type="text" id="billCustomerContact" class="phone-input" placeholder="XXXXXXXXXX" maxlength="10">
+        </div>
+      </div>
+    </div>
+
+    <div class="billing-container">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:14px;">Select Products</h3>
+          <span style="font-size:12px; color:var(--muted);" id="productCount">0 products</span>
+        </div>
+        <input type="text" id="billProductSearch" placeholder="🔍 Search products (Type and click or Enter)..." 
+               style="margin-bottom:12px; width:100%;">
+        <div class="bill-product-grid" id="billProductGrid"></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px;">Cart <span id="cartItemCount" style="color:var(--muted);">(0 items)</span></h3>
+        <div class="bill-cart">
+          <div id="cartItems">
+            <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+              <div style="font-size:40px; margin-bottom:8px;">🛒</div>
+              <p>Tap products to add</p>
+            </div>
+          </div>
+          
+          <div class="cart-total" id="cartTotal" style="display:none;">
+            <div class="cart-total-line">
+              <span>Items:</span>
+              <span id="totalItems">0</span>
+            </div>
+            <div class="cart-total-line">
+              <span>Subtotal:</span>
+              <span id="subtotalAmount">₹0</span>
+            </div>
+            <div class="cart-total-line" style="color:var(--teal);">
+              <span>Profit:</span>
+              <span id="profitAmount">₹0</span>
+            </div>
+            <div class="cart-total-final">
+              <span>TOTAL:</span>
+              <span id="totalAmount">₹0</span>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="generateBill()">
+              Generate DC (Ctrl+S)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="billReceiptContainer" style="display:none; margin-top:30px;">
+      <div class="bill-receipt" id="billReceipt"></div>
+      <div style="text-align:center; margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
+        <button class="btn btn-teal" onclick="downloadPDF()">📄 Download PDF</button>
+        <button class="btn btn-whatsapp" onclick="showWhatsAppOptions()">📱 WhatsApp</button>
+        <button class="btn btn-ghost" onclick="closeBillReceipt()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPPLIER REPORTS TAB -->
+  <div id="tab-supplierReports" class="tab-content">
+    <h2 style="margin-bottom:16px;">Supplier Purchase Reports</h2>
+    
+    <div class="stats" style="margin-bottom:20px;">
+      <div class="stat value">
+        <div class="lbl">Total Purchase Value</div>
+        <div class="val" id="totalPurchaseValue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Suppliers</div>
+        <div class="val" id="totalSuppliers">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total DCs</div>
+        <div class="val" id="totalPurchaseDCs">0</div>
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="supplierReportSearch" placeholder="Search Supplier...">
+      <button class="btn btn-ghost" onclick="exportSupplierReport()">📤 Export</button>
+    </div>
+
+    <div id="supplierReportContainer"></div>
+  </div>
+
+  <!-- PURCHASE DC REPORTS TAB -->
+  <div id="tab-dcReports" class="tab-content">
+    <h2 style="margin-bottom:16px;">Purchase DC Reports</h2>
+    
+    <div class="stats" style="margin-bottom:20px;">
+      <div class="stat value">
+        <div class="lbl">Total Purchase Value</div>
+        <div class="val" id="dcReportTotalValue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total DCs</div>
+        <div class="val" id="dcReportTotalDCs">0</div>
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="dcReportSearch" placeholder="Search DC Number...">
+      <input type="date" id="dcReportDateFilter">
+      <input type="text" id="dcReportSupplierFilter" placeholder="Supplier" list="dcSupplierList">
+      <datalist id="dcSupplierList"></datalist>
+      <button class="btn btn-ghost" onclick="exportDCReport()">📤 Export</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DC Number</th>
+            <th>Date</th>
+            <th>Supplier</th>
+            <th>Total Items</th>
+            <th>Total Qty</th>
+            <th>Total Value</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="dcReportBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SALES BILLS REPORTS TAB -->
+  <div id="tab-billReports" class="tab-content">
+    <h2 style="margin-bottom:16px;">Sales DC Reports</h2>
+    
+    <div class="stats" style="margin-bottom:20px;">
+      <div class="stat value">
+        <div class="lbl">Total Sales Value</div>
+        <div class="val" id="billReportTotalValue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Sales DCs</div>
+        <div class="val" id="billReportTotalDCs">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total Profit</div>
+        <div class="val" id="billReportTotalProfit">₹0</div>
+      </div>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="billReportSearch" placeholder="Search DC Number...">
+      <input type="date" id="billReportDateFilter">
+      <button class="btn btn-ghost" onclick="exportBillReport()">📤 Export</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DC Number</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Total Items</th>
+            <th>Total Qty</th>
+            <th>Total Amount</th>
+            <th>Profit</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="billReportBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BILL HISTORY TAB -->
+  <div id="tab-history" class="tab-content">
+    <h2 style="margin-bottom:16px;">Bill History</h2>
+    <div class="toolbar">
+      <input id="historySearch" type="text" placeholder="Search..." style="flex:1;">
+      <button class="btn btn-ghost" onclick="exportBillHistory()">📤 Export</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DC Number</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Amount</th>
+            <th>Profit</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div id="tab-settings" class="tab-content">
+    <h2 style="margin-bottom:16px;">Settings</h2>
+    
+    <div class="settings-card">
+      <h3>Global Profit Margin</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Profit % for all</label>
+          <input type="number" id="globalProfitPercent" min="0" step="0.1" value="10">
+        </div>
+        <div class="field">
+          <button class="btn btn-primary" onclick="applyGlobalProfit()" style="margin-top:19px;">Apply All</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Database</h3>
+      <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div id="tab-analytics" class="tab-content">
+    <h2 style="margin-bottom:16px;">Analytics</h2>
+    
+    <div class="stats">
+      <div class="stat">
+        <div class="lbl">Total Bills</div>
+        <div class="val" id="analyticsTotal">0</div>
+      </div>
+      <div class="stat value">
+        <div class="lbl">Revenue</div>
+        <div class="val" id="analyticsRevenue">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Profit</div>
+        <div class="val" id="analyticsProfit">₹0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Avg Bill</div>
+        <div class="val" id="analyticsAvg">₹0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <button class="btn btn-teal" onclick="downloadAnalytics()">📊 Download Report</button>
+    </div>
+
+    <div style="margin-top:20px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px;">
+      <h3 style="margin-bottom:12px; font-size:14px;">Top Products</h3>
+      <div id="topProducts"></div>
+    </div>
+  </div>
+
+  <footer>Stock Inventory & Billing System · Powered by Firebase</footer>
+</main>
+
+<!-- Product Panel -->
+<div class="overlay" id="overlay"></div>
+<div class="panel" id="panel">
+  <h2 id="panelTitle">Add Product</h2>
+  <form id="productForm">
+    <div class="field">
+      <label>Product name</label>
+      <input type="text" id="f_name" placeholder="Product name">
+      <div class="optional-hint">All fields are optional except name</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>SKU</label>
+        <input type="text" id="f_sku" placeholder="Auto-generated">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <input type="text" id="f_category" placeholder="Category">
+      </div>
+    </div>
+    <div class="field">
+      <label>Supplier</label>
+      <input type="text" id="f_supplier" placeholder="Supplier">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Stock Qty</label>
+        <input type="number" id="f_qty" min="-9999" value="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Reorder at</label>
+        <input type="number" id="f_reorder" min="0" value="5" placeholder="5">
+      </div>
+    </div>
+    <div class="field">
+      <label>Default Cost price (₹)</label>
+      <input type="number" id="f_cost" min="0" step="0.01" placeholder="0">
+      <div class="optional-hint">Average cost will be calculated from DC entries</div>
+    </div>
+    <div class="field-row-3">
+      <div class="field">
+        <label>Selling price (₹)</label>
+        <input type="number" id="f_sell" min="0" step="0.01" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Profit %</label>
+        <input type="number" id="f_profit_percent" min="0" step="0.1" placeholder="10">
+      </div>
+    </div>
+    <div class="profit-indicator" id="profitIndicator"></div>
+    <input type="hidden" id="f_id">
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+    </div>
+  </form>
+</div>
+
+<!-- Rate Entry Modal -->
+<div class="qty-modal" id="rateModal">
+  <div class="qty-modal-content">
+    <h3 id="rateModalLabel">Enter Rate & Quantity</h3>
+    <div style="margin-bottom:16px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">RATE (₹) - Use ↑↓ arrows</label>
+      <input type="number" class="qty-modal-input" id="rateModalInput" min="0" step="0.01" placeholder="0.00" style="margin-bottom:12px; font-size:32px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY - Use ↑↓ arrows</label>
+      <input type="number" class="qty-modal-input" id="qtyModalInput" min="0" value="1" style="font-size:32px;">
+      <div class="input-focus-indicator" id="modalFocusIndicator">Press Enter to switch • ↑↓ to adjust</div>
+    </div>
+    <div class="qty-modal-actions">
+      <button class="btn btn-ghost" onclick="closeRateModal()">Cancel (ESC)</button>
+      <button class="btn btn-primary" onclick="confirmRateModal()">OK (Enter)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Selling Price Modal for Billing -->
+<div class="qty-modal" id="sellPriceModal">
+  <div class="qty-modal-content">
+    <h3 id="sellPriceModalLabel">Enter Selling Price & Quantity</h3>
+    <div style="margin-bottom:16px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">SELLING PRICE (₹) - Use ↑↓ arrows</label>
+      <input type="number" class="qty-modal-input" id="sellPriceModalInput" min="0" step="0.01" placeholder="0.00" style="margin-bottom:12px; font-size:32px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:6px;">QUANTITY - Use ↑↓ arrows</label>
+      <input type="number" class="qty-modal-input" id="sellQtyModalInput" min="0" value="1" style="font-size:32px;">
+      <div class="input-focus-indicator" id="sellModalFocusIndicator">Press Enter to switch • ↑↓ to adjust</div>
+    </div>
+    <div class="qty-modal-actions">
+      <button class="btn btn-ghost" onclick="closeSellPriceModal()">Cancel (ESC)</button>
+      <button class="btn btn-primary" onclick="confirmSellPriceModal()">OK (Enter)</button>
+    </div>
+  </div>
+</div>
+
+<!-- WhatsApp Modal -->
+<div class="whatsapp-modal" id="whatsappModal">
+  <div class="whatsapp-modal-content">
+    <h3>Send Bill via WhatsApp</h3>
+    <div class="whatsapp-option" onclick="sendWhatsAppText()">
+      <h4>📝 Send as Text Message</h4>
+      <p>Simple text-based bill details (Recommended)</p>
+    </div>
+    <div class="whatsapp-option" onclick="sendWhatsAppWithPDF()">
+      <h4>📄 Download PDF & Share</h4>
+      <p>Download PDF first, then share manually</p>
+    </div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeWhatsAppModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- DC Details Modal -->
+<div class="whatsapp-modal" id="dcDetailsModal">
+  <div class="whatsapp-modal-content" style="max-width:600px;">
+    <h3 id="dcDetailsTitle">DC Details</h3>
+    <div id="dcDetailsContent"></div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeDCDetailsModal()">Close</button>
+  </div>
+</div>
+
+<!-- Bill Details Modal -->
+<div class="whatsapp-modal" id="billDetailsModal">
+  <div class="whatsapp-modal-content" style="max-width:600px;">
+    <h3 id="billDetailsTitle">Bill Details</h3>
+    <div id="billDetailsContent"></div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeBillDetailsModal()">Close</button>
+  </div>
+</div>
+
+<!-- Supplier Details Modal -->
+<div class="whatsapp-modal" id="supplierDetailsModal">
+  <div class="whatsapp-modal-content" style="max-width:800px;">
+    <h3 id="supplierDetailsTitle">Supplier Purchase Details</h3>
+    <div id="supplierDetailsContent"></div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:12px;" onclick="closeSupplierDetailsModal()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- SheetJS -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAy9oLAJMzlyZk9MmFljA6hERaMjYFJvBc",
+  authDomain: "stock-f5f68.firebaseapp.com",
+  databaseURL: "https://stock-f5f68-default-rtdb.firebaseio.com",
+  projectId: "stock-f5f68",
+  storageBucket: "stock-f5f68.firebasestorage.app",
+  messagingSenderId: "744020795401",
+  appId: "1:744020795401:web:29736d52f71bee371758d8"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const inventoryRef = db.ref("inventory");
+const billsRef = db.ref("bills");
+const stockEntriesRef = db.ref("stockEntries");
+const lastRatesRef = db.ref("lastRates");
+const countersRef = db.ref("counters");
+
+let products = {};
+let bills = {};
+let stockEntries = {};
+let lastRates = {}; // Store last rates for products
+let editingId = null;
+let cart = {};
+let stockEntry = {};
+let currentSearchTerm = '';
+let currentBillData = null;
+let billProductSearchTerm = '';
+let stockEntrySearchTerm = '';
+let currentStockEntryType = 'in';
+let currentEditingProductId = null;
+let currentEditingBillProductId = null;
+
+function initializeBillDateTime() {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0, 5);
+  
+  document.getElementById('billDate').value = dateStr;
+  document.getElementById('billTime').value = timeStr;
+  showNextNumber('selling', 'billDCNumber');
+}
+
+function initializeStockEntryDateTime() {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0, 5);
+  
+  document.getElementById('stockEntryDate').value = dateStr;
+  document.getElementById('stockEntryTime').value = timeStr;
+  showNextNumber('purchase', 'stockEntryDC');
+}
+
+function formatDocumentNumber(value) {
+  return String(Number(value || 0)).padStart(3, '0');
+}
+
+function showNextNumber(counterName, fieldId) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
+
+  countersRef.child(counterName).once('value').then(snapshot => {
+    field.value = formatDocumentNumber(Number(snapshot.val() || 0) + 1);
+  });
+}
+
+function allocateNextNumber(counterName) {
+  return countersRef.child(counterName)
+    .transaction(current => Number(current || 0) + 1)
+    .then(result => formatDocumentNumber(result.snapshot.val()));
+}
+
+initializeBillDateTime();
+initializeStockEntryDateTime();
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+db.ref(".info/connected").on("value", (snap) => {
+  const connected = snap.val() === true;
+  document.getElementById("pulseDot").classList.toggle("off", !connected);
+  document.getElementById("syncText").textContent = connected ? "Live" : "Off";
+});
+
+inventoryRef.on("value", (snap) => {
+  products = snap.val() || {};
+  render();
+  renderBillingProducts();
+  renderStockEntryProducts();
+  updateSupplierDatalist();
+});
+
+billsRef.on("value", (snap) => {
+  bills = snap.val() || {};
+  renderBillHistory();
+  renderAnalytics();
+  renderBillReports();
+});
+
+stockEntriesRef.on("value", (snap) => {
+  stockEntries = snap.val() || {};
+  renderStockEntryHistory();
+  renderDCReports();
+  renderSupplierReports();
+  updateSupplierDatalist();
+  updateDCSupplierDatalist();
+});
+
+lastRatesRef.on("value", (snap) => {
+  lastRates = snap.val() || {};
+});
+
+function updateSupplierDatalist() {
+  const current = document.getElementById('stockEntrySupplier')?.value || '';
+  const suppliers = [...new Set([
+    ...Object.values(stockEntries).map(e => e.supplier),
+    ...Object.values(products).map(p => p.supplier)
+  ].map(supplier => String(supplier || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+  
+  const select = document.getElementById('stockEntrySupplier');
+  if (!select) return;
+  select.innerHTML = '<option value="">Select supplier</option>' +
+    suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  select.value = suppliers.includes(current) ? current : '';
+}
+
+function updateDCSupplierDatalist() {
+  const suppliers = [...new Set(Object.values(stockEntries)
+    .filter(e => e.supplier && e.supplier.trim())
+    .map(e => e.supplier))].sort();
+  
+  const datalist = document.getElementById('dcSupplierList');
+  datalist.innerHTML = suppliers.map(s => `<option value="${escapeHtml(s)}">`).join('');
+}
+
+// ========== KEYBOARD NAVIGATION SYSTEM ==========
+
+// Setup keyboard navigation for stock entry
+document.getElementById('stockEntryDC').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('stockEntrySupplier').focus();
+  }
+});
+
+document.getElementById('stockEntrySupplier').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('stockEntrySearch').focus();
+  }
+});
+
+document.getElementById('stockEntrySearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && stockEntrySearchTerm) {
+    e.preventDefault();
+    selectFirstProduct('stock');
+  }
+});
+
+// Setup keyboard navigation for billing
+document.getElementById('billDCNumber').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('billCustomerName').focus();
+  }
+});
+
+document.getElementById('billCustomerName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('billCustomerContact').focus();
+  }
+});
+
+document.getElementById('billCustomerContact').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('billProductSearch').focus();
+  }
+});
+
+document.getElementById('billProductSearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && billProductSearchTerm) {
+    e.preventDefault();
+    selectFirstProduct('bill');
+  }
+});
+
+function selectFirstProduct(type) {
+  const grid = type === 'stock' ? 
+    document.getElementById('stockEntryProductGrid') : 
+    document.getElementById('billProductGrid');
+  
+  const firstCard = grid.querySelector('.product-card');
+  if (firstCard) {
+    firstCard.click();
+  }
+}
+
+// Rate Modal keyboard navigation
+let currentFocusField = 'rate';
+
+document.getElementById('rateModalInput').addEventListener('focus', () => {
+  currentFocusField = 'rate';
+  updateModalFocusIndicator();
+});
+
+document.getElementById('qtyModalInput').addEventListener('focus', () => {
+  currentFocusField = 'qty';
+  updateModalFocusIndicator();
+});
+
+function updateModalFocusIndicator() {
+  const indicator = document.getElementById('modalFocusIndicator');
+  if (currentFocusField === 'rate') {
+    indicator.textContent = 'Editing: RATE • Press Enter for Quantity';
+  } else {
+    indicator.textContent = 'Editing: QUANTITY • Press Enter to Save';
+  }
+}
+
+// Arrow key navigation in rate modal
+document.getElementById('rateModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('qtyModalInput').focus();
+    document.getElementById('qtyModalInput').select();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = (currentValue + 1).toFixed(2);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1).toFixed(2);
+  } else if (e.key === 'Escape') {
+    closeRateModal();
+  }
+});
+
+document.getElementById('qtyModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    confirmRateModal();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = currentValue + 1;
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1);
+  } else if (e.key === 'Escape') {
+    closeRateModal();
+  }
+});
+
+// Selling price modal keyboard navigation
+document.getElementById('sellPriceModalInput').addEventListener('focus', () => {
+  document.getElementById('sellModalFocusIndicator').textContent = 'Editing: PRICE • Press Enter for Quantity';
+});
+
+document.getElementById('sellQtyModalInput').addEventListener('focus', () => {
+  document.getElementById('sellModalFocusIndicator').textContent = 'Editing: QUANTITY • Press Enter to Save';
+});
+
+document.getElementById('sellPriceModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('sellQtyModalInput').focus();
+    document.getElementById('sellQtyModalInput').select();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = (currentValue + 1).toFixed(2);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseFloat(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1).toFixed(2);
+  } else if (e.key === 'Escape') {
+    closeSellPriceModal();
+  }
+});
+
+document.getElementById('sellQtyModalInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    confirmSellPriceModal();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = currentValue + 1;
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const currentValue = parseInt(e.target.value) || 0;
+    e.target.value = Math.max(0, currentValue - 1);
+  } else if (e.key === 'Escape') {
+    closeSellPriceModal();
+  }
+});
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl+S to save
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    const activeTab = document.querySelector('.tab-content.active').id;
+    if (activeTab === 'tab-stockEntry' && Object.keys(stockEntry).length > 0) {
+      saveStockEntry();
+    } else if (activeTab === 'tab-billing' && Object.keys(cart).length > 0) {
+      generateBill();
+    }
+  }
+});
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
+  
+  if(tabName === 'history') renderBillHistory();
+  if(tabName === 'analytics') renderAnalytics();
+  if(tabName === 'billing') {
+    initializeBillDateTime();
+    renderBillingProducts();
+    setTimeout(() => document.getElementById('billDCNumber').focus(), 100);
+  }
+  if(tabName === 'stockEntry') {
+    initializeStockEntryDateTime();
+    renderStockEntryProducts();
+    renderStockEntryHistory();
+    setTimeout(() => document.getElementById('stockEntryDC').focus(), 100);
+  }
+  if(tabName === 'dcReports') renderDCReports();
+  if(tabName === 'billReports') renderBillReports();
+  if(tabName === 'supplierReports') renderSupplierReports();
+}
+
+function currency(n){
+  return "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+}
+
+function signalLevelClass(qty, reorder){
+  if (reorder <= 0) reorder = 1;
+  const ratio = qty / reorder;
+  if (qty <= 0) return "lvl-1";
+  if (ratio <= 1) return "lvl-1";
+  if (ratio <= 2) return "lvl-2";
+  if (ratio <= 4) return "lvl-3";
+  return "lvl-4";
+}
+
+function calculateProfit(cost, sell) {
+  if (!cost || cost <= 0) return 0;
+  return ((sell - cost) / cost * 100).toFixed(1);
+}
+
+function generateSKU(name) {
+  const prefix = name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+  const timestamp = Date.now().toString().slice(-6);
+  return `${prefix}-${timestamp}`;
+}
+
+function calculateAverageCost(productId) {
+  const entries = Object.values(stockEntries).filter(e => 
+    e.productId === productId && 
+    e.type === 'in' && 
+    e.rate > 0
+  );
+  
+  if (entries.length === 0) return 0;
+  
+  let totalCost = 0;
+  let totalQty = 0;
+  
+  entries.forEach(e => {
+    totalCost += e.rate * e.quantity;
+    totalQty += e.quantity;
+  });
+  
+  return totalQty > 0 ? totalCost / totalQty : 0;
+}
+
+function getLastRate(productId, type = 'purchase') {
+  if (lastRates[productId] && lastRates[productId][type]) {
+    return lastRates[productId][type];
+  }
+  return 0;
+}
+
+function saveLastRate(productId, rate, type = 'purchase') {
+  const updates = {};
+  updates[`${productId}/${type}`] = rate;
+  lastRatesRef.update(updates);
+}
+
+function getFilteredList(){
+  const search = document.getElementById("search").value.trim().toLowerCase();
+  currentSearchTerm = search;
+  const cat = document.getElementById("categoryFilter").value;
+  const stockMode = document.getElementById("stockFilter").value;
+
+  const filtered = Object.entries(products)
+    .map(([id, p]) => ({ 
+      id, 
+      ...p,
+      avgCost: calculateAverageCost(id)
+    }))
+    .filter(p => {
+      if (search && !(`${p.name} ${p.sku}`.toLowerCase().includes(search))) return false;
+      if (cat && p.category !== cat) return false;
+      if (stockMode === "low" && !(p.quantity <= p.reorderLevel && p.quantity > 0)) return false;
+      if (stockMode === "negative" && p.quantity >= 0) return false;
+      return true;
+    })
+    .sort((a,b) => a.name.localeCompare(b.name));
+
+  const notFoundBanner = document.getElementById('searchNotFound');
+  if (search && filtered.length === 0 && Object.keys(products).length > 0) {
+    document.getElementById('searchTermDisplay').textContent = `"${search}"`;
+    notFoundBanner.classList.add('show');
+  } else {
+    notFoundBanner.classList.remove('show');
+  }
+
+  return filtered;
+}
+
+function rebuildCategoryOptions(){
+  const sel = document.getElementById("categoryFilter");
+  const current = sel.value;
+  const cats = [...new Set(Object.values(products).map(p => p.category).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join("");
+  sel.value = current;
+}
+
+function addProductFromSearch() {
+  editingId = null;
+  document.getElementById("panelTitle").textContent = "Add Product";
+  document.getElementById("productForm").reset();
+  
+  if (currentSearchTerm) {
+    document.getElementById("f_name").value = currentSearchTerm;
+  }
+  
+  openPanel();
+  document.getElementById('searchNotFound').classList.remove('show');
+}
+
+function adjustStock(id, delta) {
+  const product = products[id];
+  if (!product) return;
+  
+  const newQty = Number(product.quantity || 0) + delta;
+  inventoryRef.child(id).update({
+    quantity: newQty,
+    updatedAt: Date.now()
+  });
+  
+  const entryType = delta > 0 ? 'in' : 'out';
+  stockEntriesRef.push({
+    productId: id,
+    productName: product.name,
+    productSku: product.sku,
+    type: entryType,
+    quantity: Math.abs(delta),
+    timestamp: Date.now(),
+    entryDate: new Date().toISOString().split('T')[0],
+    entryTime: new Date().toTimeString().slice(0, 5),
+    dcNumber: 'MANUAL',
+    supplier: '',
+    rate: 0,
+    total: 0
+  });
+  
+  showToast(`${delta > 0 ? '+' : ''}${delta} ${product.name}`);
+}
+
+function render(){
+  rebuildCategoryOptions();
+  const list = getFilteredList();
+  const tbody = document.getElementById("tableBody");
+  const empty = document.getElementById("emptyState");
+
+  const all = Object.values(products).map(p => ({
+    ...p,
+    avgCost: calculateAverageCost(Object.keys(products).find(id => products[id] === p))
+  }));
+  
+  const totalCount = all.length;
+  const totalUnits = all.reduce((s,p) => s + Number(p.quantity || 0), 0);
+  const totalValue = all.reduce((s,p) => s + (Number(p.quantity||0) * Number(p.avgCost||0)), 0);
+  const lowCount = all.filter(p => Number(p.quantity||0) <= Number(p.reorderLevel||0) && Number(p.quantity||0) > 0).length;
+
+  document.getElementById("statCount").textContent = totalCount;
+  document.getElementById("statUnits").textContent = totalUnits.toLocaleString("en-IN");
+  document.getElementById("statValue").textContent = currency(totalValue);
+  document.getElementById("statLow").textContent = lowCount;
+
+  if (list.length === 0 && !currentSearchTerm){
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  
+  if (list.length === 0 && currentSearchTerm) {
+    tbody.innerHTML = "";
+    empty.style.display = "none";
+    return;
+  }
+  
+  empty.style.display = "none";
+
+  tbody.innerHTML = list.map(p => {
+    const qty = Number(p.quantity||0);
+    const reorder = Number(p.reorderLevel||0);
+    const isLow = qty <= reorder && qty > 0;
+    const lvl = signalLevelClass(qty, reorder);
+    const profit = calculateProfit(p.avgCost || p.costPrice, p.sellPrice);
+
+    return `
+      <tr>
+        <td>
+          <div class="prod-name">${escapeHtml(p.name)}</div>
+          <div class="prod-sku sku">${escapeHtml(p.sku)}</div>
+        </td>
+        <td><span class="cat-tag">${escapeHtml(p.category||"—")}</span></td>
+        <td>
+          <div class="qty-row">
+            <span class="signal ${lvl}"><i></i><i></i><i></i><i></i></span>
+            <span class="qty-num num ${qty < 0 ? 'negative-stock' : ''}">${qty}</span>
+          </div>
+          ${isLow ? `<div class="low-flag">Low</div>` : ""}
+        </td>
+        <td>
+          <div class="stock-controls">
+            <button class="stock-btn" onclick="adjustStock('${p.id}', -1)">−</button>
+            <button class="stock-btn" onclick="adjustStock('${p.id}', 1)">+</button>
+          </div>
+        </td>
+        <td class="num" style="font-size:12px; color:var(--amber);">
+          ${currency(p.avgCost || p.costPrice)}
+        </td>
+        <td class="num" style="font-size:12px;">
+          ${currency(p.sellPrice)}
+        </td>
+        <td class="num" style="color:${profit > 0 ? 'var(--teal)' : 'var(--coral)'}; font-size:12px;">${profit}%</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick="openEdit('${p.id}')" title="Edit">✎</button>
+            <button class="icon-btn" onclick="deleteProduct('${p.id}')" title="Delete">✕</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+
+const overlay = document.getElementById("overlay");
+const panel = document.getElementById("panel");
+
+function openPanel(){
+  overlay.classList.add("show");
+  panel.classList.add("show");
+}
+function closePanel(){
+  overlay.classList.remove("show");
+  panel.classList.remove("show");
+  document.getElementById("productForm").reset();
+  editingId = null;
+  updateProfitIndicator();
+}
+
+document.getElementById("addBtn").onclick = () => {
+  editingId = null;
+  document.getElementById("panelTitle").textContent = "Add Product";
+  document.getElementById("productForm").reset();
+  openPanel();
+};
+document.getElementById("cancelBtn").onclick = closePanel;
+overlay.onclick = closePanel;
+
+window.openEdit = function(id){
+  const p = products[id];
+  if (!p) return;
+  editingId = id;
+  document.getElementById("panelTitle").textContent = "Edit Product";
+  document.getElementById("f_name").value = p.name || "";
+  document.getElementById("f_sku").value = p.sku || "";
+  document.getElementById("f_category").value = p.category || "";
+  document.getElementById("f_supplier").value = p.supplier || "";
+  document.getElementById("f_qty").value = p.quantity ?? 0;
+  document.getElementById("f_reorder").value = p.reorderLevel ?? 5;
+  document.getElementById("f_cost").value = p.costPrice ?? 0;
+  document.getElementById("f_sell").value = p.sellPrice ?? 0;
+  updateProfitIndicator();
+  openPanel();
+};
+
+window.deleteProduct = function(id){
+  const p = products[id];
+  if (!p) return;
+  if (confirm(`Delete "${p.name}"?`)){
+    inventoryRef.child(id).remove();
+    showToast('Product deleted');
+  }
+};
+
+function updateProfitIndicator() {
+  const cost = Number(document.getElementById("f_cost").value || 0);
+  const sell = Number(document.getElementById("f_sell").value || 0);
+  const indicator = document.getElementById("profitIndicator");
+  
+  if (cost > 0 && sell > 0) {
+    const profit = sell - cost;
+    const profitPercent = ((profit / cost) * 100).toFixed(2);
+    indicator.textContent = `Profit: ${currency(profit)} (${profitPercent}%)`;
+    indicator.style.color = profit >= 0 ? 'var(--teal)' : 'var(--coral)';
+  } else {
+    indicator.textContent = '';
+  }
+}
+
+document.getElementById("f_cost").addEventListener("input", updateProfitIndicator);
+document.getElementById("f_sell").addEventListener("input", updateProfitIndicator);
+
+document.getElementById("f_profit_percent").addEventListener("input", (e) => {
+  const cost = Number(document.getElementById("f_cost").value || 0);
+  const percent = Number(e.target.value || 0);
+  
+  if (cost > 0 && percent >= 0) {
+    const sell = cost + (cost * percent / 100);
+    document.getElementById("f_sell").value = sell.toFixed(2);
+    updateProfitIndicator();
+  }
+});
+
+document.getElementById("f_sell").addEventListener("input", () => {
+  const cost = Number(document.getElementById("f_cost").value || 0);
+  const sell = Number(document.getElementById("f_sell").value || 0);
+  
+  if (cost > 0) {
+    const percent = ((sell - cost) / cost * 100).toFixed(2);
+    document.getElementById("f_profit_percent").value = percent;
+  }
+});
+
+document.getElementById("productForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  
+  const name = document.getElementById("f_name").value.trim();
+  
+  if (!name) {
+    alert('Product name is required');
+    return;
+  }
+
+  const data = {
+    name: name,
+    sku: document.getElementById("f_sku").value.trim() || generateSKU(name),
+    category: document.getElementById("f_category").value.trim() || "Uncategorized",
+    supplier: document.getElementById("f_supplier").value.trim() || "",
+    quantity: Number(document.getElementById("f_qty").value || 0),
+    reorderLevel: Number(document.getElementById("f_reorder").value || 5),
+    costPrice: Number(document.getElementById("f_cost").value || 0),
+    sellPrice: Number(document.getElementById("f_sell").value || 0),
+    updatedAt: Date.now()
+  };
+
+  if (editingId){
+    inventoryRef.child(editingId).update(data);
+    showToast('Product updated');
+  } else {
+    inventoryRef.push(data);
+    showToast('Product added');
+  }
+  closePanel();
+});
+
+// ========== RATE MODAL (FOR STOCK ENTRY) ==========
+
+function openRateModal(productId, productName, currentQty = 1) {
+  currentEditingProductId = productId;
+  const product = products[productId];
+  
+  // Get last rate or default to product cost
+  const lastRate = getLastRate(productId, 'purchase') || product?.costPrice || 0;
+  
+  document.getElementById('rateModalLabel').textContent = `${productName}`;
+  document.getElementById('rateModalInput').value = lastRate;
+  document.getElementById('qtyModalInput').value = currentQty;
+  document.getElementById('rateModal').classList.add('show');
+  
+  currentFocusField = 'rate';
+  setTimeout(() => {
+    document.getElementById('rateModalInput').focus();
+    document.getElementById('rateModalInput').select();
+    updateModalFocusIndicator();
+  }, 100);
+}
+
+function closeRateModal() {
+  document.getElementById('rateModal').classList.remove('show');
+  currentEditingProductId = null;
+  
+  // Return focus to search
+  setTimeout(() => {
+    document.getElementById('stockEntrySearch').focus();
+  }, 100);
+}
+
+function confirmRateModal() {
+  const rate = parseFloat(document.getElementById('rateModalInput').value) || 0;
+  const qty = parseInt(document.getElementById('qtyModalInput').value) || 0;
+  
+  if (currentEditingProductId && rate > 0 && qty > 0) {
+    // Save last rate
+    saveLastRate(currentEditingProductId, rate, 'purchase');
+    
+    if (stockEntry[currentEditingProductId]) {
+      stockEntry[currentEditingProductId].qty = qty;
+      stockEntry[currentEditingProductId].rate = rate;
+    } else {
+      stockEntry[currentEditingProductId] = { qty, rate };
+    }
+    
+    renderStockEntryProducts();
+    showToast(`Added: ${qty} units @ ${currency(rate)}`);
+  }
+  
+  closeRateModal();
+}
+
+// ========== SELLING PRICE MODAL (FOR BILLING) ==========
+
+function openSellPriceModal(productId, productName, currentQty = 1) {
+  currentEditingBillProductId = productId;
+  const product = products[productId];
+  
+  // Get last selling rate or default to product sell price
+  const lastRate = getLastRate(productId, 'selling') || product?.sellPrice || 0;
+  
+  document.getElementById('sellPriceModalLabel').textContent = `${productName}`;
+  document.getElementById('sellPriceModalInput').value = lastRate;
+  document.getElementById('sellQtyModalInput').value = currentQty;
+  document.getElementById('sellPriceModal').classList.add('show');
+  
+  setTimeout(() => {
+    document.getElementById('sellPriceModalInput').focus();
+    document.getElementById('sellPriceModalInput').select();
+  }, 100);
+}
+
+function closeSellPriceModal() {
+  document.getElementById('sellPriceModal').classList.remove('show');
+  currentEditingBillProductId = null;
+  
+  // Return focus to search
+  setTimeout(() => {
+    document.getElementById('billProductSearch').focus();
+  }, 100);
+}
+
+function confirmSellPriceModal() {
+  const price = parseFloat(document.getElementById('sellPriceModalInput').value) || 0;
+  const qty = parseInt(document.getElementById('sellQtyModalInput').value) || 0;
+  
+  if (currentEditingBillProductId && price > 0 && qty > 0) {
+    // Save last selling rate
+    saveLastRate(currentEditingBillProductId, price, 'selling');
+    
+    if (cart[currentEditingBillProductId]) {
+      cart[currentEditingBillProductId].qty = qty;
+      cart[currentEditingBillProductId].customPrice = price;
+    } else {
+      cart[currentEditingBillProductId] = { qty, customPrice: price };
+    }
+    
+    renderBillingProducts();
+    showToast(`Added: ${qty} units @ ${currency(price)}`);
+  }
+  
+  closeSellPriceModal();
+}
+
+// ========== STOCK ENTRY FUNCTIONS ==========
+
+function setStockEntryType(type) {
+  currentStockEntryType = type;
+  
+  if (type === 'in') {
+    document.getElementById("stockTypeIn").classList.add("active");
+    document.getElementById("stockTypeOut").classList.remove("active");
+  } else {
+    document.getElementById("stockTypeOut").classList.add("active");
+    document.getElementById("stockTypeIn").classList.remove("active");
+  }
+
+  showNextNumber(type === 'in' ? 'purchase' : 'dc', 'stockEntryDC');
+  
+  renderStockEntryProducts();
+}
+
+document.getElementById("stockEntrySearch").addEventListener("input", (e) => {
+  stockEntrySearchTerm = e.target.value.trim().toLowerCase();
+  renderStockEntryProducts();
+});
+
+function renderStockEntryProducts() {
+  const container = document.getElementById("stockEntryProductGrid");
+  let list = Object.entries(products)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (stockEntrySearchTerm) {
+    list = list.filter(p => 
+      p.name.toLowerCase().includes(stockEntrySearchTerm) || 
+      (p.sku && p.sku.toLowerCase().includes(stockEntrySearchTerm))
+    );
+  }
+
+  document.getElementById('stockEntryProductCount').textContent = `${list.length} products`;
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(p => {
+    const inEntry = stockEntry[p.id];
+    const qty = inEntry ? inEntry.qty : 0;
+    const rate = inEntry ? inEntry.rate : (getLastRate(p.id, 'purchase') || 0);
+    const cardClass = inEntry ? (currentStockEntryType === 'in' ? 'in-stock-entry' : 'stock-out') : '';
+    const badgeClass = currentStockEntryType === 'out' ? 'out' : '';
+    
+    return `
+      <div class="product-card ${cardClass}" onclick="openRateModal('${p.id}', '${escapeHtml(p.name)}', ${qty || 1})">
+        ${qty > 0 ? `<div class="product-card-badge ${badgeClass}">${qty}</div>` : ''}
+        <div class="product-card-name">${escapeHtml(p.name)}</div>
+        ${rate > 0 ? `<div class="product-card-price">${currency(rate)}</div>` : ''}
+        <div class="product-card-stock">Stock: ${p.quantity}</div>
+        <div style="font-size:10px; color:var(--muted); margin-top:4px;">${escapeHtml(p.sku)}</div>
+      </div>
+    `;
+  }).join("");
+
+  updateStockEntryCart();
+}
+
+function removeFromStockEntry(productId) {
+  delete stockEntry[productId];
+  renderStockEntryProducts();
+  showToast('Removed from entry');
+}
+
+function updateStockEntryCart() {
+  const cartContainer = document.getElementById('stockEntryItems');
+  const cartTotalSection = document.getElementById('stockEntryTotal');
+  const cartItemCount = document.getElementById('stockEntryItemCount');
+
+  const items = Object.entries(stockEntry);
+
+  if (items.length === 0) {
+    cartContainer.innerHTML = `
+      <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+        <div style="font-size:40px; margin-bottom:8px;">📦</div>
+        <p>Click products to add</p>
+      </div>
+    `;
+    cartTotalSection.style.display = 'none';
+    cartItemCount.textContent = '(0 items)';
+    return;
+  }
+
+  cartItemCount.textContent = `(${items.length} items)`;
+
+  let totalQty = 0;
+  let totalValue = 0;
+
+  cartContainer.innerHTML = items.map(([id, data]) => {
+    const product = products[id];
+    if (!product) return '';
+
+    const qty = data.qty;
+    const rate = data.rate || 0;
+    const itemTotal = rate * qty;
+    
+    totalQty += qty;
+    totalValue += itemTotal;
+
+    return `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${escapeHtml(product.name)}</div>
+          <div class="cart-item-price">
+            ${qty} × ${currency(rate)} = ${currency(itemTotal)}
+          </div>
+        </div>
+        <div class="cart-qty-controls">
+          <div class="qty-display" onclick="openRateModal('${id}', '${escapeHtml(product.name)}', ${qty})" style="min-width:60px;">
+            ${qty} @ ${currency(rate)}
+          </div>
+          <div class="cart-remove" onclick="removeFromStockEntry('${id}')" title="Remove">×</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById('stockEntryTotalQty').textContent = totalQty;
+  document.getElementById('stockEntryTotalValue').textContent = currency(totalValue);
+  cartTotalSection.style.display = 'block';
+}
+
+async function saveStockEntry() {
+  const entryDate = document.getElementById("stockEntryDate").value;
+  const entryTime = document.getElementById("stockEntryTime").value;
+  const supplier = document.getElementById("stockEntrySupplier").value.trim();
+
+  if (!entryDate || !entryTime) {
+    alert("Please select date and time");
+    return;
+  }
+
+  if (!supplier && currentStockEntryType === 'in') {
+    alert("Please select supplier name for stock IN");
+    return;
+  }
+
+  const items = Object.entries(stockEntry);
+  if (items.length === 0) {
+    alert("No items added!");
+    return;
+  }
+
+  const entryDateTime = new Date(`${entryDate}T${entryTime}`);
+  const timestamp = entryDateTime.getTime();
+  const dcNumber = await allocateNextNumber(currentStockEntryType === 'in' ? 'purchase' : 'dc');
+
+  items.forEach(([id, data]) => {
+    const product = products[id];
+    if (!product) return;
+    
+    const qty = data.qty;
+    const rate = data.rate || 0;
+    const qtyChange = currentStockEntryType === 'in' ? qty : -qty;
+    const newStock = product.quantity + qtyChange;
+    
+    inventoryRef.child(id).update({
+      quantity: newStock,
+      updatedAt: Date.now()
+    });
+
+    stockEntriesRef.push({
+      productId: id,
+      productName: product.name,
+      productSku: product.sku,
+      type: currentStockEntryType,
+      quantity: qty,
+      rate: rate,
+      total: rate * qty,
+      timestamp: timestamp,
+      entryDate: entryDate,
+      entryTime: entryTime,
+      dcNumber: dcNumber || 'MANUAL',
+      supplier: supplier || ''
+    });
+  });
+
+  showToast(`Stock entry saved! (${items.length} items)`);
+  
+  stockEntry = {};
+  document.getElementById("stockEntryDC").value = '';
+  document.getElementById("stockEntrySupplier").value = '';
+  initializeStockEntryDateTime();
+  renderStockEntryProducts();
+  
+  // Focus back to DC number for next entry
+  setTimeout(() => {
+    document.getElementById('stockEntryDC').focus();
+  }, 100);
+}
+
+function renderStockEntryHistory() {
+  const tbody = document.getElementById("stockEntryHistoryBody");
+  const dateFilter = document.getElementById("stockHistoryDateFilter")?.value || '';
+  const typeFilter = document.getElementById("stockHistoryTypeFilter")?.value || '';
+  const dcFilter = document.getElementById("stockHistoryDCFilter")?.value.toLowerCase() || '';
+
+  let entryList = Object.entries(stockEntries)
+    .map(([id, e]) => ({ id, ...e }))
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  if (dateFilter) {
+    entryList = entryList.filter(e => e.entryDate === dateFilter);
+  }
+
+  if (typeFilter) {
+    entryList = entryList.filter(e => e.type === typeFilter);
+  }
+  
+  if (dcFilter) {
+    entryList = entryList.filter(e => e.dcNumber?.toLowerCase().includes(dcFilter));
+  }
+
+  if (entryList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--muted); padding:30px;">No entries</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = entryList.map(entry => {
+    const date = new Date(entry.timestamp);
+    const displayDate = entry.entryDate ? new Date(entry.entryDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = entry.entryTime || date.toLocaleTimeString();
+
+    return `
+      <tr>
+        <td style="font-size:11px;">${displayDate}<br/>${displayTime}</td>
+        <td><span class="dc-badge">${escapeHtml(entry.dcNumber || 'N/A')}</span></td>
+        <td style="font-size:11px;">${escapeHtml(entry.supplier || '—')}</td>
+        <td>
+          <div class="prod-name">${escapeHtml(entry.productName)}</div>
+          <div class="prod-sku sku">${escapeHtml(entry.productSku)}</div>
+        </td>
+        <td><span class="entry-type-badge ${entry.type}">${entry.type === 'in' ? '➕ IN' : '➖ OUT'}</span></td>
+        <td class="num" style="font-weight:600;">${entry.quantity}</td>
+        <td class="num" style="color:var(--amber);">${currency(entry.rate || 0)}</td>
+        <td class="num" style="font-weight:600;">${currency(entry.total || 0)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+document.getElementById("stockHistoryDateFilter")?.addEventListener("change", renderStockEntryHistory);
+document.getElementById("stockHistoryTypeFilter")?.addEventListener("change", renderStockEntryHistory);
+document.getElementById("stockHistoryDCFilter")?.addEventListener("input", renderStockEntryHistory);
+
+// Continue in next part due to length...
+</script>
+
+<!-- Part 2 of JavaScript continues here -->
+<script>
+
+// ========== SUPPLIER REPORTS ==========
+
+function renderSupplierReports() {
+  const container = document.getElementById("supplierReportContainer");
+  const searchFilter = document.getElementById("supplierReportSearch")?.value.toLowerCase() || '';
+  
+  const supplierGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.supplier || entry.supplier.trim() === '') return;
+    
+    if (!supplierGroups[entry.supplier]) {
+      supplierGroups[entry.supplier] = {
+        supplier: entry.supplier,
+        dcCount: new Set(),
+        totalQty: 0,
+        totalValue: 0,
+        entries: []
+      };
+    }
+    
+    supplierGroups[entry.supplier].dcCount.add(entry.dcNumber);
+    supplierGroups[entry.supplier].totalQty += entry.quantity;
+    supplierGroups[entry.supplier].totalValue += (entry.rate * entry.quantity);
+    supplierGroups[entry.supplier].entries.push(entry);
+  });
+  
+  let supplierList = Object.values(supplierGroups).map(s => ({
+    ...s,
+    dcCount: s.dcCount.size
+  })).sort((a, b) => b.totalValue - a.totalValue);
+  
+  if (searchFilter) {
+    supplierList = supplierList.filter(s => 
+      s.supplier.toLowerCase().includes(searchFilter)
+    );
+  }
+  
+  const totalPurchaseValue = supplierList.reduce((sum, s) => sum + s.totalValue, 0);
+  const totalSuppliers = supplierList.length;
+  const totalDCs = supplierList.reduce((sum, s) => sum + s.dcCount, 0);
+  
+  document.getElementById("totalPurchaseValue").textContent = currency(totalPurchaseValue);
+  document.getElementById("totalSuppliers").textContent = totalSuppliers;
+  document.getElementById("totalPurchaseDCs").textContent = totalDCs;
+  
+  if (supplierList.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:50px; color:var(--muted);">No supplier purchases found</div>';
+    return;
+  }
+  
+  container.innerHTML = supplierList.map(supplier => `
+    <div class="supplier-summary-card" onclick="viewSupplierDetails('${escapeHtml(supplier.supplier)}')">
+      <div class="supplier-summary-header">
+        <div class="supplier-name">🏭 ${escapeHtml(supplier.supplier)}</div>
+      </div>
+      <div class="supplier-stats">
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">DCs</div>
+          <div class="supplier-stat-value">${supplier.dcCount}</div>
+        </div>
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">Total Qty</div>
+          <div class="supplier-stat-value">${supplier.totalQty}</div>
+        </div>
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">Total Value</div>
+          <div class="supplier-stat-value" style="color:var(--teal);">${currency(supplier.totalValue)}</div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+window.viewSupplierDetails = function(supplierName) {
+  const entries = Object.values(stockEntries).filter(e => 
+    e.supplier === supplierName && e.type === 'in'
+  );
+  
+  if (entries.length === 0) return;
+  
+  const dcGroups = {};
+  entries.forEach(entry => {
+    if (!dcGroups[entry.dcNumber]) {
+      dcGroups[entry.dcNumber] = {
+        dcNumber: entry.dcNumber,
+        date: entry.entryDate,
+        items: [],
+        totalValue: 0
+      };
+    }
+    dcGroups[entry.dcNumber].items.push(entry);
+    dcGroups[entry.dcNumber].totalValue += (entry.rate * entry.quantity);
+  });
+  
+  const dcList = Object.values(dcGroups).sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
+  
+  let grandTotal = 0;
+  
+  const dcsHtml = dcList.map(dc => {
+    grandTotal += dc.totalValue;
+    
+    const itemsHtml = dc.items.map(item => `
+      <div style="padding:8px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; font-size:11px;">
+        <div>${escapeHtml(item.productName)}</div>
+        <div class="num">${item.quantity}</div>
+        <div class="num">${currency(item.rate)}</div>
+        <div class="num" style="font-weight:600;">${currency(item.total)}</div>
+      </div>
+    `).join("");
+    
+    return `
+      <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; margin-bottom:16px; overflow:hidden;">
+        <div style="padding:12px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span class="dc-badge">${escapeHtml(dc.dcNumber)}</span>
+            <span style="font-size:11px; color:var(--muted); margin-left:8px;">${new Date(dc.date).toLocaleDateString()}</span>
+          </div>
+          <div style="font-weight:700; color:var(--teal);">${currency(dc.totalValue)}</div>
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; padding:10px; background:var(--panel); border-bottom:1px solid var(--line); font-size:10px; color:var(--muted); font-weight:600;">
+          <div>PRODUCT</div>
+          <div class="num">QTY</div>
+          <div class="num">RATE</div>
+          <div class="num">TOTAL</div>
+        </div>
+        ${itemsHtml}
+      </div>
+    `;
+  }).join("");
+  
+  const content = `
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:20px; font-weight:700; color:var(--amber); margin-bottom:8px;">🏭 ${escapeHtml(supplierName)}</div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:12px;">
+        <div style="text-align:center;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Total DCs</div>
+          <div style="font-size:20px; font-weight:700;">${dcList.length}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Total Items</div>
+          <div style="font-size:20px; font-weight:700;">${entries.length}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Grand Total</div>
+          <div style="font-size:20px; font-weight:700; color:var(--teal);">${currency(grandTotal)}</div>
+        </div>
+      </div>
+    </div>
+    
+    <h4 style="margin-bottom:12px; font-size:14px;">DC-wise Breakdown</h4>
+    ${dcsHtml}
+  `;
+  
+  document.getElementById('supplierDetailsTitle').textContent = 'Supplier Purchase Details';
+  document.getElementById('supplierDetailsContent').innerHTML = content;
+  document.getElementById('supplierDetailsModal').classList.add('show');
+};
+
+function closeSupplierDetailsModal() {
+  document.getElementById('supplierDetailsModal').classList.remove('show');
+}
+
+document.getElementById("supplierReportSearch")?.addEventListener("input", renderSupplierReports);
+
+function exportSupplierReport() {
+  const supplierGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.supplier || entry.supplier.trim() === '') return;
+    
+    if (!supplierGroups[entry.supplier]) {
+      supplierGroups[entry.supplier] = [];
+    }
+    
+    supplierGroups[entry.supplier].push({
+      'Supplier': entry.supplier,
+      'DC Number': entry.dcNumber,
+      'Date': entry.entryDate,
+      'Product': entry.productName,
+      'SKU': entry.productSku,
+      'Quantity': entry.quantity,
+      'Rate': entry.rate,
+      'Total': entry.rate * entry.quantity
+    });
+  });
+  
+  const allData = Object.values(supplierGroups).flat();
+  
+  const ws = XLSX.utils.json_to_sheet(allData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Supplier Report");
+  XLSX.writeFile(wb, `supplier_report_${Date.now()}.xlsx`);
+  showToast('Supplier Report exported!');
+}
+
+// ========== DC REPORTS ==========
+
+function renderDCReports() {
+  const tbody = document.getElementById("dcReportBody");
+  const searchFilter = document.getElementById("dcReportSearch")?.value.toLowerCase() || '';
+  const dateFilter = document.getElementById("dcReportDateFilter")?.value || '';
+  const supplierFilter = document.getElementById("dcReportSupplierFilter")?.value.toLowerCase() || '';
+  
+  const dcGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.dcNumber || entry.dcNumber === 'MANUAL') return;
+    
+    if (!dcGroups[entry.dcNumber]) {
+      dcGroups[entry.dcNumber] = {
+        dcNumber: entry.dcNumber,
+        supplier: entry.supplier || '',
+        date: entry.entryDate,
+        items: [],
+        totalQty: 0,
+        totalValue: 0
+      };
+    }
+    
+    dcGroups[entry.dcNumber].items.push(entry);
+    dcGroups[entry.dcNumber].totalQty += entry.quantity;
+    dcGroups[entry.dcNumber].totalValue += (entry.rate * entry.quantity);
+  });
+  
+  let dcList = Object.values(dcGroups).sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
+  
+  if (searchFilter) {
+    dcList = dcList.filter(dc => 
+      dc.dcNumber.toLowerCase().includes(searchFilter)
+    );
+  }
+  
+  if (dateFilter) {
+    dcList = dcList.filter(dc => dc.date === dateFilter);
+  }
+  
+  if (supplierFilter) {
+    dcList = dcList.filter(dc => 
+      dc.supplier.toLowerCase().includes(supplierFilter)
+    );
+  }
+  
+  const totalValue = dcList.reduce((sum, dc) => sum + dc.totalValue, 0);
+  const totalDCs = dcList.length;
+  
+  document.getElementById("dcReportTotalValue").textContent = currency(totalValue);
+  document.getElementById("dcReportTotalDCs").textContent = totalDCs;
+  
+  if (dcList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:30px;">No DC entries</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = dcList.map(dc => `
+    <tr>
+      <td>
+        <span class="dc-badge">${escapeHtml(dc.dcNumber)}</span>
+      </td>
+      <td style="font-size:11px;">${new Date(dc.date).toLocaleDateString()}</td>
+      <td>${escapeHtml(dc.supplier)}</td>
+      <td class="num">${dc.items.length}</td>
+      <td class="num" style="font-weight:600;">${dc.totalQty}</td>
+      <td class="num" style="color:var(--teal); font-weight:600;">${currency(dc.totalValue)}</td>
+      <td>
+        <button class="icon-btn" onclick="viewDCDetails('${escapeHtml(dc.dcNumber)}')" title="View">👁</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+window.viewDCDetails = function(dcNumber) {
+  const entries = Object.values(stockEntries).filter(e => e.dcNumber === dcNumber);
+  
+  if (entries.length === 0) return;
+  
+  const firstEntry = entries[0];
+  let totalValue = 0;
+  
+  const itemsHtml = entries.map(entry => {
+    const itemTotal = entry.rate * entry.quantity;
+    totalValue += itemTotal;
+    
+    return `
+      <div style="padding:10px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; font-size:12px;">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(entry.productName)}</div>
+          <div style="font-size:10px; color:var(--muted);">${escapeHtml(entry.productSku)}</div>
+        </div>
+        <div class="num">${entry.quantity}</div>
+        <div class="num" style="color:var(--amber);">${currency(entry.rate)}</div>
+        <div class="num" style="font-weight:600;">${currency(itemTotal)}</div>
+      </div>
+    `;
+  }).join("");
+  
+  const content = `
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:16px;">
+      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">DC NUMBER</div>
+      <div style="font-size:18px; font-weight:700; color:var(--amber); margin-bottom:8px;">${escapeHtml(dcNumber)}</div>
+      <div style="font-size:11px; color:var(--muted);">Supplier: ${escapeHtml(firstEntry.supplier || 'N/A')}</div>
+      <div style="font-size:11px; color:var(--muted);">Date: ${new Date(firstEntry.entryDate).toLocaleDateString()}</div>
+    </div>
+    
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; padding:10px; background:var(--panel); border-bottom:1px solid var(--line); font-size:10px; color:var(--muted); font-weight:600;">
+        <div>PRODUCT</div>
+        <div class="num">QTY</div>
+        <div class="num">RATE</div>
+        <div class="num">TOTAL</div>
+      </div>
+      ${itemsHtml}
+      <div style="padding:12px; background:var(--panel); border-top:2px solid var(--line); display:flex; justify-content:space-between; font-weight:700;">
+        <span>TOTAL VALUE:</span>
+        <span style="color:var(--teal); font-size:18px;">${currency(totalValue)}</span>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('dcDetailsTitle').textContent = 'DC Details';
+  document.getElementById('dcDetailsContent').innerHTML = content;
+  document.getElementById('dcDetailsModal').classList.add('show');
+};
+
+function closeDCDetailsModal() {
+  document.getElementById('dcDetailsModal').classList.remove('show');
+}
+
+document.getElementById("dcReportSearch")?.addEventListener("input", renderDCReports);
+document.getElementById("dcReportDateFilter")?.addEventListener("change", renderDCReports);
+document.getElementById("dcReportSupplierFilter")?.addEventListener("input", renderDCReports);
+
+function exportDCReport() {
+  const dcGroups = {};
+  
+  Object.values(stockEntries).forEach(entry => {
+    if (entry.type !== 'in' || !entry.dcNumber || entry.dcNumber === 'MANUAL') return;
+    
+    if (!dcGroups[entry.dcNumber]) {
+      dcGroups[entry.dcNumber] = [];
+    }
+    
+    dcGroups[entry.dcNumber].push({
+      'DC Number': entry.dcNumber,
+      'Date': entry.entryDate,
+      'Supplier': entry.supplier || '',
+      'Product': entry.productName,
+      'SKU': entry.productSku,
+      'Quantity': entry.quantity,
+      'Rate': entry.rate,
+      'Total': entry.rate * entry.quantity
+    });
+  });
+  
+  const allData = Object.values(dcGroups).flat();
+  
+  const ws = XLSX.utils.json_to_sheet(allData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DC Report");
+  XLSX.writeFile(wb, `dc_report_${Date.now()}.xlsx`);
+  showToast('DC Report exported!');
+}
+
+// ========== BILL REPORTS ==========
+
+function renderBillReports() {
+  const tbody = document.getElementById("billReportBody");
+  const searchFilter = document.getElementById("billReportSearch")?.value.toLowerCase() || '';
+  const dateFilter = document.getElementById("billReportDateFilter")?.value || '';
+  
+  let billList = Object.entries(bills)
+    .map(([id, b]) => ({ id, ...b }))
+    .sort((a, b) => b.timestamp - a.timestamp);
+  
+  if (searchFilter) {
+    billList = billList.filter(b => 
+      (b.billDCNumber && b.billDCNumber.toLowerCase().includes(searchFilter)) ||
+      b.billId.toLowerCase().includes(searchFilter) ||
+      b.customerName.toLowerCase().includes(searchFilter)
+    );
+  }
+  
+  if (dateFilter) {
+    billList = billList.filter(b => b.billDate === dateFilter);
+  }
+  
+  const totalValue = billList.reduce((sum, b) => sum + b.totalAmount, 0);
+  const totalDCs = billList.length;
+  const totalProfit = billList.reduce((sum, b) => sum + b.profit, 0);
+  
+  document.getElementById("billReportTotalValue").textContent = currency(totalValue);
+  document.getElementById("billReportTotalDCs").textContent = totalDCs;
+  document.getElementById("billReportTotalProfit").textContent = currency(totalProfit);
+  
+  if (billList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--muted); padding:30px;">No bills</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = billList.map(bill => {
+    const totalQty = Object.values(bill.items || {}).reduce((sum, item) => sum + item.qty, 0);
+    
+    return `
+      <tr>
+        <td>
+          <span class="dc-badge">${escapeHtml(bill.billDCNumber || bill.billId)}</span>
+        </td>
+        <td style="font-size:11px;">${new Date(bill.billDate).toLocaleDateString()}</td>
+        <td>${escapeHtml(bill.customerName)}</td>
+        <td class="num">${bill.itemCount}</td>
+        <td class="num" style="font-weight:600;">${totalQty}</td>
+        <td class="num" style="color:var(--teal); font-weight:600;">${currency(bill.totalAmount)}</td>
+        <td class="num" style="color:var(--teal); font-weight:600;">${currency(bill.profit)}</td>
+        <td>
+          <button class="icon-btn" onclick="viewBillDetailsReport('${bill.id}')" title="View">👁</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.viewBillDetailsReport = function(billId) {
+  const bill = bills[billId];
+  
+  if (!bill) return;
+  
+  let totalValue = 0;
+  
+  const itemsHtml = Object.values(bill.items).map(item => {
+    const itemTotal = item.total;
+    totalValue += itemTotal;
+    
+    return `
+      <div style="padding:10px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; font-size:12px;">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(item.name)}</div>
+          <div style="font-size:10px; color:var(--muted);">${escapeHtml(item.sku)}</div>
+        </div>
+        <div class="num">${item.qty}</div>
+        <div class="num" style="color:var(--amber);">${currency(item.sellPrice)}</div>
+        <div class="num" style="font-weight:600;">${currency(itemTotal)}</div>
+      </div>
+    `;
+  }).join("");
+  
+  const content = `
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:16px;">
+      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">DC NUMBER</div>
+      <div style="font-size:18px; font-weight:700; color:var(--amber); margin-bottom:8px;">${escapeHtml(bill.billDCNumber || bill.billId)}</div>
+      <div style="font-size:11px; color:var(--muted);">Customer: ${escapeHtml(bill.customerName)}</div>
+      <div style="font-size:11px; color:var(--muted);">Contact: ${escapeHtml(bill.customerContact || 'N/A')}</div>
+      <div style="font-size:11px; color:var(--muted);">Date: ${new Date(bill.billDate).toLocaleDateString()}</div>
+    </div>
+    
+    <div style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px; padding:10px; background:var(--panel); border-bottom:1px solid var(--line); font-size:10px; color:var(--muted); font-weight:600;">
+        <div>PRODUCT</div>
+        <div class="num">QTY</div>
+        <div class="num">PRICE</div>
+        <div class="num">TOTAL</div>
+      </div>
+      ${itemsHtml}
+      <div style="padding:12px; background:var(--panel); border-top:2px solid var(--line);">
+        <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:8px;">
+          <span>TOTAL AMOUNT:</span>
+          <span style="color:var(--teal); font-size:18px;">${currency(bill.totalAmount)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--teal);">
+          <span>PROFIT:</span>
+          <span style="font-weight:600;">${currency(bill.profit)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('billDetailsTitle').textContent = 'Sales DC Details';
+  document.getElementById('billDetailsContent').innerHTML = content;
+  document.getElementById('billDetailsModal').classList.add('show');
+};
+
+function closeBillDetailsModal() {
+  document.getElementById('billDetailsModal').classList.remove('show');
+}
+
+document.getElementById("billReportSearch")?.addEventListener("input", renderBillReports);
+document.getElementById("billReportDateFilter")?.addEventListener("change", renderBillReports);
+
+function exportBillReport() {
+  const billsData = Object.values(bills).map(b => {
+    const items = Object.values(b.items || {});
+    return items.map(item => ({
+      'DC Number': b.billDCNumber || b.billId,
+      'Date': b.billDate,
+      'Customer': b.customerName,
+      'Contact': b.customerContact || '',
+      'Product': item.name,
+      'SKU': item.sku,
+      'Quantity': item.qty,
+      'Selling Price': item.sellPrice,
+      'Total': item.total
+    }));
+  }).flat();
+  
+  const ws = XLSX.utils.json_to_sheet(billsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Bill Report");
+  XLSX.writeFile(wb, `bill_report_${Date.now()}.xlsx`);
+  showToast('Bill Report exported!');
+}
+
+// ========== BILLING FUNCTIONS ==========
+
+document.getElementById("billProductSearch").addEventListener("input", (e) => {
+  billProductSearchTerm = e.target.value.trim().toLowerCase();
+  renderBillingProducts();
+});
+
+function renderBillingProducts() {
+  const container = document.getElementById("billProductGrid");
+  let list = Object.entries(products)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (billProductSearchTerm) {
+    list = list.filter(p => 
+      p.name.toLowerCase().includes(billProductSearchTerm) || 
+      (p.sku && p.sku.toLowerCase().includes(billProductSearchTerm))
+    );
+  }
+
+  document.getElementById('productCount').textContent = `${list.length} products`;
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No products found</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(p => {
+    const inCart = cart[p.id];
+    const qty = inCart ? inCart.qty : 0;
+    const customPrice = inCart?.customPrice || getLastRate(p.id, 'selling') || p.sellPrice;
+    
+    return `
+      <div class="product-card ${inCart ? 'in-cart' : ''}" onclick="openSellPriceModal('${p.id}', '${escapeHtml(p.name)}', ${qty || 1})">
+        ${qty > 0 ? `<div class="product-card-badge">${qty}</div>` : ''}
+        <div class="product-card-name">${escapeHtml(p.name)}</div>
+        <div class="product-card-price">${currency(customPrice)}</div>
+        <div class="product-card-stock">Stock: ${p.quantity}</div>
+      </div>
+    `;
+  }).join("");
+
+  updateCart();
+}
+
+function removeFromCart(productId) {
+  delete cart[productId];
+  renderBillingProducts();
+  showToast('Removed from cart');
+}
+
+function updateCart() {
+  const cartContainer = document.getElementById('cartItems');
+  const cartTotalSection = document.getElementById('cartTotal');
+  const cartItemCount = document.getElementById('cartItemCount');
+
+  const items = Object.entries(cart);
+
+  if (items.length === 0) {
+    cartContainer.innerHTML = `
+      <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+        <div style="font-size:40px; margin-bottom:8px;">🛒</div>
+        <p>Tap products to add</p>
+      </div>
+    `;
+    cartTotalSection.style.display = 'none';
+    cartItemCount.textContent = '(0 items)';
+    return;
+  }
+
+  cartItemCount.textContent = `(${items.length} items)`;
+
+  let totalCost = 0;
+  let totalSell = 0;
+  let totalQty = 0;
+
+  cartContainer.innerHTML = items.map(([id, data]) => {
+    const product = products[id];
+    if (!product) return '';
+
+    const qty = data.qty;
+    const sellPrice = data.customPrice || product.sellPrice;
+    const itemTotal = sellPrice * qty;
+    const avgCost = calculateAverageCost(id) || product.costPrice;
+    const itemCost = avgCost * qty;
+
+    totalCost += itemCost;
+    totalSell += itemTotal;
+    totalQty += qty;
+
+    return `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${escapeHtml(product.name)}</div>
+          <div class="cart-item-price">${currency(sellPrice)} × ${qty} = ${currency(itemTotal)}</div>
+        </div>
+        <div class="cart-qty-controls">
+          <div class="qty-display" onclick="openSellPriceModal('${id}', '${escapeHtml(product.name)}', ${qty})" style="min-width:60px;">
+            ${qty} @ ${currency(sellPrice)}
+          </div>
+          <div class="cart-remove" onclick="removeFromCart('${id}')" title="Remove">×</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const profit = totalSell - totalCost;
+
+  document.getElementById('totalItems').textContent = totalQty;
+  document.getElementById('subtotalAmount').textContent = currency(totalSell);
+  document.getElementById('profitAmount').textContent = currency(profit);
+  document.getElementById('totalAmount').textContent = currency(totalSell);
+
+  cartTotalSection.style.display = 'block';
+}
+
+async function generateBill() {
+  const customerName = document.getElementById("billCustomerName").value.trim();
+  let customerContact = document.getElementById("billCustomerContact").value.trim();
+  const billDate = document.getElementById("billDate").value;
+  const billTime = document.getElementById("billTime").value;
+  
+  if (!customerName) {
+    alert("Enter customer name");
+    return;
+  }
+
+  if (!billDate || !billTime) {
+    alert("Please select date and time");
+    return;
+  }
+
+  const items = Object.entries(cart);
+  if (items.length === 0) {
+    alert("Cart is empty! Add products first.");
+    return;
+  }
+
+  if (customerContact && !customerContact.startsWith('+')) {
+    customerContact = '+91' + customerContact;
+  }
+
+  const selectedDateTime = new Date(`${billDate}T${billTime}`);
+  const timestamp = selectedDateTime.getTime();
+  const billDCNumber = await allocateNextNumber('selling');
+
+  let totalCost = 0;
+  let totalSell = 0;
+  const billItems = {};
+
+  items.forEach(([id, data]) => {
+    const product = products[id];
+    if (!product) return;
+    
+    const qty = data.qty;
+    const sellPrice = data.customPrice || product.sellPrice;
+    const newStock = product.quantity - qty;
+    
+    inventoryRef.child(id).update({
+      quantity: newStock,
+      updatedAt: Date.now()
+    });
+
+    stockEntriesRef.push({
+      productId: id,
+      productName: product.name,
+      productSku: product.sku,
+      type: 'out',
+      quantity: qty,
+      rate: sellPrice,
+      total: sellPrice * qty,
+      timestamp: timestamp,
+      entryDate: billDate,
+      entryTime: billTime,
+      dcNumber: billDCNumber,
+      supplier: ''
+    });
+
+    const avgCost = calculateAverageCost(id) || product.costPrice;
+    const itemCost = avgCost * qty;
+    const itemSell = sellPrice * qty;
+    
+    totalCost += itemCost;
+    totalSell += itemSell;
+
+    billItems[id] = {
+      name: product.name,
+      sku: product.sku,
+      qty: qty,
+      costPrice: avgCost,
+      sellPrice: sellPrice,
+      total: itemSell
+    };
+  });
+
+  const billData = {
+    billId: 'B' + Date.now(),
+    billDCNumber: billDCNumber,
+    timestamp: timestamp,
+    billDate: billDate,
+    billTime: billTime,
+    customerName,
+    customerContact,
+    items: billItems,
+    totalAmount: totalSell,
+    totalCost: totalCost,
+    profit: totalSell - totalCost,
+    itemCount: items.length
+  };
+
+  billsRef.push(billData);
+  currentBillData = billData;
+
+  displayBillReceipt(billData);
+
+  cart = {};
+  document.getElementById("billCustomerName").value = '';
+  document.getElementById("billCustomerContact").value = '';
+  document.getElementById("billDCNumber").value = '';
+  billProductSearchTerm = '';
+  document.getElementById("billProductSearch").value = '';
+  initializeBillDateTime();
+  renderBillingProducts();
+
+  showToast('Sales DC generated!');
+  
+  // Focus back to DC number for next bill
+  setTimeout(() => {
+    document.getElementById('billDCNumber').focus();
+  }, 100);
+}
+
+function displayBillReceipt(bill) {
+  const container = document.getElementById("billReceiptContainer");
+  const receipt = document.getElementById("billReceipt");
+  
+  const date = new Date(bill.timestamp);
+  const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
+  const displayTime = bill.billTime || date.toLocaleTimeString();
+  
+  const itemsList = Object.values(bill.items).map(item => `
+    <div class="receipt-line">
+      <span>${item.name} x${item.qty}</span>
+      <span>${currency(item.total)}</span>
+    </div>
+  `).join('');
+
+  receipt.innerHTML = `
+    <div class="receipt-header">
+      <h2 style="margin:0;">SALES DC</h2>
+      <div style="font-size:11px; margin-top:5px;">Stock Inventory & Billing</div>
+      <div style="font-size:10px; margin-top:2px;">${displayDate} ${displayTime}</div>
+      <div style="font-size:12px; margin-top:5px; font-weight:bold;">DC: ${bill.billDCNumber || bill.billId}</div>
+    </div>
+    <div style="margin:10px 0; font-size:11px;">
+      <div><strong>Customer:</strong> ${escapeHtml(bill.customerName)}</div>
+      ${bill.customerContact ? `<div><strong>Contact:</strong> ${escapeHtml(bill.customerContact)}</div>` : ''}
+    </div>
+    <div style="border-top:1px dashed #000; padding-top:8px;">
+      ${itemsList}
+    </div>
+    <div class="receipt-total">
+      <div class="receipt-line">
+        <span>TOTAL:</span>
+        <span>${currency(bill.totalAmount)}</span>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:15px; font-size:10px; border-top:1px dashed #000; padding-top:8px;">
+      Thank you for your business!
+    </div>
+  `;
+  
+  container.style.display = 'block';
+  container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function printBill() {
+  window.print();
+}
+
+function closeBillReceipt() {
+  document.getElementById("billReceiptContainer").style.display = 'none';
+  currentBillData = null;
+}
+
+async function downloadPDF() {
+  if (!currentBillData) {
+    alert("No bill data available");
+    return;
+  }
+
+  showToast('Generating PDF...');
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const date = new Date(currentBillData.timestamp);
+    const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = currentBillData.billTime || date.toLocaleTimeString();
+
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text('SALES DC', 105, 20, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Stock Inventory & Billing', 105, 28, { align: 'center' });
+    doc.text(`${displayDate} ${displayTime}`, 105, 34, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`DC: ${currentBillData.billDCNumber || currentBillData.billId}`, 105, 42, { align: 'center' });
+
+    let yPos = 55;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Customer: ${currentBillData.customerName}`, 20, yPos);
+    if (currentBillData.customerContact) {
+      yPos += 6;
+      doc.text(`Contact: ${currentBillData.customerContact}`, 20, yPos);
+    }
+
+    yPos += 10;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+
+    yPos += 8;
+    doc.setFont(undefined, 'bold');
+    doc.text('Item', 20, yPos);
+    doc.text('Qty', 130, yPos);
+    doc.text('Price', 150, yPos);
+    doc.text('Total', 170, yPos);
+
+    yPos += 2;
+    doc.setLineWidth(0.3);
+    doc.line(20, yPos, 190, yPos);
+
+    yPos += 6;
+    doc.setFont(undefined, 'normal');
+    Object.values(currentBillData.items).forEach(item => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(item.name, 20, yPos);
+      doc.text(item.qty.toString(), 130, yPos);
+      doc.text(currency(item.sellPrice), 150, yPos);
+      doc.text(currency(item.total), 170, yPos);
+      yPos += 6;
+    });
+
+    yPos += 5;
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('TOTAL:', 130, yPos);
+    doc.text(currency(currentBillData.totalAmount), 170, yPos);
+
+    yPos += 15;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
+
+    const pdfBlob = doc.output('blob');
+    const fileName = `SalesDC_${currentBillData.billDCNumber || currentBillData.billId}.pdf`;
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfBlob);
+    link.download = fileName;
+    link.click();
+
+    showToast('PDF Downloaded!');
+
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    alert('Error generating PDF');
+  }
+}
+
+function showWhatsAppOptions() {
+  if (!currentBillData) {
+    alert("No bill data available");
+    return;
+  }
+
+  const phone = currentBillData.customerContact;
+  if (!phone) {
+    alert("Customer phone number is required for WhatsApp");
+    return;
+  }
+
+  document.getElementById('whatsappModal').classList.add('show');
+}
+
+function closeWhatsAppModal() {
+  document.getElementById('whatsappModal').classList.remove('show');
+}
+
+function sendWhatsAppText() {
+  closeWhatsAppModal();
+
+  const phone = currentBillData.customerContact;
+  let cleanPhone = phone.replace(/[^\d+]/g, '');
+  
+  if (!cleanPhone.startsWith('+91')) {
+    cleanPhone = '+91' + cleanPhone;
+  }
+
+  const date = new Date(currentBillData.timestamp);
+  const displayDate = currentBillData.billDate ? new Date(currentBillData.billDate).toLocaleDateString() : date.toLocaleDateString();
+  const displayTime = currentBillData.billTime || date.toLocaleTimeString();
+  
+  let message = `*SALES DC*\n\n`;
+  message += `Hi ${currentBillData.customerName},\n\n`;
+  message += `Your sales DC is ready!\n\n`;
+  message += `📋 *DC Number:* ${currentBillData.billDCNumber || currentBillData.billId}\n`;
+  message += `📅 *Date:* ${displayDate} ${displayTime}\n\n`;
+  message += `*ITEMS:*\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+  
+  Object.values(currentBillData.items).forEach(item => {
+    message += `${item.name}\n`;
+    message += `  ${item.qty} × ${currency(item.sellPrice)} = ${currency(item.total)}\n`;
+  });
+  
+  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+  message += `*TOTAL: ${currency(currentBillData.totalAmount)}*\n\n`;
+  message += `Thank you for your business!\n`;
+
+  const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappURL, '_blank');
+  
+  showToast('WhatsApp opened!');
+}
+
+function sendWhatsAppWithPDF() {
+  closeWhatsAppModal();
+  
+  showToast('Downloading PDF... Then share via WhatsApp');
+  
+  downloadPDF();
+  
+  setTimeout(() => {
+    const phone = currentBillData.customerContact;
+    let cleanPhone = phone.replace(/[^\d+]/g, '');
+    
+    if (!cleanPhone.startsWith('+91')) {
+      cleanPhone = '+91' + cleanPhone;
+    }
+    
+    const message = `Hi ${currentBillData.customerName},\n\nYour sales DC (${currentBillData.billDCNumber || currentBillData.billId}) is ready!\n\nTotal Amount: ${currency(currentBillData.totalAmount)}\n\nPlease find the attached PDF DC.\n\nThank you!`;
+    
+    const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
+    
+    alert('PDF downloaded! Now attach it to WhatsApp and send.');
+  }, 1500);
+}
+
+function renderBillHistory() {
+  const tbody = document.getElementById("historyTableBody");
+  const search = document.getElementById("historySearch")?.value.toLowerCase() || '';
+  
+  const billList = Object.entries(bills)
+    .map(([id, b]) => ({ id, ...b }))
+    .filter(b => {
+      if (!search) return true;
+      return (b.billDCNumber && b.billDCNumber.toLowerCase().includes(search)) ||
+             b.billId.toLowerCase().includes(search) || 
+             b.customerName.toLowerCase().includes(search);
+    })
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  if (billList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:30px;">No bills</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = billList.map(bill => {
+    const date = new Date(bill.timestamp);
+    const displayDate = bill.billDate ? new Date(bill.billDate).toLocaleDateString() : date.toLocaleDateString();
+    const displayTime = bill.billTime || date.toLocaleTimeString();
+    
+    return `
+      <tr>
+        <td class="sku" style="font-size:11px;">${escapeHtml(bill.billDCNumber || bill.billId)}</td>
+        <td style="font-size:11px;">${displayDate}<br/>${displayTime}</td>
+        <td style="font-size:12px;">
+          <div>${escapeHtml(bill.customerName)}</div>
+          <div style="font-size:10px; color:var(--muted);">${escapeHtml(bill.customerContact || '')}</div>
+        </td>
+        <td>${bill.itemCount}</td>
+        <td class="num">${currency(bill.totalAmount)}</td>
+        <td class="num" style="color:var(--teal);">${currency(bill.profit)}</td>
+        <td>
+          <button class="icon-btn" onclick="viewBillDetails('${bill.id}')" title="View">👁</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.viewBillDetails = function(id) {
+  const bill = bills[id];
+  if (!bill) return;
+  
+  currentBillData = bill;
+  displayBillReceipt(bill);
+  switchTab('billing');
+};
+
+document.getElementById("historySearch")?.addEventListener("input", renderBillHistory);
+
+function renderAnalytics() {
+  const billList = Object.values(bills);
+  const totalBills = billList.length;
+  const totalRevenue = billList.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const totalProfit = billList.reduce((sum, b) => sum + (b.profit || 0), 0);
+  const avgBill = totalBills > 0 ? totalRevenue / totalBills : 0;
+
+  document.getElementById("analyticsTotal").textContent = totalBills;
+  document.getElementById("analyticsRevenue").textContent = currency(totalRevenue);
+  document.getElementById("analyticsProfit").textContent = currency(totalProfit);
+  document.getElementById("analyticsAvg").textContent = currency(avgBill);
+
+  const productSales = {};
+  billList.forEach(bill => {
+    Object.entries(bill.items || {}).forEach(([id, item]) => {
+      if (!productSales[item.name]) {
+        productSales[item.name] = { qty: 0, revenue: 0 };
+      }
+      productSales[item.name].qty += item.qty;
+      productSales[item.name].revenue += item.total;
+    });
+  });
+
+  const topProducts = Object.entries(productSales)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 10);
+
+  const topContainer = document.getElementById("topProducts");
+  if (topProducts.length === 0) {
+    topContainer.innerHTML = '<p style="color:var(--muted); font-size:12px;">No sales yet</p>';
+  } else {
+    topContainer.innerHTML = topProducts.map(([name, data], i) => `
+      <div style="padding:8px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; font-size:12px;">
+        <div>
+          <span style="color:var(--amber); font-weight:700; margin-right:6px;">#${i+1}</span>
+          <span>${escapeHtml(name)}</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:600;">${data.qty}</div>
+          <div style="font-size:10px; color:var(--muted);">${currency(data.revenue)}</div>
+        </div>
+      </div>
+    `).join("");
+  }
+}
+
+function downloadAnalytics() {
+  const billList = Object.values(bills);
+  
+  const csvData = [
+    ['DC Number', 'Date', 'Time', 'Customer', 'Contact', 'Items', 'Amount', 'Profit'],
+    ...billList.map(b => {
+      const date = new Date(b.timestamp);
+      return [
+        b.billDCNumber || b.billId,
+        b.billDate || date.toLocaleDateString(),
+        b.billTime || date.toLocaleTimeString(),
+        b.customerName,
+        b.customerContact || '',
+        b.itemCount,
+        b.totalAmount,
+        b.profit
+      ];
+    })
+  ];
+
+  const csv = csvData.map(row => row.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `analytics_${Date.now()}.csv`;
+  a.click();
+  showToast('Downloaded!');
+}
+
+function exportBillHistory() {
+  downloadAnalytics();
+}
+
+function exportToExcel() {
+  const data = Object.entries(products).map(([id, p]) => ({
+    'Name': p.name,
+    'SKU': p.sku,
+    'Category': p.category || '',
+    'Supplier': p.supplier || '',
+    'Qty': p.quantity,
+    'Reorder': p.reorderLevel,
+    'Avg Cost': calculateAverageCost(id),
+    'Sell': p.sellPrice,
+    'Profit%': calculateProfit(calculateAverageCost(id) || p.costPrice, p.sellPrice)
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+  XLSX.writeFile(wb, `inventory_${Date.now()}.xlsx`);
+  showToast('Exported!');
+}
+
+function importFromExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+    if (!confirm(`Import ${jsonData.length} products?`)) return;
+
+    jsonData.forEach(row => {
+      const name = row['Name'] || row['name'] || '';
+      
+      if (!name) return;
+      
+      const productData = {
+        name: name,
+        sku: row['SKU'] || row['sku'] || generateSKU(name),
+        category: row['Category'] || row['category'] || 'Uncategorized',
+        supplier: row['Supplier'] || row['supplier'] || '',
+        quantity: Number(row['Qty'] || row['quantity'] || 0),
+        reorderLevel: Number(row['Reorder'] || row['reorderLevel'] || 5),
+        costPrice: Number(row['Cost'] || row['costPrice'] || 0),
+        sellPrice: Number(row['Sell'] || row['sellPrice'] || 0),
+        updatedAt: Date.now()
+      };
+
+      inventoryRef.push(productData);
+    });
+
+    showToast('Imported!');
+    event.target.value = '';
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function applyGlobalProfit() {
+  const percent = Number(document.getElementById("globalProfitPercent").value || 0);
+  if (percent < 0) {
+    alert("Enter valid percentage");
+    return;
+  }
+  
+  if (!confirm(`Apply ${percent}% to all products?`)) return;
+
+  Object.entries(products).forEach(([id, product]) => {
+    const cost = calculateAverageCost(id) || Number(product.costPrice || 0);
+    const newSell = cost + (cost * percent / 100);
+    inventoryRef.child(id).update({
+      sellPrice: newSell,
+      updatedAt: Date.now()
+    });
+  });
+
+  showToast('Profit applied to all!');
+}
+
+function clearAllData() {
+  if (!confirm("Delete ALL data?")) return;
+  if (!confirm("FINAL WARNING!")) return;
+
+  inventoryRef.remove();
+  billsRef.remove();
+  stockEntriesRef.remove();
+  lastRatesRef.remove();
+  countersRef.remove();
+  showToast('All data cleared!');
+}
+
+document.getElementById("search").addEventListener("input", render);
+document.getElementById("categoryFilter").addEventListener("change", render);
+document.getElementById("stockFilter").addEventListener("change", render);
+</script>
+</body>
+</html>
