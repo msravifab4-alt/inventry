@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dealer Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--panel:#141b22;--panel2:#1a232c;--line:#293541;--amber:#ffb300;--teal:#20e3b2;--coral:#ff5c6c;--text:#e8edf2;--muted:#82909d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,sans-serif}h1,h2,h3{font-family:'Space Grotesk',sans-serif}header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:#10161d}main{max-width:1100px;margin:auto;padding:20px 16px}.brand{font:700 18px 'Space Grotesk';color:var(--amber)}.muted{color:var(--muted);font-size:12px}.panel,.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}input,select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:10px;font:13px Inter}.toolbar input{flex:1;min-width:180px}.btn{border:0;border-radius:7px;padding:10px 14px;font-weight:600;cursor:pointer}.primary{background:var(--amber);color:#0d1117}.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}.teal{background:var(--teal);color:#0d1117}.danger{background:transparent;border:1px solid #63313a;color:var(--coral)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}.product{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:14px}.product h3{font-size:14px;margin:0 0 8px}.price{font:bold 16px monospace;color:var(--teal)}.stock{font-size:11px;color:var(--muted);margin-top:5px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.cart-item{padding:10px 0;border-bottom:1px solid var(--line)}.cart-line{display:grid;grid-template-columns:1fr 86px 86px 90px auto;gap:6px;align-items:center}.cart-line input{padding:7px}.line-total{font:600 12px monospace;color:var(--teal);text-align:right}.product:focus,.cart-line input:focus,.product button:focus{outline:2px solid var(--amber);outline-offset:2px}.hidden{display:none!important}.notice{padding:10px;border:1px solid var(--amber);border-radius:8px;color:var(--amber);font-size:12px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:10px;text-transform:uppercase}@media(max-width:700px){.cart-line{grid-template-columns:1fr 70px 70px 78px auto;gap:4px}.cart-line .line-label{display:none}}@media(min-width:800px){.two{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}}
+@media(max-width:700px){
+	header{padding:12px 14px;position:sticky;top:0;z-index:5}
+	main{padding:14px 10px}
+	h2{font-size:20px;margin:8px 0}
+	h3{font-size:15px}
+	.panel,.card{padding:12px;margin-bottom:12px}
+	.two{display:block}
+	.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+	.product{padding:10px;min-width:0}
+	.product h3{font-size:12px;line-height:1.25;word-break:break-word}
+	.price{font-size:14px}
+	.stock{font-size:10px;line-height:1.3}
+	.product .btn{padding:9px 6px;font-size:11px}
+	.toolbar{margin-bottom:10px}
+	.toolbar input{min-width:0;width:100%;font-size:14px;padding:11px}
+	.cart-line{grid-template-columns:minmax(0,1fr) 70px 70px;gap:6px;align-items:center}
+	.cart-line strong{grid-column:1 / -1;white-space:normal;word-break:break-word;font-size:12px}
+	.cart-line input{width:100%;padding:8px 5px;font-size:12px}
+	.cart-line .line-total{grid-column:1 / 2;text-align:left;font-size:12px}
+	.cart-line .btn{grid-column:3;padding:8px 5px;font-size:11px}
+	.row{gap:6px}
+	.btn{padding:10px 11px;font-size:12px}
+	input,select{font-size:14px;padding:11px}
+	table{display:block;overflow-x:auto;white-space:nowrap}
+}
+</style>
+</head>
+<body>
+<header><div class="brand">Dealer Portal</div><button class="btn ghost hidden" id="logoutBtn" onclick="logout()">Logout</button></header>
+<main>
+	<section class="panel" id="loginPanel">
+		<h2>Dealer Login</h2><p class="muted">Use the ID and password provided by the owner.</p>
+		<input id="loginId" placeholder="Dealer ID" style="margin-bottom:8px">
+		<input id="loginPassword" type="password" placeholder="Password" style="margin-bottom:12px">
+		<button class="btn primary" onclick="login()">Login</button><p id="loginError" class="muted"></p>
+	</section>
+	<section id="portal" class="hidden">
+		<div class="row"><div><h2 id="dealerTitle">Dealer</h2><p class="muted">Sell prices and available stock</p></div></div>
+		<div id="notice" class="notice hidden"></div>
+		<div class="two">
+			<div>
+				<div class="toolbar"><input id="search" placeholder="Search products... (Enter to add first)"></div>
+				<div id="products" class="grid"></div>
+			</div>
+			<div>
+				<div class="card"><h3>Order / Sales DC</h3><p class="muted">Rate and quantity can be edited. Stock is informational; owner confirms the order.</p><div id="cart"><p class="muted">Add products to order.</p></div><div class="row" style="margin-top:12px"><strong>Total</strong><strong id="total">₹0</strong></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="placeOrder()">Place Order (Ctrl+S)</button></div>
+				<div class="card"><h3>Request Rate Change</h3><select id="rateRequestProduct" style="margin-bottom:8px"><option value="">Select product</option></select><input id="rateRequestAmount" type="number" min="0" step="0.01" placeholder="Requested sell rate"><input id="rateRequestNote" placeholder="Reason (optional)" style="margin-top:8px"><button class="btn ghost" style="width:100%;margin-top:10px" onclick="submitRateRequest()">Request Rate</button></div>
+				<div class="card"><h3>Payment</h3><input id="paymentAmount" type="number" min="0" placeholder="Amount" style="margin-bottom:8px"><input id="paymentNote" placeholder="Payment note"><button class="btn teal" style="width:100%;margin-top:10px" onclick="submitPayment()">Submit Payment</button></div>
+				<div class="card"><h3>Return Components</h3><select id="returnProduct" style="margin-bottom:8px"><option value="">Select confirmed item</option></select><input id="returnQty" type="number" min="1" placeholder="Quantity" style="margin-bottom:8px"><input id="returnReason" placeholder="Reason"><button class="btn danger" style="width:100%;margin-top:10px" onclick="submitReturn()">Request Return</button></div>
+			</div>
+		</div>
+		<div class="card"><h3>My Orders</h3><div id="orders"></div></div>
+		<div class="card"><h3>My Payments</h3><div id="payments"></div></div>
+		<div class="card"><h3>My Returns</h3><div id="returns"></div></div>
+	</section>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:'AIzaSyAy9oLAJMzlyZK9MmFljA6hERaMjYFJvBc',authDomain:'stock-f5f68.firebaseapp.com',databaseURL:'https://stock-f5f68-default-rtdb.firebaseio.com',projectId:'stock-f5f68',storageBucket:'stock-f5f68.firebasestorage.app',messagingSenderId:'744020795401',appId:'1:744020795401:web:29736d52f71bee371758d8'};
+firebase.initializeApp(firebaseConfig);const db=firebase.database();
+const inventoryRef=db.ref('inventory'),accountsRef=db.ref('dealerAccounts'),ordersRef=db.ref('dealerOrders'),paymentsRef=db.ref('dealerPayments'),returnsRef=db.ref('dealerReturns'),rateRequestsRef=db.ref('dealerRateRequests');
+let products={},cart={},currentDealer=null,orders={},payments={},returns={},rateRequests={};
+const money=value=>'₹'+Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const safe=value=>String(value??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function login(){const id=document.getElementById('loginId').value.trim();const password=document.getElementById('loginPassword').value;const dealer=accountsRef.child(id);dealer.once('value').then(s=>{const data=s.val();if(!data||data.active===false||data.password!==password){document.getElementById('loginError').textContent='Invalid dealer login';return}currentDealer=data;sessionStorage.setItem('dealerId',id);showPortal()})}
+function showPortal(){document.getElementById('loginPanel').classList.add('hidden');document.getElementById('portal').classList.remove('hidden');document.getElementById('logoutBtn').classList.remove('hidden');document.getElementById('dealerTitle').textContent=currentDealer.name;listenData();renderProducts()}
+function logout(){sessionStorage.removeItem('dealerId');location.reload()}
+function listenData(){inventoryRef.on('value',s=>{products=s.val()||{};renderProducts();renderReturnProducts();renderRateRequestProducts()});ordersRef.orderByChild('dealerId').equalTo(currentDealer.id).on('value',s=>{orders=s.val()||{};renderOrders();renderReturnProducts()});paymentsRef.orderByChild('dealerId').equalTo(currentDealer.id).on('value',s=>{payments=s.val()||{};renderPayments()});returnsRef.orderByChild('dealerId').equalTo(currentDealer.id).on('value',s=>{returns=s.val()||{};renderReturns()});rateRequestsRef.orderByChild('dealerId').equalTo(currentDealer.id).on('value',s=>{rateRequests=s.val()||{};renderRateRequests()})}
+function renderProducts(){const term=document.getElementById('search').value.toLowerCase();const list=window.innerWidth<=700&&!term?[]:Object.entries(products).filter(([id,p])=>(p.name||'').toLowerCase().includes(term)||(p.sku||'').toLowerCase().includes(term));document.getElementById('products').innerHTML=list.length?list.map(([id,p])=>`<div class="product" tabindex="0" data-product-id="${safe(id)}" onkeydown="productKey(event,'${id}')"><h3>${safe(p.name)}</h3><div class="price">${money(p.sellPrice)}</div><div class="stock">Available: ${Number(p.quantity||0)} (can order even at 0)</div><button class="btn primary" style="width:100%;margin-top:10px" onclick="addToCart('${id}')">Add / Edit</button></div>`).join(''):term?'<p class="muted">No matching products found</p>':'<p class="muted">Search for a product to begin</p>'}
+function addToCart(id){const product=products[id];if(!product)return;cart[id]=cart[id]||{productId:id,name:product.name,sellPrice:Number(product.sellPrice||0),qty:0};cart[id].qty=cart[id].qty||1;renderCart()}
+function productKey(event,id){if(event.key==='Enter'||event.key===' '){event.preventDefault();addToCart(id)}else if(event.key==='ArrowDown'){event.preventDefault();event.target.nextElementSibling?.focus()}}
+function renderCart(){const list=Object.entries(cart);document.getElementById('cart').innerHTML=list.length?list.map(([id,item])=>`<div class="cart-item cart-line"><strong>${safe(item.name)}</strong><input aria-label="Quantity for ${safe(item.name)}" type="number" min="1" value="${item.qty}" onchange="updateCartItem('${id}','qty',this.value)"><input aria-label="Rate for ${safe(item.name)}" type="number" min="0" step="0.01" value="${item.sellPrice}" onchange="updateCartItem('${id}','sellPrice',this.value)"><span class="line-total">${money(item.qty*item.sellPrice)}</span><button class="btn danger" onclick="removeItem('${id}')">Remove</button></div>`).join(''):'<p class="muted">Add products to order.</p>';document.getElementById('total').textContent=money(list.reduce((sum,[id,item])=>sum+item.qty*item.sellPrice,0))}
+function updateCartItem(id,field,value){const number=Number(value);if(!cart[id]||!Number.isFinite(number)||number<0)return;cart[id][field]=field==='qty'?Math.max(1,Math.floor(number)):number;renderCart()}
+function removeItem(id){delete cart[id];renderCart()}
+function placeOrder(){const items=Object.values(cart);if(!items.length)return alert('Add products first');const totalAmount=items.reduce((sum,item)=>sum+item.qty*item.sellPrice,0);const dcNumber='D'+Date.now().toString().slice(-8);ordersRef.push({dealerId:currentDealer.id,dealerName:currentDealer.name,dealerDcNumber:dcNumber,items:cart,totalAmount,status:'pending',createdAt:Date.now()});cart={};renderCart();showNotice(`Sales DC ${dcNumber} submitted. Waiting for owner approval. Stock is not reduced yet.`)}
+function submitPayment(){const amount=Number(document.getElementById('paymentAmount').value);if(!amount||amount<=0)return alert('Enter payment amount');paymentsRef.push({dealerId:currentDealer.id,dealerName:currentDealer.name,amount,note:document.getElementById('paymentNote').value.trim(),status:'pending',createdAt:Date.now()});document.getElementById('paymentAmount').value='';document.getElementById('paymentNote').value='';showNotice('Payment submitted for owner review.')}
+function renderRateRequestProducts(){const select=document.getElementById('rateRequestProduct');if(!select)return;select.innerHTML='<option value="">Select product</option>'+Object.entries(products).map(([id,p])=>`<option value="${safe(id)}">${safe(p.name)} - current ${money(p.sellPrice)}</option>`).join('')}
+function submitRateRequest(){const productId=document.getElementById('rateRequestProduct').value;const requestedRate=Number(document.getElementById('rateRequestAmount').value);if(!productId||!requestedRate||requestedRate<0)return alert('Select a product and enter a requested rate');const product=products[productId];rateRequestsRef.push({dealerId:currentDealer.id,dealerName:currentDealer.name,productId,productName:product.name,currentRate:Number(product.sellPrice||0),requestedRate,note:document.getElementById('rateRequestNote').value.trim(),status:'pending',createdAt:Date.now()});document.getElementById('rateRequestAmount').value='';document.getElementById('rateRequestNote').value='';showNotice('Rate request sent to owner.')}
+function renderRateRequests(){const requests=Object.values(rateRequests);if(!requests.length)return;showNotice(`Rate requests: ${requests.filter(item=>item.status==='approved').length} approved, ${requests.filter(item=>item.status==='pending').length} pending.`)}
+function renderReturnProducts(){const confirmed=Object.values(orders).filter(order=>order.status==='confirmed').flatMap(order=>Object.values(order.items||{}));const select=document.getElementById('returnProduct');if(!select)return;select.innerHTML='<option value="">Select confirmed item</option>'+confirmed.map(item=>`<option value="${safe(item.productId)}">${safe(item.name)}</option>`).join('')}
+function submitReturn(){const productId=document.getElementById('returnProduct').value;const quantity=Number(document.getElementById('returnQty').value);if(!productId||!quantity||quantity<1)return alert('Select an item and quantity');const product=products[productId];returnsRef.push({dealerId:currentDealer.id,dealerName:currentDealer.name,productId,productName:product?.name||'Item',quantity,reason:document.getElementById('returnReason').value.trim(),status:'pending',createdAt:Date.now()});showNotice('Return request submitted for owner approval.');document.getElementById('returnQty').value='';document.getElementById('returnReason').value=''}
+function renderOrders(){document.getElementById('orders').innerHTML=Object.values(orders).length?Object.values(orders).map(order=>`<div class="cart-item"><strong>${safe(order.dealerDcNumber||'Sales DC')}</strong> - ${safe(order.status)} - ${money(order.totalAmount)}<div class="muted">${Object.values(order.items||{}).map(item=>`${safe(item.name)} x ${item.qty} @ ${money(item.sellPrice)} = ${money(item.qty*item.sellPrice)}`).join('<br>')}</div><div class="muted">${new Date(order.createdAt).toLocaleString()}</div></div>`).join(''):'<p class="muted">No orders</p>'}
+function renderPayments(){document.getElementById('payments').innerHTML=Object.values(payments).length?Object.values(payments).map(payment=>`<div class="cart-item">${money(payment.amount)} - ${safe(payment.status)} <span class="muted">${safe(payment.note)}</span></div>`).join(''):'<p class="muted">No payments</p>'}
+function renderReturns(){document.getElementById('returns').innerHTML=Object.values(returns).length?Object.values(returns).map(item=>`<div class="cart-item">${safe(item.productName)} x ${item.quantity} - ${safe(item.status)}</div>`).join(''):'<p class="muted">No returns</p>'}
+function showNotice(message){const notice=document.getElementById('notice');notice.textContent=message;notice.classList.remove('hidden');setTimeout(()=>notice.classList.add('hidden'),3500)}
+document.getElementById('search').addEventListener('input',renderProducts);document.getElementById('search').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();document.querySelector('.product')?.focus();document.querySelector('.product button')?.click()}});document.addEventListener('keydown',event=>{if(event.ctrlKey&&event.key.toLowerCase()==='s'){event.preventDefault();if(Object.keys(cart).length)placeOrder()}});const savedId=sessionStorage.getItem('dealerId');if(savedId)accountsRef.child(savedId).once('value').then(s=>{if(s.val()&&s.val().active!==false){currentDealer=s.val();showPortal()}});
+</script>
+</body>
+</html>
