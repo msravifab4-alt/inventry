@@ -984,6 +984,7 @@
           <label>Supplier Name</label>
           <select id="stockEntrySupplier">
             <option value="">Select supplier</option>
+            <option value="__add_new_supplier__">+ Add new supplier</option>
           </select>
         </div>
       </div>
@@ -1327,6 +1328,50 @@
     <div class="settings-card">
       <h3>Database</h3>
       <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+      <div class="optional-hint">Clear-data password: santhosh2409</div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Dealer Management</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Dealer ID</label>
+          <input type="text" id="dealerIdInput" placeholder="Dealer login ID">
+        </div>
+        <div class="field">
+          <label>Dealer Password</label>
+          <input type="password" id="dealerPasswordInput" placeholder="Dealer password">
+        </div>
+      </div>
+      <div class="field">
+        <label>Dealer Name</label>
+        <input type="text" id="dealerNameInput" placeholder="Dealer name">
+      </div>
+      <button class="btn btn-primary" onclick="saveDealerAccount()">Add Dealer</button>
+      <div id="dealerAccountsList" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Index Password</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>New Password</label>
+          <input type="password" id="ownerPasswordInput" placeholder="santhosh2409">
+        </div>
+        <div class="field">
+          <label>Password Protection</label>
+          <select id="ownerPasswordEnabled">
+            <option value="false">Off</option>
+            <option value="true">On</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveOwnerSecurity()">Save Security</button>
+    </div>
+
+    <div class="settings-card">
+      <h3>Dealer Orders, Payments & Returns</h3>
+      <div id="dealerManagementList"></div>
     </div>
   </div>
 
@@ -1531,6 +1576,12 @@ const billsRef = db.ref("bills");
 const stockEntriesRef = db.ref("stockEntries");
 const lastRatesRef = db.ref("lastRates");
 const countersRef = db.ref("counters");
+const dealerAccountsRef = db.ref("dealerAccounts");
+const dealerOrdersRef = db.ref("dealerOrders");
+const dealerPaymentsRef = db.ref("dealerPayments");
+const dealerReturnsRef = db.ref("dealerReturns");
+const dealerRateRequestsRef = db.ref("dealerRateRequests");
+const appSettingsRef = db.ref("appSettings");
 
 let products = {};
 let bills = {};
@@ -1546,6 +1597,11 @@ let stockEntrySearchTerm = '';
 let currentStockEntryType = 'in';
 let currentEditingProductId = null;
 let currentEditingBillProductId = null;
+let dealerAccounts = {};
+let dealerOrders = {};
+let dealerPayments = {};
+let dealerReturns = {};
+let dealerRateRequests = {};
 
 function initializeBillDateTime() {
   const now = new Date();
@@ -1626,6 +1682,43 @@ stockEntriesRef.on("value", (snap) => {
   updateDCSupplierDatalist();
 });
 
+dealerAccountsRef.on("value", snap => {
+  dealerAccounts = snap.val() || {};
+  renderDealerAccounts();
+  renderDealerManagement();
+});
+dealerOrdersRef.on("value", snap => {
+  dealerOrders = snap.val() || {};
+  renderDealerManagement();
+});
+dealerPaymentsRef.on("value", snap => {
+  dealerPayments = snap.val() || {};
+  renderDealerManagement();
+});
+dealerReturnsRef.on("value", snap => {
+  dealerReturns = snap.val() || {};
+  renderDealerManagement();
+});
+dealerRateRequestsRef.on("value", snap => {
+  dealerRateRequests = snap.val() || {};
+  renderDealerManagement();
+});
+
+appSettingsRef.on("value", snap => {
+  const settings = snap.val() || {};
+  const enabled = settings.ownerPasswordEnabled === true;
+  const selector = document.getElementById('ownerPasswordEnabled');
+  if (selector) selector.value = String(enabled);
+  if (enabled && sessionStorage.getItem('ownerAccessGranted') !== 'true') {
+    const password = prompt('Enter index password:');
+    if (password === (settings.ownerPassword || 'santhosh2409')) {
+      sessionStorage.setItem('ownerAccessGranted', 'true');
+    } else {
+      document.body.innerHTML = '<main style="padding:40px; text-align:center; color:#e8edf2; background:#0d1117; min-height:100vh;"><h2>Access denied</h2><p>Reload the page and enter the correct password.</p></main>';
+    }
+  }
+});
+
 lastRatesRef.on("value", (snap) => {
   lastRates = snap.val() || {};
 });
@@ -1641,9 +1734,33 @@ function updateSupplierDatalist() {
   const select = document.getElementById('stockEntrySupplier');
   if (!select) return;
   select.innerHTML = '<option value="">Select supplier</option>' +
-    suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('') +
+    '<option value="__add_new_supplier__">+ Add new supplier</option>';
   select.value = suppliers.includes(current) ? current : '';
 }
+
+document.getElementById('stockEntrySupplier').addEventListener('change', (event) => {
+  if (event.target.value !== '__add_new_supplier__') return;
+
+  const supplierName = prompt('Enter supplier name:')?.trim();
+  if (!supplierName) {
+    event.target.value = '';
+    return;
+  }
+
+  const existingOption = [...event.target.options].find(
+    option => option.value.toLowerCase() === supplierName.toLowerCase()
+  );
+
+  if (existingOption) {
+    event.target.value = existingOption.value;
+    return;
+  }
+
+  const option = new Option(supplierName, supplierName);
+  event.target.add(option, event.target.options[event.target.options.length - 1]);
+  event.target.value = supplierName;
+});
 
 function updateDCSupplierDatalist() {
   const suppliers = [...new Set(Object.values(stockEntries)
@@ -2213,8 +2330,9 @@ function openRateModal(productId, productName, currentQty = 1) {
   currentEditingProductId = productId;
   const product = products[productId];
   
-  // Get last rate or default to product cost
-  const lastRate = getLastRate(productId, 'purchase') || product?.costPrice || 0;
+  // Default to the calculated average purchase cost while keeping the rate editable.
+  const averageCost = calculateAverageCost(productId);
+  const lastRate = averageCost || getLastRate(productId, 'purchase') || product?.costPrice || 0;
   
   document.getElementById('rateModalLabel').textContent = `${productName}`;
   document.getElementById('rateModalInput').value = lastRate;
@@ -2338,6 +2456,12 @@ document.getElementById("stockEntrySearch").addEventListener("input", (e) => {
 
 function renderStockEntryProducts() {
   const container = document.getElementById("stockEntryProductGrid");
+  if (window.innerWidth <= 700 && !stockEntrySearchTerm) {
+    document.getElementById('stockEntryProductCount').textContent = '0 products';
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">Search for a product to begin</div>';
+    updateStockEntryCart();
+    return;
+  }
   let list = Object.entries(products)
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -3093,6 +3217,12 @@ document.getElementById("billProductSearch").addEventListener("input", (e) => {
 
 function renderBillingProducts() {
   const container = document.getElementById("billProductGrid");
+  if (window.innerWidth <= 700 && !billProductSearchTerm) {
+    document.getElementById('productCount').textContent = '0 products';
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">Search for a product to begin</div>';
+    updateCart();
+    return;
+  }
   let list = Object.entries(products)
     .map(([id, p]) => ({ id, ...p }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -3729,7 +3859,7 @@ function importFromExcel(event) {
         supplier: row['Supplier'] || row['supplier'] || '',
         quantity: Number(row['Qty'] || row['quantity'] || 0),
         reorderLevel: Number(row['Reorder'] || row['reorderLevel'] || 5),
-        costPrice: Number(row['Cost'] || row['costPrice'] || 0),
+        costPrice: Number(row['Purchase Price'] || row['Purchase price'] || row['Avg Cost'] || row['Cost'] || row['costPrice'] || 0),
         sellPrice: Number(row['Sell'] || row['sellPrice'] || 0),
         updatedAt: Date.now()
       };
@@ -3766,6 +3896,11 @@ function applyGlobalProfit() {
 }
 
 function clearAllData() {
+  const password = prompt("Enter clear-data password:");
+  if (password !== "santhosh2409") {
+    alert("Incorrect password");
+    return;
+  }
   if (!confirm("Delete ALL data?")) return;
   if (!confirm("FINAL WARNING!")) return;
 
@@ -3774,7 +3909,163 @@ function clearAllData() {
   stockEntriesRef.remove();
   lastRatesRef.remove();
   countersRef.remove();
+  dealerAccountsRef.remove();
+  dealerOrdersRef.remove();
+  dealerPaymentsRef.remove();
+  dealerReturnsRef.remove();
+  dealerRateRequestsRef.remove();
   showToast('All data cleared!');
+}
+
+function saveDealerAccount() {
+  const id = document.getElementById('dealerIdInput').value.trim();
+  const password = document.getElementById('dealerPasswordInput').value.trim();
+  const name = document.getElementById('dealerNameInput').value.trim();
+  if (!id || !password || !name) {
+    alert('Enter dealer ID, password, and name');
+    return;
+  }
+  dealerAccountsRef.child(id).set({ id, name, password, active: true, updatedAt: Date.now() });
+  document.getElementById('dealerIdInput').value = '';
+  document.getElementById('dealerPasswordInput').value = '';
+  document.getElementById('dealerNameInput').value = '';
+  showToast('Dealer added');
+}
+
+function renderDealerAccounts() {
+  const container = document.getElementById('dealerAccountsList');
+  if (!container) return;
+  const list = Object.values(dealerAccounts);
+  container.innerHTML = list.length ? list.map(dealer => `
+    <div class="dc-info" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <span><strong>${escapeHtml(dealer.name)}</strong> (${escapeHtml(dealer.id)}) - ${dealer.active === false ? 'Disabled' : 'Active'}</span>
+      <span>
+        <button class="btn btn-ghost" onclick="toggleDealer('${escapeHtml(dealer.id)}')">${dealer.active === false ? 'Enable' : 'Disable'}</button>
+        <button class="btn btn-danger" onclick="deleteDealer('${escapeHtml(dealer.id)}')">Delete</button>
+      </span>
+    </div>
+  `).join('') : '<div class="optional-hint">No dealers added</div>';
+}
+
+function toggleDealer(id) {
+  const dealer = dealerAccounts[id];
+  if (dealer) dealerAccountsRef.child(id).update({ active: dealer.active === false });
+}
+
+function deleteDealer(id) {
+  if (confirm('Delete this dealer login?')) dealerAccountsRef.child(id).remove();
+}
+
+function saveOwnerSecurity() {
+  const password = document.getElementById('ownerPasswordInput').value.trim() || 'santhosh2409';
+  const enabled = document.getElementById('ownerPasswordEnabled').value === 'true';
+  appSettingsRef.update({ ownerPassword: password, ownerPasswordEnabled: enabled });
+  document.getElementById('ownerPasswordInput').value = '';
+  showToast('Index security saved');
+}
+
+function renderDealerManagement() {
+  const container = document.getElementById('dealerManagementList');
+  if (!container) return;
+  const orders = Object.entries(dealerOrders);
+  const payments = Object.entries(dealerPayments);
+  const returns = Object.entries(dealerReturns);
+  const rateRequests = Object.entries(dealerRateRequests);
+  const sections = [];
+
+  const balances = {};
+  orders.filter(([, order]) => order.status === 'confirmed').forEach(([, order]) => {
+    const key = order.dealerId || order.dealerName;
+    balances[key] = balances[key] || { name: order.dealerName || key, amount: 0 };
+    balances[key].amount += Number(order.totalAmount || 0);
+  });
+  payments.filter(([, payment]) => payment.status === 'cleared').forEach(([, payment]) => {
+    const key = payment.dealerId || payment.dealerName;
+    balances[key] = balances[key] || { name: payment.dealerName || key, amount: 0 };
+    balances[key].amount -= Number(payment.amount || 0);
+  });
+  sections.push('<h4 style="margin:10px 0;">Pending Amount</h4>');
+  sections.push(Object.values(balances).length ? Object.values(balances).map(balance => `
+    <div class="dc-info"><strong>${escapeHtml(balance.name)}</strong>: <span style="color:${balance.amount > 0 ? 'var(--coral)' : 'var(--teal)'};">${currency(Math.max(0, balance.amount))}</span></div>
+  `).join('') : '<div class="optional-hint">No confirmed dealer sales</div>');
+
+  sections.push('<h4 style="margin:18px 0 10px;">Dealer Rate Requests</h4>');
+  sections.push(rateRequests.length ? rateRequests.map(([id, request]) => `
+    <div class="dc-info"><strong>${escapeHtml(request.dealerName || request.dealerId)}</strong> - ${escapeHtml(request.productName)}: ${currency(request.currentRate)} to ${currency(request.requestedRate)} - ${escapeHtml(request.status || 'pending')}
+      ${request.status === 'pending' ? `<button class="btn btn-primary" style="margin-left:8px;" onclick="approveDealerRateRequest('${id}')">Approve Rate</button><button class="btn btn-danger" style="margin-left:8px;" onclick="rejectDealerRateRequest('${id}')">Reject</button>` : ''}
+    </div>
+  `).join('') : '<div class="optional-hint">No dealer rate requests</div>');
+
+  sections.push('<h4 style="margin:10px 0;">Orders awaiting approval</h4>');
+  sections.push(orders.length ? orders.map(([id, order]) => `
+    <div class="dc-info">
+      <strong>${escapeHtml(order.dealerName || order.dealerId)}</strong> - ${escapeHtml(order.status || 'pending')} - ${currency(order.totalAmount)}
+      <div style="margin-top:6px;">${Object.values(order.items || {}).map(item => `${escapeHtml(item.name)} x ${item.qty}`).join(', ')}</div>
+      ${order.status === 'pending' ? `<button class="btn btn-primary" style="margin-top:8px;" onclick="approveDealerOrder('${id}')">Approve & Reduce Stock</button>` : ''}
+    </div>
+  `).join('') : '<div class="optional-hint">No dealer orders</div>');
+
+  sections.push('<h4 style="margin:18px 0 10px;">Payments</h4>');
+  sections.push(payments.length ? payments.map(([id, payment]) => `
+    <div class="dc-info"><strong>${escapeHtml(payment.dealerName || payment.dealerId)}</strong> - ${currency(payment.amount)} - ${escapeHtml(payment.status || 'pending')}
+      ${payment.status !== 'cleared' ? `<button class="btn btn-teal" style="margin-left:8px;" onclick="markDealerPayment('${id}')">Mark Cleared</button>` : ''}
+    </div>
+  `).join('') : '<div class="optional-hint">No payments recorded</div>');
+
+  sections.push('<h4 style="margin:18px 0 10px;">Returns</h4>');
+  sections.push(returns.length ? returns.map(([id, item]) => `
+    <div class="dc-info"><strong>${escapeHtml(item.dealerName || item.dealerId)}</strong> - ${escapeHtml(item.productName)} x ${item.quantity} - ${escapeHtml(item.status || 'pending')}
+      ${item.status === 'pending' ? `<button class="btn btn-primary" style="margin-left:8px;" onclick="approveDealerReturn('${id}')">Approve Return & Add Stock</button>` : ''}
+    </div>
+  `).join('') : '<div class="optional-hint">No return requests</div>');
+  container.innerHTML = sections.join('');
+}
+
+async function approveDealerOrder(orderId) {
+  const order = dealerOrders[orderId];
+  if (!order || order.status !== 'pending') return;
+  for (const item of Object.values(order.items || {})) {
+    const product = products[item.productId];
+    if (!product || Number(product.quantity || 0) < Number(item.qty || 0)) {
+      alert(`Not enough stock for ${item.name}`);
+      return;
+    }
+  }
+  for (const item of Object.values(order.items || {})) {
+    const product = products[item.productId];
+    await inventoryRef.child(item.productId).update({ quantity: Number(product.quantity || 0) - Number(item.qty), updatedAt: Date.now() });
+  }
+  await dealerOrdersRef.child(orderId).update({ status: 'confirmed', confirmedAt: Date.now() });
+  showToast('Dealer order confirmed');
+}
+
+async function approveDealerRateRequest(requestId) {
+  const request = dealerRateRequests[requestId];
+  if (!request || request.status !== 'pending') return;
+  if (!products[request.productId]) return;
+  await inventoryRef.child(request.productId).update({ sellPrice: Number(request.requestedRate), updatedAt: Date.now() });
+  await dealerRateRequestsRef.child(requestId).update({ status: 'approved', approvedAt: Date.now() });
+  showToast('Dealer rate approved');
+}
+
+function rejectDealerRateRequest(requestId) {
+  if (dealerRateRequests[requestId]?.status === 'pending') {
+    dealerRateRequestsRef.child(requestId).update({ status: 'rejected', rejectedAt: Date.now() });
+  }
+}
+
+function markDealerPayment(paymentId) {
+  dealerPaymentsRef.child(paymentId).update({ status: 'cleared', clearedAt: Date.now() });
+}
+
+async function approveDealerReturn(returnId) {
+  const request = dealerReturns[returnId];
+  if (!request || request.status !== 'pending') return;
+  const product = products[request.productId];
+  if (!product) return;
+  await inventoryRef.child(request.productId).update({ quantity: Number(product.quantity || 0) + Number(request.quantity || 0), updatedAt: Date.now() });
+  await dealerReturnsRef.child(returnId).update({ status: 'approved', approvedAt: Date.now() });
+  showToast('Dealer return approved');
 }
 
 document.getElementById("search").addEventListener("input", render);
